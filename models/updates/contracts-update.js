@@ -1,17 +1,17 @@
-import UpdateBase from './update-base.js'
-import UpdateType from './update-type.js'
-import { sortObjectKeys } from '../../utils/index.js'
+const {sortObjectKeys} = require('../../utils/index')
+const UpdateBase = require('./update-base')
+const UpdateType = require('./update-type')
 
-export default class ContractsUpdate extends UpdateBase {
+module.exports = class ContractsUpdate extends UpdateBase {
 
     /**
      * @param {BigInt} timestamp - pending update timestamp
      * @param {{ContractConfig}[]} configs - pending update configs
      */
     constructor(timestamp, configs) {
-        super(UpdateType.NODES, timestamp)
+        super(UpdateType.CONTRACTS, timestamp)
         if (!configs || !configs.length)
-            throw new Error('nodes is required')
+            throw new Error('configs is required')
         this.configs = configs
     }
 

@@ -1,3 +1,6 @@
-export * from './contractId-helper.js'
-export * from './majority-helper.js'
-export * from './serialization-helper.js'
+module.exports = {
+    ...require('./contractId-helper'),
+    ...require('./majority-helper'),
+    ...require('./serialization-helper'),
+    ...require('./timestamp-helper')
+}

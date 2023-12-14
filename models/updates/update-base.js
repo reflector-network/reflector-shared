@@ -1,6 +1,6 @@
-import { sortObjectKeys } from '../../utils/index.js'
+const {sortObjectKeys} = require('../../utils/index')
 
-export default class UpdateBase {
+class UpdateBase {
     /**
      * @param {number} type - pending update type
      * @param {number} timestamp - pending update timestamp
@@ -23,3 +23,5 @@ export default class UpdateBase {
         })
     }
 }
+
+module.exports = UpdateBase

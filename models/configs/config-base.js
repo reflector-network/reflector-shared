@@ -1,4 +1,4 @@
-export default class ConfigBase {
+module.exports = class ConfigBase {
     static notDefined = 'Not defined'
     static invalidOrNotDefined = 'Invalid or not defined'
 

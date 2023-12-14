@@ -1,15 +1,10 @@
-/**
- * @typedef {import('../updates/update-base').default} UpdateBase
- */
+const {StrKey} = require('stellar-sdk')
+const Asset = require('../assets/asset')
+const {isValidContractId} = require('../../utils/contractId-helper')
+const {sortObjectKeys} = require('../../utils/index')
+const ConfigBase = require('./config-base')
 
-import {StrKey} from 'stellar-base'
-import {buildUpdate} from '../../updates-helper.js'
-import Asset from '../assets/asset.js'
-import {isValidContractId} from '../../utils/contractId-helper.js'
-import ConfigBase from './config-base.js'
-import { sortObjectKeys } from '../../utils/index.js'
-
-export default class ContractConfig extends ConfigBase {
+module.exports = class ContractConfig extends ConfigBase {
     constructor(raw) {
         super()
         if (!raw) {
@@ -18,7 +13,6 @@ export default class ContractConfig extends ConfigBase {
         }
         this.admin = !(raw.admin && StrKey.isValidEd25519PublicKey(raw.admin)) ? this.__addConfigIssue(`admin: ${ConfigBase.invalidOrNotDefined}`) : raw.admin
         this.oracleId = !(raw.oracleId && isValidContractId(raw.oracleId)) ? this.__addConfigIssue(`oracleId: ${ConfigBase.invalidOrNotDefined}`) : raw.oracleId
-        this.network = !(raw.network && raw.network.length > 0) ? this.__addConfigIssue(`network: ${ConfigBase.invalidOrNotDefined}`) : raw.network
         this.decimals = !(raw.decimals && raw.decimals > 0 && !isNaN(raw.decimals)) ? this.__addConfigIssue(`decimals: ${ConfigBase.invalidOrNotDefined}`) : raw.decimals
         this.timeframe = !(raw.timeframe && raw.timeframe > 0 && !isNaN(raw.timeframe)) ? this.__addConfigIssue(`timeframe: ${ConfigBase.invalidOrNotDefined}`) : raw.timeframe
         this.period = !(raw.period && !isNaN(raw.period) && raw.period > raw.timeframe) ? this.__addConfigIssue(`period: ${ConfigBase.invalidOrNotDefined}`) : raw.period
@@ -27,6 +21,8 @@ export default class ContractConfig extends ConfigBase {
         this.__assignBaseAsset(raw.baseAsset)
 
         this.__assignAssets(raw.assets)
+
+        this.__assignDataSource(raw.dataSource)
     }
 
     __assignBaseAsset(asset) {
@@ -44,7 +40,7 @@ export default class ContractConfig extends ConfigBase {
         try {
             if (!(assets && Array.isArray(assets) && assets.length > 0))
                 throw new Error(ConfigBase.invalidOrNotDefined)
-            for (let rawAsset of assets) {
+            for (const rawAsset of assets) {
                 const asset = new Asset(rawAsset.type, rawAsset.code)
                 if (this.assets.findIndex(a => a.equals(asset)) >= 0)
                     throw new Error('Duplicate asset found in assets')
@@ -52,6 +48,16 @@ export default class ContractConfig extends ConfigBase {
             }
         } catch (err) {
             this.__addConfigIssue(`assets: ${err.message}`)
+        }
+    }
+
+    __assignDataSource(dataSource) {
+        try {
+            if (!dataSource)
+                throw new Error(ConfigBase.notDefined)
+            this.dataSource = dataSource
+        } catch (err) {
+            this.__addConfigIssue(`dataSource: ${err.message}`)
         }
     }
 
@@ -64,11 +70,6 @@ export default class ContractConfig extends ConfigBase {
      * @type {string}
      */
     oracleId
-
-    /**
-     * @type {string}
-     */
-    network
 
     /**
      * @type {Asset}
@@ -100,14 +101,18 @@ export default class ContractConfig extends ConfigBase {
      */
     fee
 
+    /**
+     * @returns {string}
+     */
+    dataSource
+
     toPlainObject() {
         return sortObjectKeys({
             admin: this.admin,
             oracleId: this.oracleId,
-            network: this.network,
             baseAsset: this.baseAsset?.toPlainObject(),
             decimals: this.decimals,
-            assets: this.assets?.map(asset => asset.toPlainObject()),
+            assets: this.assets.map(a => a.toPlainObject()),
             timeframe: this.timeframe,
             period: this.period,
             fee: this.fee
@@ -117,15 +122,14 @@ export default class ContractConfig extends ConfigBase {
     equals(other) {
         if (!(other instanceof ContractConfig))
             return false
-        return this.admin === other.admin &&
-            this.oracleId === other.oracleId &&
-            this.network === other.network &&
-            this.baseAsset.equals(other.baseAsset) &&
-            this.decimals === other.decimals &&
-            this.assets.length === other.assets.length &&
-            this.assets.every((asset, index) => asset.equals(other.assets[index])) &&
-            this.timeframe === other.timeframe &&
-            this.period === other.period &&
-            this.fee === other.fee
+        return this.admin === other.admin
+            && this.oracleId === other.oracleId
+            && this.baseAsset.equals(other.baseAsset)
+            && this.decimals === other.decimals
+            && this.assets.length === other.assets.length
+            && this.assets.every((asset, index) => asset.equals(other.assets[index]))
+            && this.timeframe === other.timeframe
+            && this.period === other.period
+            && this.fee === other.fee
     }
 }

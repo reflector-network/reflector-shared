@@ -1,18 +1,20 @@
-import UpdateBase from './update-base.js'
-import UpdateType from './update-type.js'
-import { sortObjectKeys } from '../../utils/index.js'
+const {sortObjectKeys} = require('../../utils/index')
+const OracleUpdateBase = require('./oracle-update-base')
+const UpdateType = require('./update-type')
 
 /**
  * @typedef {import('../assets/asset')} Asset
  */
 
-export default class AssetsUpdate extends UpdateBase {
+module.exports = class AssetsUpdate extends OracleUpdateBase {
     /**
      * @param {BigInt} timestamp - pending update timestamp
+     * @param {string} oracleId - oracle id
+     * @param {string} admin - oracle admin
      * @param {Asset[]} assets - pending update assets
      */
-    constructor(timestamp, assets) {
-        super(UpdateType.ASSETS, timestamp)
+    constructor(timestamp, oracleId, admin, assets) {
+        super(UpdateType.ASSETS, timestamp, oracleId, admin)
         if (!assets || !assets.length)
             throw new Error('assets is required')
         this.assets = assets

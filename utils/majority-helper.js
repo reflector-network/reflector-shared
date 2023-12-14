@@ -1,7 +1,12 @@
-export function hasMajority(totalSignersCount, signaturesCount) {
+function hasMajority(totalSignersCount, signaturesCount) {
     return signaturesCount >= getMajority(totalSignersCount)
 }
 
-export function getMajority(totalSignersCount) {
+function getMajority(totalSignersCount) {
     return Math.floor(totalSignersCount / 2) + 1
+}
+
+module.exports = {
+    hasMajority,
+    getMajority
 }

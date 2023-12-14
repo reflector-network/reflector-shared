@@ -8,4 +8,4 @@ const AssetType = {
     GENERIC: 2
 }
 
-export default AssetType
+module.exports = AssetType

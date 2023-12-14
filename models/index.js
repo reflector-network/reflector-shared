@@ -1,14 +1,45 @@
-export { default as UpdateType } from './updates/update-type.js'
-export { default as UpdateBase } from './updates/update-base.js'
-export { default as AssetsUpdate } from './updates/assets-update.js'
-export { default as NodesUpdate } from './updates/nodes-update.js'
-export { default as PeriodUpdate } from './updates/period-update.js'
-export { default as ContractUpdate } from './updates/contract-update.js'
-export { default as ValidationError } from './validation-error.js'
-export { default as AssetType } from './assets/asset-type.js'
-export { default as Asset } from './assets/asset.js'
-export { default as ConfigBase } from './configs/config-base.js'
-export { default as ContractConfig } from './configs/contract-config.js'
-export { default as Config } from './configs/config.js'
-export { default as ConfigEnvelope } from './configs/config-envelope.js'
-export { default as Node } from './node.js'
+const UpdateType = require('./updates/update-type')
+const UpdateBase = require('./updates/update-base')
+const AssetsUpdate = require('./updates/assets-update')
+const NodesUpdate = require('./updates/nodes-update')
+const PeriodUpdate = require('./updates/period-update')
+const WasmUpdate = require('./updates/wasm-update')
+const ValidationError = require('./validation-error')
+const AssetType = require('./assets/asset-type')
+const Asset = require('./assets/asset')
+const ConfigBase = require('./configs/config-base')
+const ContractConfig = require('./configs/contract-config')
+const ConfigEnvelope = require('./configs/config-envelope')
+const Config = require('./configs/config')
+const Node = require('./node')
+const PendingTransactionBase = require('./transactions/pending-transaction-base')
+const PendingTransactionType = require('./transactions/pending-transaction-type')
+const AssetsPendingTransaction = require('./transactions/assets-pending-transaction')
+const InitPendingTransaction = require('./transactions/init-pending-transaction')
+const ContractPendingTransaction = require('./transactions/contract-pending-transaction')
+const NodesPendingTransaction = require('./transactions/nodes-pending-transaction')
+const PeriodPendingTransaction = require('./transactions/period-pending-transaction')
+const PriceUpdatePendingTransaction = require('./transactions/price-update-pending-transaction')
+
+module.exports.UpdateType = UpdateType
+module.exports.UpdateBase = UpdateBase
+module.exports.AssetsUpdate = AssetsUpdate
+module.exports.NodesUpdate = NodesUpdate
+module.exports.PeriodUpdate = PeriodUpdate
+module.exports.WasmUpdate = WasmUpdate
+module.exports.ValidationError = ValidationError
+module.exports.AssetType = AssetType
+module.exports.Asset = Asset
+module.exports.ConfigBase = ConfigBase
+module.exports.ContractConfig = ContractConfig
+module.exports.Config = Config
+module.exports.ConfigEnvelope = ConfigEnvelope
+module.exports.Node = Node
+module.exports.PendingTransactionBase = PendingTransactionBase
+module.exports.PendingTransactionType = PendingTransactionType
+module.exports.AssetsPendingTransaction = AssetsPendingTransaction
+module.exports.InitPendingTransaction = InitPendingTransaction
+module.exports.ContractPendingTransaction = ContractPendingTransaction
+module.exports.NodesPendingTransaction = NodesPendingTransaction
+module.exports.PeriodPendingTransaction = PeriodPendingTransaction
+module.exports.PriceUpdatePendingTransaction = PriceUpdatePendingTransaction

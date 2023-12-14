@@ -1,21 +1,42 @@
-import { StrKey } from 'stellar-base'
-import { sortObjectKeys } from '../utils/index.js'
+const {StrKey} = require('stellar-sdk')
+const {sortObjectKeys} = require('../utils/index')
 
-export default class Signature {
+module.exports = class Signature {
     constructor(rawSignature) {
         if (!rawSignature)
             throw new Error('rawSignature is required')
-        this.__setSigner(rawSignature.signer)
+        this.__setPubkey(rawSignature.pubkey)
         this.__setSignature(rawSignature.signature)
         this.__setNonce(rawSignature.nonce)
+        this.__setRejected(rawSignature.rejected)
     }
 
-    __setSigner(signer) {
-        if (!signer)
-            throw new Error('signer is required')
-        if (!StrKey.isValidEd25519PublicKey(signer))
-            throw new Error('signer is invalid')
-        this.signer = signer
+    /**
+     * @type {string}
+     */
+    pubkey = null
+
+    /**
+     * @type {string}
+     */
+    signature = null
+
+    /**
+     * @type {number}
+     */
+    nonce = null
+
+    /**
+     * @type {boolean}
+     */
+    rejected = undefined
+
+    __setPubkey(pubkey) {
+        if (!pubkey)
+            throw new Error('pubkey is required')
+        if (!StrKey.isValidEd25519PublicKey(pubkey))
+            throw new Error('pubkey is invalid')
+        this.pubkey = pubkey
     }
 
     __setSignature(signature) {
@@ -34,11 +55,20 @@ export default class Signature {
         this.nonce = nonce
     }
 
+    __setRejected(rejected) {
+        if (rejected === undefined)
+            throw new Error('rejected is required')
+        this.rejected = rejected
+    }
+
     toPlainObject() {
-        return sortObjectKeys({
-            signer: this.signer,
+        const rawObject = {
+            pubkey: this.pubkey,
             signature: this.signature,
             nonce: this.nonce
-        })
+        }
+        if (this.rejected)
+            rawObject.rejected = this.rejected
+        return sortObjectKeys(rawObject)
     }
 }

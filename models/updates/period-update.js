@@ -1,14 +1,16 @@
-import UpdateBase from './update-base.js'
-import UpdateType from './update-type.js'
-import { sortObjectKeys } from '../../utils/index.js'
+const {sortObjectKeys} = require('../../utils/index')
+const OracleUpdateBase = require('./oracle-update-base')
+const UpdateType = require('./update-type')
 
-export default class PeriodUpdate extends UpdateBase {
+module.exports = class PeriodUpdate extends OracleUpdateBase {
     /**
      * @param {BigInt} timestamp - pending update timestamp
+     * @param {string} oracleId - oracle id
+     * @param {string} admin - oracle admin
      * @param {BigInt} period - pending update period
      */
-    constructor(timestamp, period) {
-        super(UpdateType.PERIOD, timestamp)
+    constructor(timestamp, oracleId, admin, period) {
+        super(UpdateType.PERIOD, timestamp, oracleId, admin)
         if (!period)
             throw new Error('period is required')
         this.period = period

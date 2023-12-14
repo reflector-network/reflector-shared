@@ -1,9 +1,12 @@
-import ConfigBase from './config-base.js'
-import ContractConfig from './contract-config.js'
-import Node from '../node.js'
-import { sortObjectKeys } from '../../utils/index.js'
+const {StrKey} = require('stellar-sdk')
+const Node = require('../node')
+const {sortObjectKeys} = require('../../utils/index')
+const {areMapsEqual, mapToPlainObject} = require('../../utils/map-helper')
+const {getDataHash, getSignaturePayloadHash} = require('../../signatures-helper')
+const ContractConfig = require('./contract-config')
+const ConfigBase = require('./config-base')
 
-export default class Config extends ConfigBase {
+module.exports = class Config extends ConfigBase {
     constructor(raw) {
         super()
         if (!raw) {
@@ -14,33 +17,59 @@ export default class Config extends ConfigBase {
         this.__setNodes(raw.nodes)
         this.__setWasm(raw.wasmHash)
         this.__setMinDate(raw.minDate)
+        this.__setSystemAccount(raw.systemAccount)
+        this.__setNetwork(raw.network)
     }
 
     /**
-     * @type {ContractConfig[]}
+     * @type {Map<string, ContractConfig>}
      */
-    contracts = []
+    contracts = new Map()
 
     /**
-     * @type {Node[]}
+     * @type {Map<string, Node>}
      */
-    nodes = []
+    nodes = new Map()
+
+    /**
+     * @type {string}
+     */
+    systemAccount = null
+
+    /**
+     * @type {string}
+     */
+    wasmHash = null
+
+    /**
+     * @type {number}
+     */
+    minDate = null
+
+    /**
+     * @type {string}
+     */
+    network = null
 
     __setContracts(contracts) {
         try {
             if (!contracts)
                 throw new Error(ConfigBase.notDefined)
-            for (let i = 0; i < contracts.length; i++) {
-                const contractRaw = contracts[i]
-                if (this.contracts.findIndex(c => c.oracleId === contractRaw.oracleId) >= 0)
-                    throw new Error('Duplicate oracleId found in contracts')
+            const allKeys = Object.keys(contracts)
+            const oracleIds = new Set(allKeys)
+            if (allKeys.length !== oracleIds.size)
+                throw new Error('Duplicate oracleId found in contracts')
+            for (const oracleId of oracleIds) {
+                const contractRaw = contracts[oracleId]
                 const contract = new ContractConfig(contractRaw)
+                if (contract.oracleId !== oracleId)
+                    this.__addConfigIssue(`contracts.${oracleId}: oracleId '${contract.oracleId}' does not match key '${oracleId}'`)
                 if (!contract.isValid) {
                     for (const issue of contract?.issues || [])
-                        this.__addConfigIssue(`contracts[${i}]: ${issue}`)
+                        this.__addConfigIssue(`contracts.${oracleId}: ${issue}`)
                     continue
                 }
-                this.contracts.push(contract)
+                this.contracts.set(oracleId, contract)
             }
         } catch (err) {
             this.__addConfigIssue(`contracts: ${err.message}`)
@@ -51,15 +80,19 @@ export default class Config extends ConfigBase {
         try {
             if (!nodes)
                 throw new Error(ConfigBase.notDefined)
-            for (let i = 0; i < nodes.length; i++) {
-                const rawNode = nodes[i]
+            const allKeys = Object.keys(nodes)
+            const pubkeys = new Set(allKeys)
+            if (allKeys.length !== pubkeys.size)
+                throw new Error('Duplicate pubkey found in nodes')
+            for (const pubkey of pubkeys) {
+                const rawNode = nodes[pubkey]
                 try {
-                    if (this.nodes.findIndex(n => n.pubkey === rawNode.pubkey) >= 0)
-                        throw new Error('Duplicate pubkey found in nodes')
                     const node = new Node(rawNode)
-                    this.nodes.push(node)
+                    if (node.pubkey !== pubkey)
+                        this.__addConfigIssue(`nodes.${pubkey}: pubkey '${node.pubkey}' does not match key '${pubkey}'`)
+                    this.nodes.set(pubkey, node)
                 } catch (err) {
-                    this.__addConfigIssue(`nodes[${i}]: ${err.message}`)
+                    this.__addConfigIssue(`nodes.${pubkey}: ${err.message}`)
                 }
             }
         } catch (err) {
@@ -79,31 +112,71 @@ export default class Config extends ConfigBase {
 
     __setMinDate(minDate) {
         try {
-            if (!minDate)
+            if (!minDate && minDate !== 0)
                 throw new Error(ConfigBase.notDefined)
+            minDate = parseInt(minDate, 10)
+            if (isNaN(minDate))
+                throw new Error(ConfigBase.invalidOrNotDefined)
             this.minDate = minDate
         } catch (err) {
             this.__addConfigIssue(`minDate: ${err.message}`)
         }
     }
 
+    __setSystemAccount(systemAccount) {
+        try {
+            if (!StrKey.isValidEd25519PublicKey(systemAccount))
+                throw new Error(ConfigBase.invalidOrNotDefined)
+            this.systemAccount = systemAccount
+        } catch (err) {
+            this.__addConfigIssue(`systemAccount: ${err.message}`)
+        }
+    }
+
+    __setNetwork(network) {
+        try {
+            if (!network)
+                throw new Error(ConfigBase.notDefined)
+            this.network = network
+        } catch (err) {
+            this.__addConfigIssue(`network: ${err.message}`)
+        }
+    }
+
+    getHash() {
+        const rawConfig = this.toPlainObject()
+        const hash = getDataHash(rawConfig)
+        return hash
+    }
+
+    getSignaturePayloadHash(pubkey, nonce, rejected) {
+        if (!pubkey)
+            throw new Error('pubkey is required')
+        if (!nonce)
+            throw new Error('nonce is required')
+        const hash = getSignaturePayloadHash(this.toPlainObject(), pubkey, nonce, rejected)
+        return hash
+    }
+
     toPlainObject() {
         return sortObjectKeys({
-            contracts: this.contracts.map(contract => contract.toPlainObject()),
-            nodes: this.nodes.map(node => node.toPlainObject()),
+            contracts: mapToPlainObject(this.contracts),
+            nodes: mapToPlainObject(this.nodes),
             wasmHash: this.wasmHash,
-            minDate: this.minDate
+            minDate: this.minDate,
+            systemAccount: this.systemAccount,
+            network: this.network
         })
     }
 
     equals(other) {
         if (!(other instanceof Config))
             return false
-        return this.contracts.length === other.contracts.length
-            && this.nodes.length === other.nodes.length
-            && this.contracts.every((contract, i) => contract.equals(other.contracts[i]))
-            && this.nodes.every((node, i) => node.equals(other.nodes[i]))
+        return areMapsEqual(this.contracts, other.contracts)
+            && areMapsEqual(this.nodes, other.nodes)
             && this.wasmHash === other.wasmHash
             && this.minDate === other.minDate
+            && this.systemAccount === other.systemAccount
+            && this.network === other.network
     }
 }

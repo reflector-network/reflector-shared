@@ -3,13 +3,16 @@
   "version": "0.0.1",
   "description": "",
   "main": "index.js",
-  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
-  "dependencies": {
-    "stellar-base": "v10.0.0-beta.3"
+  "devDependencies": {
+    "@stellar-expert/eslint-config-js": "github:stellar-expert/eslint-config-js"
+  },
+  "peerDependencies": {
+    "stellar-sdk": "^11.0.0",
+    "@reflector/oracle-client": "reflector-network/oracle-client#v3.0.0"
   }
 }

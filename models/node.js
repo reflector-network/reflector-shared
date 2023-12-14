@@ -1,14 +1,14 @@
-import { StrKey } from 'stellar-base'
-import { sortObjectKeys } from '../utils/index.js'
+const {StrKey} = require('stellar-sdk')
+const {sortObjectKeys} = require('../utils/index')
 
-const urlRegex = /^(http:\/\/|https:\/\/|ws:\/\/|wss:\/\/)?(([0-9]{1,3}\.){3}[0-9]{1,3}|([\da-z.-]+)\.([a-z.]{2,6}))(:(\d+))?$/
+const urlRegex = /^(http:\/\/|https:\/\/|ws:\/\/|wss:\/\/)?(localhost|(([0-9]{1,3}\.){3}[0-9]{1,3})|([\da-z.-]+)\.([a-z.]{2,6}))(:(\d+))?$/
 
-export default class Node {
+module.exports = class Node {
 
     constructor(rawNode) {
         if (!rawNode)
             throw new Error('Node is undefined')
-        const { pubkey, url } = rawNode
+        const {pubkey, url} = rawNode
         if (!pubkey || !StrKey.isValidEd25519PublicKey(pubkey))
             throw new Error('pubkey is undefined or invalid')
         if (!url || !urlRegex.test(url))

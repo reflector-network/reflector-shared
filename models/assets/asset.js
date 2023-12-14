@@ -1,11 +1,11 @@
-import {Asset as StellarAsset, StrKey} from 'stellar-base'
-import {isValidContractId, encodeAssetContractId} from '../../utils/contractId-helper.js'
-import AssetType from './asset-type.js'
-import { sortObjectKeys } from '../../utils/index.js'
+const {Asset: StellarAsset, StrKey} = require('stellar-sdk')
+const {isValidContractId, encodeAssetContractId} = require('../../utils/contractId-helper')
+const {sortObjectKeys} = require('../../utils/index')
+const AssetType = require('./asset-type')
 
 const assetTypeValues = Object.values(AssetType)
 
-export default class Asset {
+class Asset {
 
     /**
      * @param {number} type - asset type (stellar or generic)
@@ -91,3 +91,5 @@ export default class Asset {
         return this.type === other.type && this.code === other.code
     }
 }
+
+module.exports = Asset

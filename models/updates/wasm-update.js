@@ -1,8 +1,8 @@
-import UpdateBase from './update-base.js'
-import UpdateType from './update-type.js'
-import { sortObjectKeys } from '../../utils/index.js'
+const {sortObjectKeys} = require('../../utils/index')
+const UpdateBase = require('./update-base')
+const UpdateType = require('./update-type')
 
-export default class WasmUpdate extends UpdateBase {
+module.exports = class WasmUpdate extends UpdateBase {
     /**
      * @param {BigInt} timestamp - pending update timestamp
      * @param {string} wasmHash - contract wasm hash

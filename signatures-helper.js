@@ -1,7 +1,7 @@
-import { Keypair, xdr } from 'stellar-base'
-import crypto from 'crypto'
-import { ValidationError } from './models/index.js'
-import { sortObjectKeys } from './utils/serialization-helper.js'
+const crypto = require('crypto')
+const {Keypair, xdr} = require('stellar-sdk')
+const {ValidationError} = require('./models/index')
+const {sortObjectKeys} = require('./utils/serialization-helper')
 
 function getDecoratedSignature(signature) {
     try {
@@ -21,7 +21,7 @@ function getDecoratedSignature(signature) {
  * @param {string} hash
  * @returns {boolean}
  */
-export function verifySignature(publicKey, signature, hash) {
+function verifySignature(publicKey, signature, hash) {
     const kp = Keypair.fromPublicKey(publicKey)
     return kp.verify(Buffer.from(hash, 'hex'), Buffer.from(signature, 'hex'))
 }
@@ -29,17 +29,21 @@ export function verifySignature(publicKey, signature, hash) {
 /**
  * Returns hash of the data
  * @param {any} data
+ * @param {string} pubkey
  * @param {number} nonce
  * @param {boolean} [rejected]
  * @returns {string}
  */
-export function getHash(pubkey, data, nonce, rejected = false) {
-    let hashData = structuredClone(data)
+function getSignaturePayloadHash(data, pubkey, nonce, rejected = false) {
+    if (!pubkey)
+        throw new Error('pubkey is required')
+    if (!nonce)
+        throw new Error('nonce is required')
+    const hashData = structuredClone(data)
+    hashData.nonce = nonce
     if (rejected)
         hashData.rejected = true
-    hashData.nonce = nonce
-    hashData = sortObjectKeys(hashData)
-    return crypto.createHash('sha256').update(`${pubkey}:${JSON.stringify(hashData)}`).digest('hex')
+    return getDataHash(hashData, pubkey)
 }
 
 /**
@@ -48,8 +52,15 @@ export function getHash(pubkey, data, nonce, rejected = false) {
  * @param {string} [pubkey]
  * @returns {string}
  */
-export function getDataHash(data, pubkey = null) {
+function getDataHash(data, pubkey = null) {
     if (data instanceof Object)
         data = sortObjectKeys(data)
     return crypto.createHash('sha256').update(`${pubkey ? `${pubkey}:` : ''}${JSON.stringify(data)}`).digest('hex')
+}
+
+module.exports = {
+    getDecoratedSignature,
+    verifySignature,
+    getSignaturePayloadHash,
+    getDataHash
 }

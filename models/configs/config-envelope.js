@@ -1,8 +1,8 @@
-import Config from './config.js'
-import Signature from '../signature.js'
-import { sortObjectKeys } from '../../utils/index.js'
+const Signature = require('../signature')
+const {sortObjectKeys} = require('../../utils/index')
+const Config = require('./config')
 
-export default class ConfigEnvelope {
+module.exports = class ConfigEnvelope {
     constructor(rawEnvelope) {
         if (!rawEnvelope)
             throw new Error('rawEnvelope is required')
@@ -11,6 +11,21 @@ export default class ConfigEnvelope {
         this.__setTimestamp(rawEnvelope.timestamp)
     }
 
+    /**
+     * @type {Config}
+     */
+    config = null
+
+    /**
+     * @type {Signature[]}
+     */
+    signatures = []
+
+    /**
+     * @type {number}
+     */
+    timestamp = null
+
     __setConfig(config) {
         if (!config)
             throw new Error('config is required')
@@ -18,14 +33,19 @@ export default class ConfigEnvelope {
     }
 
     __setSignatures(signatures) {
-        if (!signatures || !signatures.length)
+        if (!signatures)
             throw new Error('signatures is required')
-        this.signatures = signatures.map(s => new Signature(s))
+        for (const signature of signatures) {
+            if (this.signatures.find(s => s.pubkey === signature.pubkey))
+                throw new Error(`signature for ${signature.pubkey} already exists`)
+            this.signatures.push(new Signature(signature))
+        }
     }
 
     __setTimestamp(timestamp) {
-        if (!timestamp || isNaN(timestamp))
-            throw new Error('timestamp is required')
+        timestamp = parseInt(timestamp, 10)
+        if (isNaN(timestamp) || timestamp < 0)
+            throw new Error('timestamp is not a valid number')
         this.timestamp = timestamp
     }
 
@@ -35,5 +55,12 @@ export default class ConfigEnvelope {
             signatures: this.signatures.map(s => s.toPlainObject()),
             timestamp: this.timestamp
         })
+    }
+
+    isPayloadEqual(otherEnvelope) {
+        if (!otherEnvelope)
+            return false
+        return this.config.equals(otherEnvelope.config)
+            && this.timestamp === otherEnvelope.timestamp
     }
 }

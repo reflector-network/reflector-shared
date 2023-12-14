@@ -1,28 +1,32 @@
-import UpdateBase from './update-base.js'
-import UpdateType from './update-type.js'
-import { sortObjectKeys } from '../../utils/index.js'
+const {sortObjectKeys} = require('../../utils/index')
+const {mapToPlainObject} = require('../../utils/map-helper')
+const UpdateBase = require('./update-base')
+const UpdateType = require('./update-type')
 
 /**
  * @typedef {import('../node')} Node
  */
 
-export default class NodesUpdate extends UpdateBase {
+module.exports = class NodesUpdate extends UpdateBase {
 
     /**
      * @param {BigInt} timestamp - pending update timestamp
-     * @param {Node[]} nodes - pending update nodes
+     * @param {Map<string, Node>} newNodes - pending update nodes
+     * @param {Map<string, Node>} currentNodes - current nodes
      */
-    constructor(timestamp, nodes) {
+    constructor(timestamp, newNodes, currentNodes) {
         super(UpdateType.NODES, timestamp)
-        if (!nodes || !nodes.length)
+        if (!newNodes || !newNodes.length)
             throw new Error('nodes is required')
-        this.nodes = nodes
+        this.newNodes = newNodes
+        this.currentNodes = currentNodes
     }
 
     toPlainObject() {
         return sortObjectKeys({
             ...super.toPlainObject(),
-            nodes: this.nodes.toPlainObject()
+            newNodes: mapToPlainObject(this.newNodes),
+            currentNodes: mapToPlainObject(this.currentNodes)
         })
     }
 }

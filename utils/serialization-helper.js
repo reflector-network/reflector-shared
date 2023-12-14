@@ -1,4 +1,4 @@
-export function sortObjectKeys(obj) {
+function sortObjectKeys(obj) {
     if (typeof obj !== 'object' || obj === null) {
         return obj
     }
@@ -10,3 +10,5 @@ export function sortObjectKeys(obj) {
         return sortedObj
     }, {})
 }
+
+module.exports = {sortObjectKeys}
