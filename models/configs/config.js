@@ -3,14 +3,14 @@ const Node = require('../node')
 const {sortObjectKeys} = require('../../utils/index')
 const {areMapsEqual, mapToPlainObject} = require('../../utils/map-helper')
 const {getDataHash, getSignaturePayloadHash} = require('../../signatures-helper')
+const IssuesContainer = require('../issues-container')
 const ContractConfig = require('./contract-config')
-const ConfigBase = require('./config-base')
 
-module.exports = class Config extends ConfigBase {
+module.exports = class Config extends IssuesContainer {
     constructor(raw) {
         super()
         if (!raw) {
-            this.__addConfigIssue(`config: ${ConfigBase.notDefined}`)
+            this.__addIssue(`config: ${IssuesContainer.notDefined}`)
             return
         }
         this.__setContracts(raw.contracts)
@@ -54,7 +54,7 @@ module.exports = class Config extends ConfigBase {
     __setContracts(contracts) {
         try {
             if (!contracts)
-                throw new Error(ConfigBase.notDefined)
+                throw new Error(IssuesContainer.notDefined)
             const allKeys = Object.keys(contracts)
             const oracleIds = new Set(allKeys)
             if (allKeys.length !== oracleIds.size)
@@ -63,23 +63,23 @@ module.exports = class Config extends ConfigBase {
                 const contractRaw = contracts[oracleId]
                 const contract = new ContractConfig(contractRaw)
                 if (contract.oracleId !== oracleId)
-                    this.__addConfigIssue(`contracts.${oracleId}: oracleId '${contract.oracleId}' does not match key '${oracleId}'`)
+                    this.__addIssue(`contracts.${oracleId}: oracleId '${contract.oracleId}' does not match key '${oracleId}'`)
                 if (!contract.isValid) {
                     for (const issue of contract?.issues || [])
-                        this.__addConfigIssue(`contracts.${oracleId}: ${issue}`)
+                        this.__addIssue(`contracts.${oracleId}: ${issue}`)
                     continue
                 }
                 this.contracts.set(oracleId, contract)
             }
         } catch (err) {
-            this.__addConfigIssue(`contracts: ${err.message}`)
+            this.__addIssue(`contracts: ${err.message}`)
         }
     }
 
     __setNodes(nodes) {
         try {
             if (!nodes)
-                throw new Error(ConfigBase.notDefined)
+                throw new Error(IssuesContainer.notDefined)
             const allKeys = Object.keys(nodes)
             const pubkeys = new Set(allKeys)
             if (allKeys.length !== pubkeys.size)
@@ -89,14 +89,14 @@ module.exports = class Config extends ConfigBase {
                 try {
                     const node = new Node(rawNode)
                     if (node.pubkey !== pubkey)
-                        this.__addConfigIssue(`nodes.${pubkey}: pubkey '${node.pubkey}' does not match key '${pubkey}'`)
+                        this.__addIssue(`nodes.${pubkey}: pubkey '${node.pubkey}' does not match key '${pubkey}'`)
                     this.nodes.set(pubkey, node)
                 } catch (err) {
-                    this.__addConfigIssue(`nodes.${pubkey}: ${err.message}`)
+                    this.__addIssue(`nodes.${pubkey}: ${err.message}`)
                 }
             }
         } catch (err) {
-            this.__addConfigIssue(`nodes: ${err.message}`)
+            this.__addIssue(`nodes: ${err.message}`)
         }
     }
 
@@ -106,40 +106,40 @@ module.exports = class Config extends ConfigBase {
                 throw new Error('Wasm code is invalid')
             this.wasmHash = wasmHash
         } catch (err) {
-            this.__addConfigIssue(`wasm: ${err.message}`)
+            this.__addIssue(`wasm: ${err.message}`)
         }
     }
 
     __setMinDate(minDate) {
         try {
             if (!minDate && minDate !== 0)
-                throw new Error(ConfigBase.notDefined)
+                throw new Error(IssuesContainer.notDefined)
             minDate = parseInt(minDate, 10)
             if (isNaN(minDate))
-                throw new Error(ConfigBase.invalidOrNotDefined)
+                throw new Error(IssuesContainer.invalidOrNotDefined)
             this.minDate = minDate
         } catch (err) {
-            this.__addConfigIssue(`minDate: ${err.message}`)
+            this.__addIssue(`minDate: ${err.message}`)
         }
     }
 
     __setSystemAccount(systemAccount) {
         try {
             if (!StrKey.isValidEd25519PublicKey(systemAccount))
-                throw new Error(ConfigBase.invalidOrNotDefined)
+                throw new Error(IssuesContainer.invalidOrNotDefined)
             this.systemAccount = systemAccount
         } catch (err) {
-            this.__addConfigIssue(`systemAccount: ${err.message}`)
+            this.__addIssue(`systemAccount: ${err.message}`)
         }
     }
 
     __setNetwork(network) {
         try {
             if (!network)
-                throw new Error(ConfigBase.notDefined)
+                throw new Error(IssuesContainer.notDefined)
             this.network = network
         } catch (err) {
-            this.__addConfigIssue(`network: ${err.message}`)
+            this.__addIssue(`network: ${err.message}`)
         }
     }
 

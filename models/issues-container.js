@@ -1,25 +1,25 @@
-module.exports = class ConfigBase {
+module.exports = class IssuesContainer {
     static notDefined = 'Not defined'
     static invalidOrNotDefined = 'Invalid or not defined'
 
-    __configIssues = []
+    __issues = []
 
-    __addConfigIssue(issue) {
-        this.__configIssues.push(issue)
+    __addIssue(issue) {
+        this.__issues.push(issue)
         return null
     }
 
     get issues() {
         if (this.isValid)
             return undefined
-        return this.__configIssues
+        return this.__issues
     }
 
     get issuesString() {
-        return this.__configIssues.join('\n')
+        return this.__issues.join('\n')
     }
 
     get isValid() {
-        return this.__configIssues.length === 0
+        return this.__issues.length === 0
     }
 }
