@@ -1,16 +1,14 @@
 const {TransactionBuilder, Operation} = require('stellar-sdk')
 const OracleClient = require('@reflector/oracle-client')
-const {
-    UpdateType,
-    InitPendingTransaction,
-    AssetsPendingTransaction,
-    NodesPendingTransaction,
-    PeriodPendingTransaction,
-    ContractPendingTransaction,
-    PriceUpdatePendingTransaction
-} = require('./models/index')
 const {getMajority} = require('./utils/index')
 const {buildUpdates} = require('./updates-helper')
+const InitPendingTransaction = require('./models/transactions/init-pending-transaction')
+const PriceUpdatePendingTransaction = require('./models/transactions/price-update-pending-transaction')
+const UpdateType = require('./models/updates/update-type')
+const ContractPendingTransaction = require('./models/transactions/contract-pending-transaction')
+const PeriodPendingTransaction = require('./models/transactions/period-pending-transaction')
+const AssetsPendingTransaction = require('./models/transactions/assets-pending-transaction')
+const NodesPendingTransaction = require('./models/transactions/nodes-pending-transaction')
 
 /**
  * @typedef {import('./models/updates/update-base')} UpdateBase
