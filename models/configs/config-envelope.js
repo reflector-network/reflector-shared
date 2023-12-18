@@ -1,5 +1,5 @@
 const Signature = require('../signature')
-const {sortObjectKeys} = require('../../utils/index')
+const {sortObjectKeys} = require('../../utils/serialization-helper')
 const Config = require('./config')
 
 module.exports = class ConfigEnvelope {

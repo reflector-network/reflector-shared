@@ -1,6 +1,6 @@
 const {StrKey} = require('stellar-sdk')
 const Node = require('../node')
-const {sortObjectKeys} = require('../../utils/index')
+const {sortObjectKeys} = require('../../utils/serialization-helper')
 const {areMapsEqual, mapToPlainObject} = require('../../utils/map-helper')
 const {getDataHash, getSignaturePayloadHash} = require('../../signatures-helper')
 const IssuesContainer = require('../issues-container')

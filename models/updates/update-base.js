@@ -1,4 +1,4 @@
-const {sortObjectKeys} = require('../../utils/index')
+const {sortObjectKeys} = require('../../utils/serialization-helper')
 
 class UpdateBase {
     /**

@@ -1,7 +1,7 @@
 const {StrKey} = require('stellar-sdk')
 const Asset = require('../assets/asset')
 const {isValidContractId} = require('../../utils/contractId-helper')
-const {sortObjectKeys} = require('../../utils/index')
+const {sortObjectKeys} = require('../../utils/serialization-helper')
 const IssuesContainer = require('../issues-container')
 
 module.exports = class ContractConfig extends IssuesContainer {
@@ -115,7 +115,8 @@ module.exports = class ContractConfig extends IssuesContainer {
             assets: this.assets.map(a => a.toPlainObject()),
             timeframe: this.timeframe,
             period: this.period,
-            fee: this.fee
+            fee: this.fee,
+            dataSource: this.dataSource
         })
     }
 
@@ -131,5 +132,6 @@ module.exports = class ContractConfig extends IssuesContainer {
             && this.timeframe === other.timeframe
             && this.period === other.period
             && this.fee === other.fee
+            && this.dataSource === other.dataSource
     }
 }

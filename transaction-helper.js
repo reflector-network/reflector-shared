@@ -1,6 +1,6 @@
 const {TransactionBuilder, Operation} = require('stellar-sdk')
 const OracleClient = require('@reflector/oracle-client')
-const {getMajority} = require('./utils/index')
+const {getMajority} = require('./utils/majority-helper')
 const {buildUpdates} = require('./updates-helper')
 const InitPendingTransaction = require('./models/transactions/init-pending-transaction')
 const PriceUpdatePendingTransaction = require('./models/transactions/price-update-pending-transaction')

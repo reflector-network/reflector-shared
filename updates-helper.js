@@ -3,7 +3,7 @@ const AssetsUpdate = require('./models/updates/assets-update')
 const NodesUpdate = require('./models/updates/nodes-update')
 const PeriodUpdate = require('./models/updates/period-update')
 const WasmUpdate = require('./models/updates/wasm-update')
-const {Config} = require('./models/index')
+const Config = require('./models/configs/config')
 
 /**
  * Builds updates from current config and new config

@@ -1,7 +1,7 @@
 const {StrKey} = require('stellar-sdk')
-const {sortObjectKeys} = require('../utils/index')
+const {sortObjectKeys} = require('../utils/serialization-helper')
 
-module.exports = class Signature {
+class Signature {
     constructor(rawSignature) {
         if (!rawSignature)
             throw new Error('rawSignature is required')
@@ -42,8 +42,6 @@ module.exports = class Signature {
     __setSignature(signature) {
         if (!signature)
             throw new Error('signature is required')
-        if (signature.length !== 64)
-            throw new Error('signature is invalid')
         this.signature = signature
     }
 
@@ -72,3 +70,5 @@ module.exports = class Signature {
         return sortObjectKeys(rawObject)
     }
 }
+
+module.exports = Signature

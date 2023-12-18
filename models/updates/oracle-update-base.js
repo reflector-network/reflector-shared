@@ -1,5 +1,6 @@
 const {StrKey} = require('stellar-sdk')
-const {isValidContractId, sortObjectKeys} = require('../../utils/index')
+const {sortObjectKeys} = require('../../utils/serialization-helper')
+const {isValidContractId} = require('../../utils/contractId-helper')
 const UpdateBase = require('./update-base')
 
 module.exports = class OracleUpdateBase extends UpdateBase {

@@ -1,4 +1,4 @@
-const {sortObjectKeys} = require('../../utils/index')
+const {sortObjectKeys} = require('../../utils/serialization-helper')
 const {mapToPlainObject} = require('../../utils/map-helper')
 const UpdateBase = require('./update-base')
 const UpdateType = require('./update-type')

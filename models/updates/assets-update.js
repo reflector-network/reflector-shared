@@ -1,4 +1,4 @@
-const {sortObjectKeys} = require('../../utils/index')
+const {sortObjectKeys} = require('../../utils/serialization-helper')
 const OracleUpdateBase = require('./oracle-update-base')
 const UpdateType = require('./update-type')
 

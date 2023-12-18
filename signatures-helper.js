@@ -1,6 +1,6 @@
 const crypto = require('crypto')
 const {Keypair, xdr} = require('stellar-sdk')
-const {ValidationError} = require('./models/index')
+const ValidationError = require('./models/validation-error')
 const {sortObjectKeys} = require('./utils/serialization-helper')
 
 function getDecoratedSignature(signature) {
@@ -53,7 +53,7 @@ function getSignaturePayloadHash(data, pubkey, nonce, rejected = false) {
  * @returns {string}
  */
 function getDataHash(data, pubkey = null) {
-    if (data instanceof Object)
+    if (typeof data === 'object')
         data = sortObjectKeys(data)
     return crypto.createHash('sha256').update(`${pubkey ? `${pubkey}:` : ''}${JSON.stringify(data)}`).digest('hex')
 }

@@ -1,6 +1,6 @@
 const {Asset: StellarAsset, StrKey} = require('stellar-sdk')
 const {isValidContractId, encodeAssetContractId} = require('../../utils/contractId-helper')
-const {sortObjectKeys} = require('../../utils/index')
+const {sortObjectKeys} = require('../../utils/serialization-helper')
 const AssetType = require('./asset-type')
 
 const assetTypeValues = Object.values(AssetType)
