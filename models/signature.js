@@ -54,8 +54,6 @@ class Signature {
     }
 
     __setRejected(rejected) {
-        if (rejected === undefined)
-            throw new Error('rejected is required')
         this.rejected = rejected
     }
 
