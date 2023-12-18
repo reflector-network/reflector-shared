@@ -4,6 +4,7 @@ const NodesUpdate = require('./models/updates/nodes-update')
 const PeriodUpdate = require('./models/updates/period-update')
 const WasmUpdate = require('./models/updates/wasm-update')
 const Config = require('./models/configs/config')
+const ContractsUpdate = require('./models/updates/contracts-update')
 
 /**
  * Builds updates from current config and new config
@@ -26,12 +27,10 @@ function buildUpdates(timestamp, currentConfig, newConfig) {
     if (newConfig.equals(currentConfig))
         return new Map()
 
-    /**
-     * @type {Map<string, UpdateBase>}
-     */
+
     const globalUpdate = __tryGetGlobalUpdate(timestamp, currentConfig, newConfig)
     const contractsUpdate = __tryGetContractsUpdate(timestamp, currentConfig.contracts, newConfig.contracts)
-    if (globalUpdate && contractsUpdate && contractsUpdate.size > 0)
+    if (globalUpdate && contractsUpdate)
         throw new ValidationError('Global update can not be combined with contracts update')
     if (globalUpdate) {
         const updates = new Map()
@@ -52,6 +51,8 @@ function buildUpdates(timestamp, currentConfig, newConfig) {
 function __tryGetGlobalUpdate(timestamp, currentConfig, newConfig) {
     let globalUpdate = null
     function setGlobalUpdate(update) {
+        if (!update)
+            return
         if (globalUpdate)
             throw new ValidationError('Only one global update can be applied at a time')
         globalUpdate = update
@@ -59,6 +60,11 @@ function __tryGetGlobalUpdate(timestamp, currentConfig, newConfig) {
     setGlobalUpdate(__tryGetNodesUpdate(timestamp, currentConfig.nodes, newConfig.nodes))
 
     setGlobalUpdate(__tryGetWasmUpdate(timestamp, currentConfig.wasmHash, newConfig.wasmHash))
+
+    const contractChanges = __getChanges(newConfig.contracts, currentConfig.contracts)
+    if (contractChanges.added.length > 0 || contractChanges.removed.length > 0)
+        setGlobalUpdate(new ContractsUpdate(timestamp, newConfig.contracts, currentConfig.contracts))
+
     return globalUpdate
 }
 
@@ -85,13 +91,13 @@ function __tryGetWasmUpdate(timestamp, currentWasm, newWasm) {
  * @returns {NodesUpdate}
  */
 function __tryGetNodesUpdate(timestamp, currentNodes, newNodes) {
-    const changes = __getChanges(newNodes.values(), currentNodes.values(), 'pubkey', 'nodes')
+    const changes = __getChanges(newNodes, currentNodes)
     if (changes.added.length === 0 && changes.removed.length === 0 && changes.modified.length === 0)
         return null
-    const modified = changes.added.concat(changes.modified)
+    const modified = changes.added.concat(changes.modified).concat(changes.removed)
     if (modified.length === 0)
         return null
-    return new NodesUpdate(timestamp, newNodes)
+    return new NodesUpdate(timestamp, newNodes, currentNodes)
 }
 
 /**
@@ -102,8 +108,8 @@ function __tryGetNodesUpdate(timestamp, currentNodes, newNodes) {
  * @returns {Map<string, UpdateBase>}
  */
 function __tryGetContractsUpdate(timestamp, currentConfigs, newConfigs) {
-    const changes = __getChanges(newConfigs, currentConfigs, 'oracleId', 'contracts')
-    if (changes.added.length === 0 && changes.removed.length === 0 && changes.modified.length === 0)
+    const changes = __getChanges(newConfigs, currentConfigs)
+    if (changes.modified.length === 0)
         return null
 
     const updates = new Map()
@@ -131,6 +137,7 @@ function __tryGetContractsUpdate(timestamp, currentConfigs, newConfigs) {
 
         updates.set(newConfig.oracleId, contractUpdate)
     })
+
     return updates
 }
 
@@ -144,7 +151,7 @@ function __tryGetContractsUpdate(timestamp, currentConfigs, newConfigs) {
  * @returns {AssetsUpdate}
  */
 function __tryGetAssetsUpdate(timestamp, oracleId, admin, currentAssets, newAssets) {
-    const assetsChanges = __getChanges(newAssets, currentAssets, 'code', `${oracleId}:assets`)
+    const assetsChanges = __getArrayChanges(newAssets, currentAssets, 'code', `${oracleId}:assets`)
     if (assetsChanges.removed.length > 0 || assetsChanges.modified.length > 0)
         throw new ValidationError(`Contract ${oracleId}. Assets can not be modified or removed`)
 
@@ -159,11 +166,9 @@ function __tryGetAssetsUpdate(timestamp, oracleId, admin, currentAssets, newAsse
 }
 
 /**
- * Compares two arrays and returns changes. All items must have unique key property, and have equals method
- * @param {Object[]} newArray - array to compare
- * @param {Object[]} currentArray - array to compare
- * @param {string} keyProperty - property to compare
- * @param {string} source - source of array
+ * Compares two maps and returns changes. All items must have have equals method
+ * @param {Map<string, any>} newMap - array to compare
+ * @param {Map<string, any>} currentMap - array to compare
  * @returns {{
  *  added: Object[],
  *  removed: Object[],
@@ -173,18 +178,15 @@ function __tryGetAssetsUpdate(timestamp, oracleId, admin, currentAssets, newAsse
  *  current: Map<string, Object>
  * }}
  */
-function __getChanges(newArray, currentArray, keyProperty, source) {
+function __getChanges(newMap, currentMap) {
     const changes = {
         added: [],
         removed: [],
         modified: [],
         unmodified: [],
-        new: new Map(newArray.map(item => [item[keyProperty], item])),
-        current: new Map(currentArray.map(item => [item[keyProperty], item]))
+        new: newMap,
+        current: currentMap
     }
-
-    if (changes.new.size !== newArray.length)
-        throw new ValidationError(`Duplicated ${keyProperty} found in ${source}`)
 
     const allKeys = new Set([...changes.new.keys(), ...changes.current.keys()])
 
@@ -205,6 +207,31 @@ function __getChanges(newArray, currentArray, keyProperty, source) {
     })
 
     return changes
+}
+
+/**
+ * Compares two arrays and returns changes. All items must have unique key property, and have equals method
+ * @param {Object[]} newArray - array to compare
+ * @param {Object[]} currentArray - array to compare
+ * @param {string} keyProperty - property to compare
+ * @param {string} source - source of array
+ * @returns {{
+ *  added: Object[],
+ *  removed: Object[],
+ *  modified: {newItem: Object, currentItem: Object}[],
+ *  unmodified: Object[],
+ *  new: Map<string, Object>,
+ *  current: Map<string, Object>
+ * }}
+ */
+function __getArrayChanges(newArray, currentArray, keyProperty, source) {
+    const newMap = new Map(newArray.map(item => [item[keyProperty], item]))
+    const currentMap = new Map(currentArray.map(item => [item[keyProperty], item]))
+
+    if (newMap.size !== newArray.length)
+        throw new ValidationError(`Duplicated ${keyProperty} found in ${source}`)
+
+    return __getChanges(newMap, currentMap, keyProperty, source)
 }
 
 module.exports = {

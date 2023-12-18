@@ -1,4 +1,5 @@
-const {sortObjectKeys} = require('../../utils/index')
+const {mapToPlainObject} = require('../../utils/map-helper')
+const {sortObjectKeys} = require('../../utils/serialization-helper')
 const UpdateBase = require('./update-base')
 const UpdateType = require('./update-type')
 
@@ -6,19 +7,22 @@ module.exports = class ContractsUpdate extends UpdateBase {
 
     /**
      * @param {BigInt} timestamp - pending update timestamp
-     * @param {{ContractConfig}[]} configs - pending update configs
+     * @param {Map<string, ContractConfig>} newConfigs - pending update configs
+     * @param {Map<string, ContractConfig>} currentConfigs - current configs
      */
-    constructor(timestamp, configs) {
+    constructor(timestamp, newConfigs, currentConfigs) {
         super(UpdateType.CONTRACTS, timestamp)
-        if (!configs || !configs.length)
+        if (!newConfigs)
             throw new Error('configs is required')
-        this.configs = configs
+        this.newConfigs = newConfigs
+        this.currentConfigs = currentConfigs
     }
 
     toPlainObject() {
         return sortObjectKeys({
             ...super.toPlainObject(),
-            configs: this.configs.map(config => config.toPlainObject())
+            newConfigs: mapToPlainObject(this.newConfigs),
+            currentConfigs: mapToPlainObject(this.currentConfigs)
         })
     }
 }

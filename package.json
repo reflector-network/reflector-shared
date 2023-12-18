@@ -1,19 +1,19 @@
 {
   "name": "@reflector/reflector-shared",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest"
   },
-  
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@stellar-expert/eslint-config-js": "github:stellar-expert/eslint-config-js"
+    "@stellar-expert/eslint-config-js": "github:stellar-expert/eslint-config-js",
+    "jest": "^29.7.0"
   },
   "peerDependencies": {
-    "stellar-sdk": "^11.0.0",
-    "@reflector/oracle-client": "reflector-network/oracle-client#v3.0.0"
+    "@reflector/oracle-client": "reflector-network/oracle-client#v3.0.0",
+    "stellar-sdk": "^11.0.0"
   }
 }

@@ -16,7 +16,7 @@ module.exports = class NodesUpdate extends UpdateBase {
      */
     constructor(timestamp, newNodes, currentNodes) {
         super(UpdateType.NODES, timestamp)
-        if (!newNodes || !newNodes.length)
+        if (!newNodes)
             throw new Error('nodes is required')
         this.newNodes = newNodes
         this.currentNodes = currentNodes

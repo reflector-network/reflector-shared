@@ -19,8 +19,11 @@ function areMapsEqual(map, otherMap) {
 }
 
 function mapToPlainObject(map) {
+    if (!map)
+        return
+    if (!(map instanceof Map))
+        throw new Error('map is not instance of Map')
     const plainObj = {}
-
     for (const [key, value] of map) {
         if (value && typeof value.toPlainObject === 'function') {
             plainObj[key] = value.toPlainObject()
