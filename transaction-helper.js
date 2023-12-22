@@ -131,7 +131,7 @@ async function buildUpdateTransaction(updateOptions) {
             )
             break
         case UpdateType.PERIOD:
-            tx = await buildPeriodUpdate(updateOptions.horizonUrl, updateOptions.account, update, txOptions)
+            tx = await buildPeriodUpdate(updateOptions.horizonUrl, updateOptions.account, txOptions, update)
             break
         case UpdateType.WASM:
             //TODO: create wasm update contract so we could have single tx
