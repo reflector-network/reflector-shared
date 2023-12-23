@@ -168,7 +168,7 @@ async function buildContractUpdate(horizonUrl, account, txOptions, update) {
  * @returns {Promise<PeriodPendingTransaction>}
  */
 async function buildPeriodUpdate(horizonUrl, account, txOptions, update) {
-    const orcaleClient = new OracleClient(txOptions.network, horizonUrl, update.oracleId)
+    const orcaleClient = new OracleClient(txOptions.networkPassphrase, horizonUrl, update.oracleId)
     const tx = await orcaleClient.setPeriod(
         account,
         {admin: account.accountId(), period: update.period},
@@ -185,13 +185,13 @@ async function buildPeriodUpdate(horizonUrl, account, txOptions, update) {
  * @returns {Promise<AssetsPendingTransaction>}
  */
 async function buildAssetsUpdate(horizonUrl, account, txOptions, update) {
-    const orcaleClient = new OracleClient(txOptions.network, horizonUrl, update.oracleId)
+    const orcaleClient = new OracleClient(txOptions.networkPassphrase, horizonUrl, update.oracleId)
     try {
         const tx = await orcaleClient.addAssets(
             account,
             {
                 admin: update.admin,
-                assets: update.assets.map(a => a.toOracleContractAsset(txOptions.network))
+                assets: update.assets.map(a => a.toOracleContractAsset(txOptions.networkPassphrase))
             },
             txOptions
         )
