@@ -154,7 +154,7 @@ async function buildContractUpdate(horizonUrl, account, txOptions, update) {
     const orcaleClient = new OracleClient(txOptions.network, horizonUrl, update.oracleId)
     const tx = await orcaleClient.updateContract(
         account,
-        {admin: account.accountId(), wasmHash: update.wasmHash},
+        {admin: update.admin, wasmHash: update.wasmHash},
         txOptions
     )
     return new ContractPendingTransaction(tx, update.timestamp, update.wasmHash)
@@ -171,7 +171,7 @@ async function buildPeriodUpdate(horizonUrl, account, txOptions, update) {
     const orcaleClient = new OracleClient(txOptions.networkPassphrase, horizonUrl, update.oracleId)
     const tx = await orcaleClient.setPeriod(
         account,
-        {admin: account.accountId(), period: update.period},
+        {admin: update.admin, period: update.period},
         txOptions
     )
     return new PeriodPendingTransaction(tx, update.timestamp, update.period)
