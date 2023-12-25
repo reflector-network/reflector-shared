@@ -147,32 +147,29 @@ const contractToUpdate = 'CAA2NN3TSWQFI6TZVLYM7B46RXBINZFRXZFP44BM2H6OHOPRXD5OAS
 test('buildUpdates, period test', () => {
     const config = new Config(rawConfig)
     const newConfig = new Config(rawConfig)
-    const contractId1 = 'CAA2NN3TSWQFI6TZVLYM7B46RXBINZFRXZFP44BM2H6OHOPRXD5OASUW'
-    newConfig.contracts.get(contractId1).period = 9999999
+    newConfig.contracts.get(contractToUpdate).period = 9999999
     const updates = buildUpdates(1, config, newConfig)
     expect(updates.size).toBe(1)
-    expect(updates.get(contractId1)).toBeInstanceOf(PeriodUpdate)
+    expect(updates.get(contractToUpdate)).toBeInstanceOf(PeriodUpdate)
 })
 
 test('buildUpdates, new contract test', () => {
     const config = new Config(rawConfig)
     const newConfig = new Config(rawConfig)
-    const contractId1 = 'CAA2NN3TSWQFI6TZVLYM7B46RXBINZFRXZFP44BM2H6OHOPRXD5OASUW'
-    newConfig.contracts.get(contractId1).assets.push({
+    newConfig.contracts.get(contractToUpdate).assets.push({
         "code": "TEST",
         "type": 2
     })
     const updates = buildUpdates(1, config, newConfig)
     expect(updates.size).toBe(1)
-    expect(updates.get(contractId1)).toBeInstanceOf(AssetsUpdate)
+    expect(updates.get(contractToUpdate)).toBeInstanceOf(AssetsUpdate)
 })
 
 test('buildUpdates, contract remove/add test', () => {
 
     const config = new Config(rawConfig)
     const newConfig = new Config(rawConfig)
-    const contractId1 = 'CAA2NN3TSWQFI6TZVLYM7B46RXBINZFRXZFP44BM2H6OHOPRXD5OASUW'
-    newConfig.contracts.delete(contractId1)
+    newConfig.contracts.delete(contractToUpdate)
     let updates = buildUpdates(1, config, newConfig)
     expect(updates.size).toBe(1)
     expect(updates.get(null)).toBeInstanceOf(ContractsUpdate)

@@ -4,8 +4,8 @@ const PendingTransactionType = require('./pending-transaction-type')
 const pendingTxTypeValues = Object.values(PendingTransactionType)
 
 /**
- * @typedef {import('stellar-sdk').xdr.DecoratedSignature} DecoratedSignature
- * @typedef {import('stellar-sdk').Transaction} Transaction
+ * @typedef {import('@stellar/stellar-sdk').xdr.DecoratedSignature} DecoratedSignature
+ * @typedef {import('@stellar/stellar-sdk').Transaction} Transaction
  */
 
 module.exports = class PendingTransactionBase {

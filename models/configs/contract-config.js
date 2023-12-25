@@ -1,4 +1,4 @@
-const {StrKey} = require('stellar-sdk')
+const {StrKey} = require('@stellar/stellar-sdk')
 const Asset = require('../assets/asset')
 const {isValidContractId} = require('../../utils/contractId-helper')
 const {sortObjectKeys} = require('../../utils/serialization-helper')

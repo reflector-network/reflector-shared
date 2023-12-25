@@ -1,4 +1,4 @@
-const {TransactionBuilder, Operation} = require('stellar-sdk')
+const {TransactionBuilder, Operation} = require('@stellar/stellar-sdk')
 const OracleClient = require('@reflector/oracle-client')
 const {getMajority} = require('./utils/majority-helper')
 const {buildUpdates} = require('./updates-helper')
@@ -19,7 +19,7 @@ const NodesPendingTransaction = require('./models/transactions/nodes-pending-tra
  * @typedef {import('./models/configs/contract-config')} ContractConfig
  * @typedef {import('./models/configs/config')} Config
  * @typedef {import('./models/configs/config-envelope')} ConfigEnvelope
- * @typedef {import('stellar-sdk').Account} Account
+ * @typedef {import('@stellar/stellar-sdk').Account} Account
  */
 
 

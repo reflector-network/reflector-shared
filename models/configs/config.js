@@ -1,4 +1,4 @@
-const {StrKey} = require('stellar-sdk')
+const {StrKey} = require('@stellar/stellar-sdk')
 const Node = require('../node')
 const {sortObjectKeys} = require('../../utils/serialization-helper')
 const {areMapsEqual, mapToPlainObject} = require('../../utils/map-helper')

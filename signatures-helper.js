@@ -1,5 +1,5 @@
 const crypto = require('crypto')
-const {Keypair, xdr} = require('stellar-sdk')
+const {Keypair, xdr} = require('@stellar/stellar-sdk')
 const ValidationError = require('./models/validation-error')
 const {sortObjectKeys} = require('./utils/serialization-helper')
 

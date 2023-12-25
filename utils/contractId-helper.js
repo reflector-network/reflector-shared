@@ -1,7 +1,7 @@
-const {StrKey, hash, xdr} = require('stellar-sdk')
+const {StrKey, hash, xdr} = require('@stellar/stellar-sdk')
 
 /**
- * @typedef {import('stellar-sdk').Asset} Asset
+ * @typedef {import('@stellar/stellar-sdk').Asset} Asset
  */
 
 const passphraseMapping = {}
