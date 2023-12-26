@@ -13,7 +13,7 @@ module.exports = class NodesPendingTransaction extends PendingTransactionBase {
      */
     constructor(transaction, timestamp, nodes) {
         super(transaction, timestamp, PendingTransactionType.NODES_UPDATE)
-        if (!nodes || !nodes.length)
+        if (!nodes || !nodes.size)
             throw new Error('nodes is required')
         this.nodes = nodes
     }

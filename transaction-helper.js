@@ -214,14 +214,14 @@ function buildNodesUpdate(account, txOptions, update, admins) {
     const txBuilder = new TransactionBuilder(account, txOptions)
 
     let isOptionsChanged = false
-    let threshold = update.currentNodes.length
-    const currentNodeKeys = new Set(...update.currentNodes.keys())
-    const newNodeKeys = new Set(...update.newNodes.keys())
-    const allNodeKeys = new Set(...currentNodeKeys.values(), ...newNodeKeys.values())
+    let threshold = update.currentNodes.size
+    const currentNodeKeys = new Set([...update.currentNodes.keys()])
+    const newNodeKeys = new Set([...update.newNodes.keys()])
+    const allNodeKeys = new Set([...currentNodeKeys.values(), ...newNodeKeys.values()])
     const signerOperations = []
     for (const nodePubkey of allNodeKeys) {
-        const presentInCurrent = update.currentNodes.find(n => n.pubkey === nodePubkey)
-        const presentInNew = update.newNodes.find(n => n.pubkey === nodePubkey)
+        const presentInCurrent = currentNodeKeys.has(nodePubkey)
+        const presentInNew = newNodeKeys.has(nodePubkey)
         if (presentInCurrent && presentInNew)
             continue //node already exists, and not removed. Skip
         const weight = presentInNew ? 1 : 0
@@ -230,8 +230,8 @@ function buildNodesUpdate(account, txOptions, update, admins) {
             ed25519PublicKey: nodePubkey,
             weight
         })
+        isOptionsChanged = true
     }
-    isOptionsChanged = true
     if (!isOptionsChanged)
         return null
     const currentMajority = getMajority(threshold)
