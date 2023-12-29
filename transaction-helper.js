@@ -138,7 +138,7 @@ async function buildUpdateTransaction(updateOptions) {
             //tx = await buildContractUpdate(updateOptions.horizonUrl, account, txOptions, update)
             throw new Error('Wasm update is not supported yet')
         default:
-            throw new Error(`Update type ${update.type} is not supported`)
+            break //no updates that must bu applied on blockchain
     }
     return tx
 }

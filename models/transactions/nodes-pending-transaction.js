@@ -24,6 +24,6 @@ module.exports = class NodesPendingTransaction extends PendingTransactionBase {
     nodes
 
     getDebugInfo() {
-        return `Nodes update: ${this.nodes.map(n => `${n.pubkey}:${n.url}:${!!n.removed}`).join(', ')}, timestamp: ${this.timestamp}, type: ${this.type}, hash: ${this.hashHex}`
+        return `Nodes update: ${[...this.nodes.values()].map(n => `${n.pubkey}:${n.url}:${!!n.domain}`).join(', ')}, timestamp: ${this.timestamp}, type: ${this.type}, hash: ${this.hashHex}`
     }
 }
