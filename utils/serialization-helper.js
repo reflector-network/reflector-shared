@@ -5,7 +5,7 @@ function sortObjectKeys(obj) {
     if (Array.isArray(obj)) {
         return obj.map(sortObjectKeys)
     }
-    return Object.keys(obj).sort().reduce((sortedObj, key) => {
+    return Object.keys(obj).sort((a, b) => a.localeCompare(b)).reduce((sortedObj, key) => {
         sortedObj[key] = sortObjectKeys(obj[key])
         return sortedObj
     }, {})

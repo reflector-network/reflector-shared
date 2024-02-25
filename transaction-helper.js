@@ -122,13 +122,18 @@ async function buildUpdateTransaction(updateOptions) {
         case UpdateType.ASSETS:
             tx = await buildAssetsUpdate(updateOptions.horizonUrl, updateOptions.account, txOptions, update)
             break
-        case UpdateType.NODES:
+        case UpdateType.NODES: {
+            const admins = [
+                ...[...updateOptions.currentConfig.contracts.values()].map(c => c.admin),
+                updateOptions.currentConfig.systemAccount
+            ]
             tx = buildNodesUpdate(
                 updateOptions.account,
                 txOptions,
                 update,
-                [...updateOptions.currentConfig.contracts.values()].map(c => c.admin)
+                admins.sort((a, b) => a.localeCompare(b)) //sort to have same order in all transactions
             )
+        }
             break
         case UpdateType.PERIOD:
             tx = await buildPeriodUpdate(updateOptions.horizonUrl, updateOptions.account, txOptions, update)
@@ -201,7 +206,7 @@ async function buildAssetsUpdate(horizonUrl, account, txOptions, update) {
  * @param {Account} account - account
  * @param {any} txOptions - transaction options
  * @param {NodesUpdate} update - nodes update
- * @param {string[]} admins - oracle admins
+ * @param {string[]} admins - oracle admins and system account
  * @returns {NodesPendingTransaction|null}
  */
 function buildNodesUpdate(account, txOptions, update, admins) {
