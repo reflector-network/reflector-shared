@@ -27,7 +27,7 @@ const NodesPendingTransaction = require('./models/transactions/nodes-pending-tra
 /**
  * @typedef {Object} UpdateOptions
  * @property {string} network - network
- * @property {string[]} horizonUrls - horizon urls
+ * @property {string[]} sorobanRpc - soroban rpc urls
  * @property {Config} currentConfig - current contract config
  * @property {Config} newConfig - pending contract config
  * @property {Account} account - account
@@ -37,7 +37,7 @@ const NodesPendingTransaction = require('./models/transactions/nodes-pending-tra
 /**
  * @typedef {Object} InitOptions
  * @property {string} network - network
- * @property {string[]} horizonUrls - horizon urls
+ * @property {string[]} sorobanRpc - soroban rpc urls
  * @property {ContractConfig} config - contract config
  * @property {Account} account - account
  */
@@ -47,7 +47,7 @@ const NodesPendingTransaction = require('./models/transactions/nodes-pending-tra
  * @property {Account} account - account
  * @property {string} network - network
  * @property {number} fee - fee
- * @property {string[]} horizonUrls - horizon urls
+ * @property {string[]} sorobanRpc - soroban rpc urls
  * @property {string} oracleId - oracle id
  * @property {string} admin - oracle admin
  * @property {BigInt[]} prices - prices
@@ -55,18 +55,18 @@ const NodesPendingTransaction = require('./models/transactions/nodes-pending-tra
  */
 
 /**
- * @param {string[]} horizonUrls - horizon urls
+ * @param {string[]} sorobanRpc - soroban rpc urls
  * @param {function(string):Promise<PendingTransactionBase>} updateFn - update function
  * @returns {Promise<PendingTransactionBase>}
  */
-async function __buildUpdate(horizonUrls, updateFn) {
+async function __buildUpdate(sorobanRpc, updateFn) {
     const errors = []
-    for (const horizonUrl of horizonUrls) {
+    for (const sorobanRpcUrl of sorobanRpc) {
         try {
-            return await updateFn(horizonUrl)
+            return await updateFn(sorobanRpcUrl)
         } catch (e) {
-            //if horizon url failed, try next one
-            console.debug(`Failed to build update. Horizon url: ${horizonUrl}, error: ${e.message}`)
+            //if soroban rpc url failed, try next one
+            console.debug(`Failed to build update. Soroban RPC url: ${sorobanRpcUrl}, error: ${e.message}`)
             errors.push(e)
         }
     }
@@ -81,10 +81,10 @@ async function __buildUpdate(horizonUrls, updateFn) {
  * @returns {Promise<InitPendingTransaction>}
  */
 async function buildInitTransaction(initOptions) {
-    const {account, config, horizonUrls, network} = initOptions
+    const {account, config, sorobanRpc, network} = initOptions
     const {admin, assets, baseAsset, decimals, fee, oracleId, period, timeframe} = config
-    const buildFn = async (horizonUrl) => {
-        const oracleClient = new OracleClient(network, horizonUrl, oracleId)
+    const buildFn = async (sorobanRpcUrl) => {
+        const oracleClient = new OracleClient(network, sorobanRpcUrl, oracleId)
         const tx = await oracleClient.config(
             account,
             {
@@ -99,7 +99,7 @@ async function buildInitTransaction(initOptions) {
         )
         return new InitPendingTransaction(tx, 1, config)
     }
-    return await __buildUpdate(horizonUrls, buildFn)
+    return await __buildUpdate(sorobanRpc, buildFn)
 }
 
 /**
@@ -107,9 +107,9 @@ async function buildInitTransaction(initOptions) {
  * @returns {Promise<PriceUpdatePendingTransaction>}
  */
 async function buildPriceUpdateTransaction(priceUpdateOptions) {
-    const {network, horizonUrls, oracleId, admin, prices, timestamp, fee, account} = priceUpdateOptions
-    const buildFn = async (horizonUrl) => {
-        const oracleClient = new OracleClient(network, horizonUrl, oracleId)
+    const {network, sorobanRpc, oracleId, admin, prices, timestamp, fee, account} = priceUpdateOptions
+    const buildFn = async (sorobanRpcUrl) => {
+        const oracleClient = new OracleClient(network, sorobanRpcUrl, oracleId)
         const tx = await oracleClient.setPrice(
             account,
             {
@@ -121,7 +121,7 @@ async function buildPriceUpdateTransaction(priceUpdateOptions) {
         )
         return new PriceUpdatePendingTransaction(tx, timestamp, prices)
     }
-    return await __buildUpdate(horizonUrls, buildFn)
+    return await __buildUpdate(sorobanRpc, buildFn)
 }
 
 /**
@@ -145,7 +145,7 @@ async function buildUpdateTransaction(updateOptions) {
     }
     switch (update.type) {
         case UpdateType.ASSETS:
-            tx = await buildAssetsUpdate(updateOptions.horizonUrls, updateOptions.account, txOptions, update)
+            tx = await buildAssetsUpdate(updateOptions.sorobanRpc, updateOptions.account, txOptions, update)
             break
         case UpdateType.NODES: {
             const admins = [
@@ -161,11 +161,11 @@ async function buildUpdateTransaction(updateOptions) {
         }
             break
         case UpdateType.PERIOD:
-            tx = await buildPeriodUpdate(updateOptions.horizonUrls, updateOptions.account, txOptions, update)
+            tx = await buildPeriodUpdate(updateOptions.sorobanRpc, updateOptions.account, txOptions, update)
             break
         case UpdateType.WASM:
             //TODO: create wasm update contract so we could have single tx
-            //tx = await buildContractUpdate(updateOptions.horizonUrls, account, txOptions, update)
+            //tx = await buildContractUpdate(updateOptions.sorobanRpc, account, txOptions, update)
             throw new Error('Wasm update is not supported yet')
         default:
             break //no updates that must bu applied on blockchain
@@ -174,15 +174,15 @@ async function buildUpdateTransaction(updateOptions) {
 }
 
 /**
- * @param {string[]} horizonUrls - horizon url
+ * @param {string[]} sorobanRpc - soroban rpc urls
  * @param {Account} account - account
  * @param {any} txOptions - transaction options
  * @param {ContractUpdate} update - contract update
  * @returns {Promise<ContractPendingTransaction>}
  */
-async function buildContractUpdate(horizonUrls, account, txOptions, update) {
-    const buildFn = async (horizonUrl) => {
-        const orcaleClient = new OracleClient(txOptions.network, horizonUrl, update.oracleId)
+async function buildContractUpdate(sorobanRpc, account, txOptions, update) {
+    const buildFn = async (sorobanRpcUrl) => {
+        const orcaleClient = new OracleClient(txOptions.network, sorobanRpcUrl, update.oracleId)
         const tx = await orcaleClient.updateContract(
             account,
             {admin: update.admin, wasmHash: update.wasmHash},
@@ -190,19 +190,19 @@ async function buildContractUpdate(horizonUrls, account, txOptions, update) {
         )
         return new ContractPendingTransaction(tx, update.timestamp, update.wasmHash)
     }
-    return await __buildUpdate(horizonUrls, buildFn)
+    return await __buildUpdate(sorobanRpc, buildFn)
 }
 
 /**
- * @param {string[]} horizonUrls - horizon url
+ * @param {string[]} sorobanRpc - soroban rpc urls
  * @param {Account} account - account
  * @param {any} txOptions - transaction options
  * @param {PeriodUpdate} update - period update
  * @returns {Promise<PeriodPendingTransaction>}
  */
-async function buildPeriodUpdate(horizonUrls, account, txOptions, update) {
-    const buildFn = async (horizonUrl) => {
-        const orcaleClient = new OracleClient(txOptions.networkPassphrase, horizonUrl, update.oracleId)
+async function buildPeriodUpdate(sorobanRpc, account, txOptions, update) {
+    const buildFn = async (sorobanRpcUrl) => {
+        const orcaleClient = new OracleClient(txOptions.networkPassphrase, sorobanRpcUrl, update.oracleId)
         const tx = await orcaleClient.setPeriod(
             account,
             {admin: update.admin, period: update.period},
@@ -210,19 +210,19 @@ async function buildPeriodUpdate(horizonUrls, account, txOptions, update) {
         )
         return new PeriodPendingTransaction(tx, update.timestamp, update.period)
     }
-    return await __buildUpdate(horizonUrls, buildFn)
+    return await __buildUpdate(sorobanRpc, buildFn)
 }
 
 /**
- * @param {strings} horizonUrls - horizon url
+ * @param {strings} sorobanRpc - soroban rpc urls
  * @param {Account} account - account
  * @param {any} txOptions - transaction options
  * @param {AssetsUpdate} update - pending update
  * @returns {Promise<AssetsPendingTransaction>}
  */
-async function buildAssetsUpdate(horizonUrls, account, txOptions, update) {
-    const buildFn = async (horizonUrl) => {
-        const orcaleClient = new OracleClient(txOptions.networkPassphrase, horizonUrl, update.oracleId)
+async function buildAssetsUpdate(sorobanRpc, account, txOptions, update) {
+    const buildFn = async (sorobanRpcUrl) => {
+        const orcaleClient = new OracleClient(txOptions.networkPassphrase, sorobanRpcUrl, update.oracleId)
         const tx = await orcaleClient.addAssets(
             account,
             {
@@ -233,7 +233,7 @@ async function buildAssetsUpdate(horizonUrls, account, txOptions, update) {
         )
         return new AssetsPendingTransaction(tx, update.timestamp, update.assets)
     }
-    return await __buildUpdate(horizonUrls, buildFn)
+    return await __buildUpdate(sorobanRpc, buildFn)
 }
 
 /**

@@ -190,7 +190,7 @@ const rawConfig = {
 
 const contractToUpdate = 'CAA2NN3TSWQFI6TZVLYM7B46RXBINZFRXZFP44BM2H6OHOPRXD5OASUW'
 
-const horizonUrls = ['http://bad.rpc.com', 'http://another.bad.rpc.com', 'http://good.rpc.com']
+const sorobanRpc = ['http://bad.rpc.com', 'http://another.bad.rpc.com', 'http://good.rpc.com']
 
 test('buildInitTransaction', async () => {
     const currentConfig = new Config(rawConfig)
@@ -198,7 +198,7 @@ test('buildInitTransaction', async () => {
     const transaction = await buildInitTransaction({
         config,
         network: 'testnet',
-        horizonUrls,
+        sorobanRpc,
         account: {accountId: () => 'GCEBYD3K3IYSYLK5EQEK72RVAH2AHZUYSFFG4IOXUS5AOINLMXJRMDRA', sequenceNumber: () => '1', incrementSequenceNumber: () => { }}
     })
     expect(transaction).toBeDefined()
@@ -237,7 +237,7 @@ test('buildUpdateTransaction', async () => {
             newConfig,
             timestamp: 1,
             network: 'testnet',
-            horizonUrls,
+            sorobanRpc,
             account: {accountId: () => 'GCEBYD3K3IYSYLK5EQEK72RVAH2AHZUYSFFG4IOXUS5AOINLMXJRMDRA', sequenceNumber: () => '1', incrementSequenceNumber: () => { }}
         })
         expect(transaction).toBeDefined()
@@ -251,7 +251,7 @@ test('buildPriceUpdateTransaction', async () => {
     const transaction = await buildPriceUpdateTransaction({
         oracleId: contractToUpdate,
         network: 'testnet',
-        horizonUrls,
+        sorobanRpc,
         account: {accountId: () => 'GCEBYD3K3IYSYLK5EQEK72RVAH2AHZUYSFFG4IOXUS5AOINLMXJRMDRA', sequenceNumber: () => '1', incrementSequenceNumber: () => { }},
         admin: contract.admin,
         timestamp: 100000,
