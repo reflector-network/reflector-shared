@@ -6,6 +6,7 @@ const AssetsUpdate = require('../models/updates/assets-update')
 const ContractsUpdate = require('../models/updates/contracts-update')
 const NodesUpdate = require('../models/updates/nodes-update')
 const WasmUpdate = require('../models/updates/wasm-update')
+const ValidationError = require('../models/validation-error')
 
 const rawConfig = {
     "contracts": {
@@ -143,6 +144,7 @@ const rawConfig = {
 }
 
 const contractToUpdate = 'CAA2NN3TSWQFI6TZVLYM7B46RXBINZFRXZFP44BM2H6OHOPRXD5OASUW'
+const contractToUpdate2 = 'CBMZO5MRIBFL457FBK5FEWZ4QJTYL3XWID7QW7SWDSDOQI5H4JN7XPZU'
 
 test('buildUpdates, period test', () => {
     const config = new Config(rawConfig)
@@ -212,4 +214,39 @@ test('buildUpdates, update wasm test', () => {
     const updates = buildUpdates(1, config, newConfig)
     expect(updates.size).toBe(1)
     expect(updates.get(null)).toBeInstanceOf(WasmUpdate)
+})
+
+test('buildUpdates, two fee updates', () => {
+    const config = new Config(rawConfig)
+    const newConfig = new Config(rawConfig)
+    newConfig.contracts.get(contractToUpdate).fee = 9999999
+    newConfig.contracts.get(contractToUpdate2).fee = 9999999
+    const updates = buildUpdates(1, config, newConfig)
+    expect(updates.size).toBe(2)
+    expect(updates.get(contractToUpdate)).toBe(null)
+    expect(updates.get(contractToUpdate2)).toBe(null)
+})
+
+test('buildUpdates, one fee and one asset updates', () => {
+    const config = new Config(rawConfig)
+    const newConfig = new Config(rawConfig)
+    newConfig.contracts.get(contractToUpdate).fee = 9999999
+    newConfig.contracts.get(contractToUpdate).assets.push({
+        "code": "TEST",
+        "type": 2
+    })
+    //expect error
+    const updates = buildUpdates(1, config, newConfig)
+    expect(updates.size).toBe(1)
+})
+
+test('buildUpdates, two asset updates throws error', () => {
+    const config = new Config(rawConfig)
+    const newConfig = new Config(rawConfig)
+    newConfig.contracts.get(contractToUpdate).fee = 9999999
+    newConfig.contracts.get(contractToUpdate2).assets.push({
+        "code": "TEST",
+        "type": 2
+    })
+    expect(() => buildUpdates(1, config, newConfig)).toThrow(ValidationError)
 })

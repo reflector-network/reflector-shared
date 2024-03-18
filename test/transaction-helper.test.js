@@ -4,6 +4,7 @@ const Config = require('../models/configs/config')
 const {buildInitTransaction, buildUpdateTransaction, buildPriceUpdateTransaction} = require('../transaction-helper')
 const Asset = require('../models/assets/asset')
 const Node = require('../models/node')
+const {normalizeTimestamp} = require('../utils/timestamp-helper')
 
 //Configure Mock Server to return 503 for all requests
 beforeEach(() => {
@@ -199,7 +200,8 @@ test('buildInitTransaction', async () => {
         config,
         network: 'testnet',
         sorobanRpc,
-        account: {accountId: () => 'GCEBYD3K3IYSYLK5EQEK72RVAH2AHZUYSFFG4IOXUS5AOINLMXJRMDRA', sequenceNumber: () => '1', incrementSequenceNumber: () => { }}
+        account: {accountId: () => 'GCEBYD3K3IYSYLK5EQEK72RVAH2AHZUYSFFG4IOXUS5AOINLMXJRMDRA', sequenceNumber: () => '1', incrementSequenceNumber: () => { }},
+        maxTime: new Date(normalizeTimestamp(Date.now(), 1000) + 10000)
     })
     expect(transaction).toBeDefined()
 }, 10000)
@@ -238,7 +240,8 @@ test('buildUpdateTransaction', async () => {
             timestamp: 1,
             network: 'testnet',
             sorobanRpc,
-            account: {accountId: () => 'GCEBYD3K3IYSYLK5EQEK72RVAH2AHZUYSFFG4IOXUS5AOINLMXJRMDRA', sequenceNumber: () => '1', incrementSequenceNumber: () => { }}
+            account: {accountId: () => 'GCEBYD3K3IYSYLK5EQEK72RVAH2AHZUYSFFG4IOXUS5AOINLMXJRMDRA', sequenceNumber: () => '1', incrementSequenceNumber: () => { }},
+            maxTime: new Date(normalizeTimestamp(Date.now(), 1000) + 10000)
         })
         expect(transaction).toBeDefined()
         expect(transaction).not.toBeNull()
@@ -256,7 +259,8 @@ test('buildPriceUpdateTransaction', async () => {
         admin: contract.admin,
         timestamp: 100000,
         prices: [1n, 2n, 3n],
-        fee: contract.fee
+        fee: contract.fee,
+        maxTime: new Date(normalizeTimestamp(Date.now(), 1000) + 10000)
     })
     expect(transaction).toBeDefined()
 }, 10000)

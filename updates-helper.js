@@ -37,6 +37,14 @@ function buildUpdates(timestamp, currentConfig, newConfig) {
         updates.set(null, globalUpdate)
         return updates
     }
+
+    const updates = [...contractsUpdate.values()]
+    const blockchainUpdates = updates.filter(u => u)
+    if (blockchainUpdates.length > 1) //if multiple updates, and some require blockchain update, throw error
+        throw new ValidationError('Multiple blockchain updates are not supported')
+    else if (blockchainUpdates.length > 0 && updates.length > 1) //if multiple updates, and some require blockchain update, throw error
+        throw new ValidationError('Combined multiple updates are not supported')
+
     if (contractsUpdate)
         return contractsUpdate
 }

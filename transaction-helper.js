@@ -32,6 +32,7 @@ const NodesPendingTransaction = require('./models/transactions/nodes-pending-tra
  * @property {Config} newConfig - pending contract config
  * @property {Account} account - account
  * @property {number} timestamp - timestamp
+ * @property {Date} maxTime - tx max time
  */
 
 /**
@@ -40,6 +41,7 @@ const NodesPendingTransaction = require('./models/transactions/nodes-pending-tra
  * @property {string[]} sorobanRpc - soroban rpc urls
  * @property {ContractConfig} config - contract config
  * @property {Account} account - account
+ * @property {Date} maxTime - tx max time
  */
 
 /**
@@ -52,6 +54,7 @@ const NodesPendingTransaction = require('./models/transactions/nodes-pending-tra
  * @property {string} admin - oracle admin
  * @property {BigInt[]} prices - prices
  * @property {number} timestamp - timestamp
+ * @property {Date} maxTime - tx max time
  */
 
 /**
@@ -81,7 +84,7 @@ async function __buildUpdate(sorobanRpc, updateFn) {
  * @returns {Promise<InitPendingTransaction>}
  */
 async function buildInitTransaction(initOptions) {
-    const {account, config, sorobanRpc, network} = initOptions
+    const {account, config, sorobanRpc, network, maxTime} = initOptions
     const {admin, assets, baseAsset, decimals, fee, oracleId, period, timeframe} = config
     const buildFn = async (sorobanRpcUrl) => {
         const oracleClient = new OracleClient(network, sorobanRpcUrl, oracleId)
@@ -95,7 +98,7 @@ async function buildInitTransaction(initOptions) {
                 decimals,
                 resolution: timeframe
             },
-            {fee, minAccountSequence: '0', networkPassphrase: network}
+            {fee, networkPassphrase: network, timebounds: {minTime: 0, maxTime}}
         )
         return new InitPendingTransaction(tx, 1, config)
     }
@@ -107,7 +110,7 @@ async function buildInitTransaction(initOptions) {
  * @returns {Promise<PriceUpdatePendingTransaction>}
  */
 async function buildPriceUpdateTransaction(priceUpdateOptions) {
-    const {network, sorobanRpc, oracleId, admin, prices, timestamp, fee, account} = priceUpdateOptions
+    const {network, sorobanRpc, oracleId, admin, prices, timestamp, fee, account, maxTime} = priceUpdateOptions
     const buildFn = async (sorobanRpcUrl) => {
         const oracleClient = new OracleClient(network, sorobanRpcUrl, oracleId)
         const tx = await oracleClient.setPrice(
@@ -117,7 +120,7 @@ async function buildPriceUpdateTransaction(priceUpdateOptions) {
                 prices,
                 timestamp
             },
-            {fee, minAccountSequence: '0', networkPassphrase: network}
+            {fee, networkPassphrase: network, timebounds: {minTime: 0, maxTime}}
         )
         return new PriceUpdatePendingTransaction(tx, timestamp, prices)
     }
@@ -129,14 +132,18 @@ async function buildPriceUpdateTransaction(priceUpdateOptions) {
  * @returns {Promise<AssetsPendingTransaction|NodesPendingTransaction|PeriodPendingTransaction|ContractPendingTransaction>}
  */
 async function buildUpdateTransaction(updateOptions) {
-    const txOptions = {fee: 1000000, minAccountSequence: '0', networkPassphrase: updateOptions.network}
+    const txOptions = {fee: 10000000, networkPassphrase: updateOptions.network, timebounds: {minTime: 0, maxTime: updateOptions.maxTime}}
     let tx = null
-    const updates = buildUpdates(updateOptions.timestamp, updateOptions.currentConfig, updateOptions.newConfig)
-    if (updates.size === 0)
-        return null
-    else if (updates.size > 1)
-        throw new Error('Multiple updates are not supported')
-    const update = [...updates.values()][0]
+    const allUpdates = buildUpdates(updateOptions.timestamp, updateOptions.currentConfig, updateOptions.newConfig)
+    if (!allUpdates || allUpdates.size === 0)
+        throw new Error('No updates found')
+
+    const updates = [...allUpdates.values()]
+    const blockchainUpdates = updates.filter(u => u)
+    if (blockchainUpdates.length === 0)
+        return null //no updates that must bu applied on blockchain
+
+    const update = updates[0]
     if (update.oracleId) {
         const contractConfig = updateOptions.currentConfig.contracts.get(update.oracleId)
         if (!contractConfig)
@@ -284,7 +291,7 @@ function buildNodesUpdate(account, txOptions, update, admins) {
             highThreshold: currentMajority
         }))
     }
-    return new NodesPendingTransaction(txBuilder.setTimeout(0).build(), update.timestamp, update.newNodes)
+    return new NodesPendingTransaction(txBuilder.build(), update.timestamp, update.newNodes)
 }
 
 module.exports = {
