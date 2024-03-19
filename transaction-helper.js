@@ -33,6 +33,7 @@ const NodesPendingTransaction = require('./models/transactions/nodes-pending-tra
  * @property {Account} account - account
  * @property {number} timestamp - timestamp
  * @property {Date} maxTime - tx max time
+ * @property {number} fee - fee
  */
 
 /**
@@ -42,6 +43,7 @@ const NodesPendingTransaction = require('./models/transactions/nodes-pending-tra
  * @property {ContractConfig} config - contract config
  * @property {Account} account - account
  * @property {Date} maxTime - tx max time
+ * @property {number} fee - fee
  */
 
 /**
@@ -84,8 +86,8 @@ async function __buildUpdate(sorobanRpc, updateFn) {
  * @returns {Promise<InitPendingTransaction>}
  */
 async function buildInitTransaction(initOptions) {
-    const {account, config, sorobanRpc, network, maxTime} = initOptions
-    const {admin, assets, baseAsset, decimals, fee, oracleId, period, timeframe} = config
+    const {account, config, sorobanRpc, network, maxTime, fee} = initOptions
+    const {admin, assets, baseAsset, decimals, oracleId, period, timeframe} = config
     const buildFn = async (sorobanRpcUrl) => {
         const oracleClient = new OracleClient(network, sorobanRpcUrl, oracleId)
         const tx = await oracleClient.config(
@@ -132,9 +134,10 @@ async function buildPriceUpdateTransaction(priceUpdateOptions) {
  * @returns {Promise<AssetsPendingTransaction|NodesPendingTransaction|PeriodPendingTransaction|ContractPendingTransaction>}
  */
 async function buildUpdateTransaction(updateOptions) {
-    const txOptions = {fee: 10000000, networkPassphrase: updateOptions.network, timebounds: {minTime: 0, maxTime: updateOptions.maxTime}}
+    const {network, maxTime, fee, timestamp, currentConfig, sorobanRpc, newConfig, account} = updateOptions
+    const txOptions = {fee, networkPassphrase: network, timebounds: {minTime: 0, maxTime}}
     let tx = null
-    const allUpdates = buildUpdates(updateOptions.timestamp, updateOptions.currentConfig, updateOptions.newConfig)
+    const allUpdates = buildUpdates(timestamp, currentConfig, newConfig)
     if (!allUpdates || allUpdates.size === 0)
         throw new Error('No updates found')
 
@@ -145,22 +148,21 @@ async function buildUpdateTransaction(updateOptions) {
 
     const update = updates[0]
     if (update.oracleId) {
-        const contractConfig = updateOptions.currentConfig.contracts.get(update.oracleId)
+        const contractConfig = currentConfig.contracts.get(update.oracleId)
         if (!contractConfig)
             throw new Error(`Contract config not found for oracle id: ${update.oracleId}`)
-        txOptions.fee = contractConfig.fee
     }
     switch (update.type) {
         case UpdateType.ASSETS:
-            tx = await buildAssetsUpdate(updateOptions.sorobanRpc, updateOptions.account, txOptions, update)
+            tx = await buildAssetsUpdate(sorobanRpc, account, txOptions, update)
             break
         case UpdateType.NODES: {
             const admins = [
-                ...[...updateOptions.currentConfig.contracts.values()].map(c => c.admin),
-                updateOptions.currentConfig.systemAccount
+                ...[...currentConfig.contracts.values()].map(c => c.admin),
+                currentConfig.systemAccount
             ]
             tx = buildNodesUpdate(
-                updateOptions.account,
+                account,
                 txOptions,
                 update,
                 admins.sort((a, b) => a.localeCompare(b)) //sort to have same order in all transactions
@@ -168,11 +170,11 @@ async function buildUpdateTransaction(updateOptions) {
         }
             break
         case UpdateType.PERIOD:
-            tx = await buildPeriodUpdate(updateOptions.sorobanRpc, updateOptions.account, txOptions, update)
+            tx = await buildPeriodUpdate(sorobanRpc, account, txOptions, update)
             break
         case UpdateType.WASM:
             //TODO: create wasm update contract so we could have single tx
-            //tx = await buildContractUpdate(updateOptions.sorobanRpc, account, txOptions, update)
+            //tx = await buildContractUpdate(sorobanRpc, account, txOptions, update)
             throw new Error('Wasm update is not supported yet')
         default:
             break //no updates that must bu applied on blockchain

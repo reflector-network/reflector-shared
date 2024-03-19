@@ -201,7 +201,8 @@ test('buildInitTransaction', async () => {
         network: 'testnet',
         sorobanRpc,
         account: {accountId: () => 'GCEBYD3K3IYSYLK5EQEK72RVAH2AHZUYSFFG4IOXUS5AOINLMXJRMDRA', sequenceNumber: () => '1', incrementSequenceNumber: () => { }},
-        maxTime: new Date(normalizeTimestamp(Date.now(), 1000) + 10000)
+        maxTime: new Date(normalizeTimestamp(Date.now(), 1000) + 10000),
+        fee: 1000000
     })
     expect(transaction).toBeDefined()
 }, 10000)
@@ -241,7 +242,8 @@ test('buildUpdateTransaction', async () => {
             network: 'testnet',
             sorobanRpc,
             account: {accountId: () => 'GCEBYD3K3IYSYLK5EQEK72RVAH2AHZUYSFFG4IOXUS5AOINLMXJRMDRA', sequenceNumber: () => '1', incrementSequenceNumber: () => { }},
-            maxTime: new Date(normalizeTimestamp(Date.now(), 1000) + 10000)
+            maxTime: new Date(normalizeTimestamp(Date.now(), 1000) + 10000),
+            fee: 1000000
         })
         expect(transaction).toBeDefined()
         expect(transaction).not.toBeNull()
