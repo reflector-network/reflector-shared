@@ -40,20 +40,6 @@ beforeEach(() => {
         })
 })
 
-//Stop the mock server after your tests
-afterAll(async () => {
-    //await mockServer.stop_mockserver({serverPort: mockServerPort})
-}, 10000)
-
-//jest.mock('axios')
-//axios.get.mockImplementation((url) => {
-//if (url === 'bad.rpc.com') {
-//throw new axios.AxiosError()
-//} else {
-//return {}
-//}
-//})
-
 const rawConfig = {
     "contracts": {
         "CAA2NN3TSWQFI6TZVLYM7B46RXBINZFRXZFP44BM2H6OHOPRXD5OASUW": {
@@ -193,6 +179,17 @@ const contractToUpdate = 'CAA2NN3TSWQFI6TZVLYM7B46RXBINZFRXZFP44BM2H6OHOPRXD5OAS
 
 const sorobanRpc = ['http://bad.rpc.com', 'http://another.bad.rpc.com', 'http://good.rpc.com']
 
+const account = {
+    accountId: () => 'GCEBYD3K3IYSYLK5EQEK72RVAH2AHZUYSFFG4IOXUS5AOINLMXJRMDRA',
+    sequence: 0
+}
+
+
+account.sequenceNumber = () => account.sequence.toString()
+account.incrementSequenceNumber = () => {
+    account.sequence++
+}
+
 test('buildInitTransaction', async () => {
     const currentConfig = new Config(rawConfig)
     const config = currentConfig.contracts.get(contractToUpdate)
@@ -200,7 +197,7 @@ test('buildInitTransaction', async () => {
         config,
         network: 'testnet',
         sorobanRpc,
-        account: {accountId: () => 'GCEBYD3K3IYSYLK5EQEK72RVAH2AHZUYSFFG4IOXUS5AOINLMXJRMDRA', sequenceNumber: () => '1', incrementSequenceNumber: () => { }},
+        account,
         maxTime: new Date(normalizeTimestamp(Date.now(), 1000) + 10000),
         fee: 1000000
     })
@@ -241,7 +238,7 @@ test('buildUpdateTransaction', async () => {
             timestamp: 1,
             network: 'testnet',
             sorobanRpc,
-            account: {accountId: () => 'GCEBYD3K3IYSYLK5EQEK72RVAH2AHZUYSFFG4IOXUS5AOINLMXJRMDRA', sequenceNumber: () => '1', incrementSequenceNumber: () => { }},
+            account,
             maxTime: new Date(normalizeTimestamp(Date.now(), 1000) + 10000),
             fee: 1000000
         })
@@ -257,7 +254,7 @@ test('buildPriceUpdateTransaction', async () => {
         oracleId: contractToUpdate,
         network: 'testnet',
         sorobanRpc,
-        account: {accountId: () => 'GCEBYD3K3IYSYLK5EQEK72RVAH2AHZUYSFFG4IOXUS5AOINLMXJRMDRA', sequenceNumber: () => '1', incrementSequenceNumber: () => { }},
+        account,
         admin: contract.admin,
         timestamp: 100000,
         prices: [1n, 2n, 3n],
@@ -266,3 +263,8 @@ test('buildPriceUpdateTransaction', async () => {
     })
     expect(transaction).toBeDefined()
 }, 10000)
+
+test('account sequence', async () => {
+    //there is total 6 updates, so the sequence should be 6
+    expect(account.sequence).toBe(6)
+})

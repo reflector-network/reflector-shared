@@ -60,51 +60,26 @@ const NodesPendingTransaction = require('./models/transactions/nodes-pending-tra
  */
 
 /**
- * @param {string[]} sorobanRpc - soroban rpc urls
- * @param {function(string):Promise<PendingTransactionBase>} updateFn - update function
- * @returns {Promise<PendingTransactionBase>}
- */
-async function __buildUpdate(sorobanRpc, updateFn) {
-    const errors = []
-    for (const sorobanRpcUrl of sorobanRpc) {
-        try {
-            return await updateFn(sorobanRpcUrl)
-        } catch (e) {
-            //if soroban rpc url failed, try next one
-            console.debug(`Failed to build update. Soroban RPC url: ${sorobanRpcUrl}, error: ${e.message}`)
-            errors.push(e)
-        }
-    }
-    for (const e of errors) {
-        console.error(e)
-    }
-    throw new Error('Failed to build update.')
-}
-
-/**
  * @param {InitOptions} initOptions - oracle client
  * @returns {Promise<InitPendingTransaction>}
  */
 async function buildInitTransaction(initOptions) {
     const {account, config, sorobanRpc, network, maxTime, fee} = initOptions
     const {admin, assets, baseAsset, decimals, oracleId, period, timeframe} = config
-    const buildFn = async (sorobanRpcUrl) => {
-        const oracleClient = new OracleClient(network, sorobanRpcUrl, oracleId)
-        const tx = await oracleClient.config(
-            account,
-            {
-                admin,
-                assets: assets.map(a => a.toOracleContractAsset(network)),
-                period,
-                baseAsset: baseAsset.toOracleContractAsset(network),
-                decimals,
-                resolution: timeframe
-            },
-            {fee, networkPassphrase: network, timebounds: {minTime: 0, maxTime}}
-        )
-        return new InitPendingTransaction(tx, 1, config)
-    }
-    return await __buildUpdate(sorobanRpc, buildFn)
+    const oracleClient = new OracleClient(network, sorobanRpc, oracleId)
+    const tx = await oracleClient.config(
+        account,
+        {
+            admin,
+            assets: assets.map(a => a.toOracleContractAsset(network)),
+            period,
+            baseAsset: baseAsset.toOracleContractAsset(network),
+            decimals,
+            resolution: timeframe
+        },
+        {fee, networkPassphrase: network, timebounds: {minTime: 0, maxTime}}
+    )
+    return new InitPendingTransaction(tx, 1, config)
 }
 
 /**
@@ -113,20 +88,17 @@ async function buildInitTransaction(initOptions) {
  */
 async function buildPriceUpdateTransaction(priceUpdateOptions) {
     const {network, sorobanRpc, oracleId, admin, prices, timestamp, fee, account, maxTime} = priceUpdateOptions
-    const buildFn = async (sorobanRpcUrl) => {
-        const oracleClient = new OracleClient(network, sorobanRpcUrl, oracleId)
-        const tx = await oracleClient.setPrice(
-            account,
-            {
-                admin,
-                prices,
-                timestamp
-            },
-            {fee, networkPassphrase: network, timebounds: {minTime: 0, maxTime}}
-        )
-        return new PriceUpdatePendingTransaction(tx, timestamp, prices)
-    }
-    return await __buildUpdate(sorobanRpc, buildFn)
+    const oracleClient = new OracleClient(network, sorobanRpc, oracleId)
+    const tx = await oracleClient.setPrice(
+        account,
+        {
+            admin,
+            prices,
+            timestamp
+        },
+        {fee, networkPassphrase: network, timebounds: {minTime: 0, maxTime}}
+    )
+    return new PriceUpdatePendingTransaction(tx, timestamp, prices)
 }
 
 /**
@@ -190,16 +162,13 @@ async function buildUpdateTransaction(updateOptions) {
  * @returns {Promise<ContractPendingTransaction>}
  */
 async function buildContractUpdate(sorobanRpc, account, txOptions, update) {
-    const buildFn = async (sorobanRpcUrl) => {
-        const orcaleClient = new OracleClient(txOptions.network, sorobanRpcUrl, update.oracleId)
-        const tx = await orcaleClient.updateContract(
-            account,
-            {admin: update.admin, wasmHash: update.wasmHash},
-            txOptions
-        )
-        return new ContractPendingTransaction(tx, update.timestamp, update.wasmHash)
-    }
-    return await __buildUpdate(sorobanRpc, buildFn)
+    const orcaleClient = new OracleClient(txOptions.network, sorobanRpc, update.oracleId)
+    const tx = await orcaleClient.updateContract(
+        account,
+        {admin: update.admin, wasmHash: update.wasmHash},
+        txOptions
+    )
+    return new ContractPendingTransaction(tx, update.timestamp, update.wasmHash)
 }
 
 /**
@@ -210,16 +179,13 @@ async function buildContractUpdate(sorobanRpc, account, txOptions, update) {
  * @returns {Promise<PeriodPendingTransaction>}
  */
 async function buildPeriodUpdate(sorobanRpc, account, txOptions, update) {
-    const buildFn = async (sorobanRpcUrl) => {
-        const orcaleClient = new OracleClient(txOptions.networkPassphrase, sorobanRpcUrl, update.oracleId)
-        const tx = await orcaleClient.setPeriod(
-            account,
-            {admin: update.admin, period: update.period},
-            txOptions
-        )
-        return new PeriodPendingTransaction(tx, update.timestamp, update.period)
-    }
-    return await __buildUpdate(sorobanRpc, buildFn)
+    const orcaleClient = new OracleClient(txOptions.networkPassphrase, sorobanRpc, update.oracleId)
+    const tx = await orcaleClient.setPeriod(
+        account,
+        {admin: update.admin, period: update.period},
+        txOptions
+    )
+    return new PeriodPendingTransaction(tx, update.timestamp, update.period)
 }
 
 /**
@@ -230,19 +196,16 @@ async function buildPeriodUpdate(sorobanRpc, account, txOptions, update) {
  * @returns {Promise<AssetsPendingTransaction>}
  */
 async function buildAssetsUpdate(sorobanRpc, account, txOptions, update) {
-    const buildFn = async (sorobanRpcUrl) => {
-        const orcaleClient = new OracleClient(txOptions.networkPassphrase, sorobanRpcUrl, update.oracleId)
-        const tx = await orcaleClient.addAssets(
-            account,
-            {
-                admin: update.admin,
-                assets: update.assets.map(a => a.toOracleContractAsset(txOptions.networkPassphrase))
-            },
-            txOptions
-        )
-        return new AssetsPendingTransaction(tx, update.timestamp, update.assets)
-    }
-    return await __buildUpdate(sorobanRpc, buildFn)
+    const orcaleClient = new OracleClient(txOptions.networkPassphrase, sorobanRpc, update.oracleId)
+    const tx = await orcaleClient.addAssets(
+        account,
+        {
+            admin: update.admin,
+            assets: update.assets.map(a => a.toOracleContractAsset(txOptions.networkPassphrase))
+        },
+        txOptions
+    )
+    return new AssetsPendingTransaction(tx, update.timestamp, update.assets)
 }
 
 /**
