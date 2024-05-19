@@ -1,11 +1,11 @@
-const {TransactionBuilder, Operation, xdr, Address} = require('@stellar/stellar-sdk')
+const {TransactionBuilder, Operation} = require('@stellar/stellar-sdk')
 const OracleClient = require('@reflector/oracle-client')
 const {getMajority} = require('./utils/majority-helper')
 const {buildUpdates} = require('./updates-helper')
 const InitPendingTransaction = require('./models/transactions/init-pending-transaction')
 const PriceUpdatePendingTransaction = require('./models/transactions/price-update-pending-transaction')
 const UpdateType = require('./models/updates/update-type')
-const ContractPendingTransaction = require('./models/transactions/contract-pending-transaction')
+const WasmPendingTransaction = require('./models/transactions/wasm-pending-transaction')
 const PeriodPendingTransaction = require('./models/transactions/period-pending-transaction')
 const AssetsPendingTransaction = require('./models/transactions/assets-pending-transaction')
 const NodesPendingTransaction = require('./models/transactions/nodes-pending-transaction')
@@ -123,7 +123,7 @@ async function buildPriceUpdateTransaction(priceUpdateOptions) {
 
 /**
  * @param {UpdateOptions} updateOptions - transaction options
- * @returns {Promise<AssetsPendingTransaction|NodesPendingTransaction|PeriodPendingTransaction|ContractPendingTransaction>}
+ * @returns {Promise<AssetsPendingTransaction|NodesPendingTransaction|PeriodPendingTransaction|WasmPendingTransaction>}
  */
 async function buildUpdateTransaction(updateOptions) {
     const {network, maxTime, fee, timestamp, currentConfig, sorobanRpc, newConfig, account} = updateOptions
@@ -181,10 +181,10 @@ async function buildUpdateTransaction(updateOptions) {
             if (contractsData.some(c => c.contractStatePromise.status === 'rejected'))
                 throw new Error(`Failed to get contract state. ${contractsData.find(c => c.contractStatePromise.status === 'rejected').reason?.message}`)
 
-            const contractState = contractsData.filter(c => c.contractStatePromise.value.hash !== update.wasmHash)
-            if (!contractState)
+            const contractsToUpdate = contractsData.filter(c => c.contractStatePromise.value.hash !== update.wasmHash)
+            if (contractsToUpdate.length === 0)
                 break //no updates that must be applied on blockchain
-            update.assignOracleId(contractState.contract)
+            update.assignContractsToUpdate(contractsToUpdate)
             tx = await buildContractUpdate(sorobanRpc, account, txOptions, update)
             break
         }
@@ -199,16 +199,17 @@ async function buildUpdateTransaction(updateOptions) {
  * @param {Account} account - account
  * @param {any} txOptions - transaction options
  * @param {WasmUpdate} update - contract update
- * @returns {Promise<ContractPendingTransaction>}
+ * @returns {Promise<WasmPendingTransaction>}
  */
 async function buildContractUpdate(sorobanRpc, account, txOptions, update) {
-    const orcaleClient = new OracleClient(txOptions.network, sorobanRpc, update.oracleId)
+    const contractToUpdate = update.contractsToUpdate[0]
+    const orcaleClient = new OracleClient(txOptions.network, sorobanRpc, contractToUpdate.contract)
     const tx = await orcaleClient.updateContract(
         account,
-        {admin: update.admin, wasmHash: update.wasmHash},
+        {admin: contractToUpdate.admin, wasmHash: update.wasmHash},
         txOptions
     )
-    return new ContractPendingTransaction(tx, update.timestamp, update.wasmHash)
+    return new WasmPendingTransaction(tx, update.timestamp, update.wasmHash, update.contractsToUpdate.length > 1)
 }
 
 /**

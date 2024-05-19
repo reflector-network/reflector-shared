@@ -1,4 +1,5 @@
 /*eslint-disable no-undef */
+const {Keypair} = require('@stellar/stellar-sdk')
 const Config = require('../models/configs/config')
 const {buildUpdates} = require('../updates-helper')
 const PeriodUpdate = require('../models/updates/period-update')
@@ -249,4 +250,12 @@ test('buildUpdates, two asset updates throws error', () => {
         "type": 2
     })
     expect(() => buildUpdates(1, config, newConfig)).toThrow(ValidationError)
+})
+
+test('buildUpdates, change sys account', () => {
+    const config = new Config(rawConfig)
+    const newConfig = new Config(rawConfig)
+    newConfig.systemAccount = Keypair.random().publicKey()
+    const update = buildUpdates(1, config, newConfig)
+    expect(update.size).toBe(1)
 })

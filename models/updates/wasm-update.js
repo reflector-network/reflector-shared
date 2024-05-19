@@ -15,14 +15,14 @@ module.exports = class WasmUpdate extends UpdateBase {
     }
 
     /**
-     * @param {string} oracleId - oracle id
+     * @param {{admin: string, contract: string}[]} contractsToUpdate - ordered oracle ids to update
      */
-    assignOracleId(oracleId) {
-        if (!oracleId)
-            throw new Error('oracleId is required')
-        if (this.oracleId)
-            throw new Error('oracleId is already assigned')
-        this.oracleId = oracleId
+    assignContractsToUpdate(contractsToUpdate) {
+        if (!Array.isArray(contractsToUpdate) || contractsToUpdate.length < 1)
+            throw new Error('No oracles to update')
+        if (this.contractsToUpdate)
+            throw new Error('contractsToUpdate is already assigned')
+        this.contractsToUpdate = contractsToUpdate
     }
 
     /**
@@ -31,16 +31,16 @@ module.exports = class WasmUpdate extends UpdateBase {
     wasmHash
 
     /**
-     * @type {string}
+     * @type {{admin: string, contract: string}[]}
      * @readonly
      */
-    oracleId
+    contractsToUpdate
 
     toPlainObject() {
         return sortObjectKeys({
             ...super.toPlainObject(),
             wasmHash: this.wasmHash,
-            oracleId: this.oracleId
+            contractsToUpdate: this.contractsToUpdate
         })
     }
 }

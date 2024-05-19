@@ -8,7 +8,8 @@ const UpdateType = {
     ASSETS: 2,
     PERIOD: 3,
     WASM: 4,
-    CONTRACTS: 5
+    CONTRACTS: 5,
+    CONFIG: 6
 }
 
 module.exports = UpdateType

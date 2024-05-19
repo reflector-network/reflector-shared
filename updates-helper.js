@@ -5,6 +5,7 @@ const PeriodUpdate = require('./models/updates/period-update')
 const WasmUpdate = require('./models/updates/wasm-update')
 const Config = require('./models/configs/config')
 const ContractsUpdate = require('./models/updates/contracts-update')
+const ConfigUpdate = require('./models/updates/config-update')
 
 /**
  * Builds updates from current config and new config
@@ -24,7 +25,7 @@ function buildUpdates(timestamp, currentConfig, newConfig) {
     if (!newConfig.isValid)
         throw new ValidationError('newConfig is not valid')
 
-    if (newConfig.equals(currentConfig))
+    if (newConfig.equals(currentConfig, true))
         return new Map()
 
 
@@ -32,6 +33,9 @@ function buildUpdates(timestamp, currentConfig, newConfig) {
     const contractsUpdate = __tryGetContractsUpdate(timestamp, currentConfig.contracts, newConfig.contracts)
     if (globalUpdate && contractsUpdate)
         throw new ValidationError('Global update can not be combined with contracts update')
+    else if (!globalUpdate && !contractsUpdate) //if no updates found, but the configs are different, return config update
+        return new Map([[null, new ConfigUpdate(timestamp, newConfig, currentConfig)]])
+
     if (globalUpdate) {
         const updates = new Map()
         updates.set(null, globalUpdate)
@@ -95,9 +99,9 @@ function __tryGetNodesUpdate(timestamp, currentNodes, newNodes) {
 
 /**
  * Tries to get assets update
- * @param {BigInt} timestamp
- * @param {Map<string, ContractConfig>} currentConfigs
- * @param {Map<string, ContractConfig>} newConfigs
+ * @param {BigInt} timestamp - timestamp of the update
+ * @param {Map<string, ContractConfig>} currentConfigs - current contract configs
+ * @param {Map<string, ContractConfig>} newConfigs - new contract configs
  * @returns {Map<string, UpdateBase>}
  */
 function __tryGetContractsUpdate(timestamp, currentConfigs, newConfigs) {

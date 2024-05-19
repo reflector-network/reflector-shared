@@ -1,5 +1,6 @@
 /*eslint-disable no-undef */
 const nock = require('nock')
+const {Keypair} = require('@stellar/stellar-sdk')
 const Config = require('../models/configs/config')
 const {buildInitTransaction, buildUpdateTransaction, buildPriceUpdateTransaction} = require('../transaction-helper')
 const Asset = require('../models/assets/asset')
@@ -264,7 +265,25 @@ test('buildPriceUpdateTransaction', async () => {
     expect(transaction).toBeDefined()
 }, 10000)
 
-test('account sequence', async () => {
+
+test('buildGlobalConfigUpdateTransaction', async () => {
+    const currentConfig = new Config(rawConfig)
+    const newConfig = new Config(rawConfig)
+    newConfig.systemAccount = Keypair.random().publicKey()
+    const transaction = await buildUpdateTransaction({
+        currentConfig,
+        newConfig,
+        timestamp: 1,
+        network: 'testnet',
+        sorobanRpc,
+        account,
+        maxTime: new Date(normalizeTimestamp(Date.now(), 1000) + 10000),
+        fee: 1000000
+    })
+    expect(transaction).toBeNull()
+}, 10000)
+
+test('account sequence', () => {
     //there is total 6 updates, so the sequence should be 6
     expect(account.sequence).toBe(6)
 })

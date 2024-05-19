@@ -169,13 +169,13 @@ module.exports = class Config extends IssuesContainer {
         })
     }
 
-    equals(other) {
+    equals(other, ignoreMinDate = false) {
         if (!(other instanceof Config))
             return false
         return areMapsEqual(this.contracts, other.contracts)
             && areMapsEqual(this.nodes, other.nodes)
             && this.wasmHash === other.wasmHash
-            && this.minDate === other.minDate
+            && (ignoreMinDate ? true : this.minDate === other.minDate)
             && this.systemAccount === other.systemAccount
             && this.network === other.network
     }
