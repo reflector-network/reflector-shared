@@ -8,10 +8,10 @@ const ContractsUpdate = require('./models/updates/contracts-update')
 
 /**
  * Builds updates from current config and new config
- * @param {BigInt} timestamp
- * @param {Config} currentConfig
- * @param {Config} newConfig
- * @returns {Map<string, UpdateBase} updates grouped by contract id
+ * @param {BigInt} timestamp - timestamp of the update
+ * @param {Config} currentConfig - current config
+ * @param {Config} newConfig - new config
+ * @returns {Map<string, NodesUpdate|WasmUpdate|ContractsUpdate|AssetsUpdate|PeriodUpdate|null>} updates grouped by contract id
  */
 function buildUpdates(timestamp, currentConfig, newConfig) {
     if (!(currentConfig instanceof Config))
@@ -74,21 +74,6 @@ function __tryGetGlobalUpdate(timestamp, currentConfig, newConfig) {
         setGlobalUpdate(new ContractsUpdate(timestamp, newConfig.contracts, currentConfig.contracts))
 
     return globalUpdate
-}
-
-/**
- * Tries to get wasm update
- * @param {BigInt} timestamp
- * @param {string} currentWasm
- * @param {string} newWasm
- * @returns {WasmUpdate}
- */
-function __tryGetWasmUpdate(timestamp, currentWasm, newWasm) {
-    if (currentWasm === newWasm)
-        return null
-    if (!newWasm)
-        throw new ValidationError('Wasm can not be removed')
-    return new WasmUpdate(timestamp, newWasm)
 }
 
 /**
@@ -171,6 +156,23 @@ function __tryGetAssetsUpdate(timestamp, oracleId, admin, currentAssets, newAsse
             throw new ValidationError(`Contract ${oracleId}. Assets can not be modified or removed`)
     }
     return new AssetsUpdate(timestamp, oracleId, admin, assetsChanges.added)
+}
+
+
+/**
+ * Tries to get wasm update
+ * @param {BigInt} timestamp
+ * @param {string} currentWasm
+ * @param {string} newWasm
+ * @returns {WasmUpdate}
+ */
+function __tryGetWasmUpdate(timestamp, currentWasm, newWasm) {
+    if (currentWasm === newWasm)
+        return null
+    if (!newWasm)
+        throw new ValidationError('Wasm can not be removed')
+
+    return new WasmUpdate(timestamp, newWasm)
 }
 
 /**

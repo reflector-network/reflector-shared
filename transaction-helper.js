@@ -1,4 +1,4 @@
-const {TransactionBuilder, Operation} = require('@stellar/stellar-sdk')
+const {TransactionBuilder, Operation, xdr, Address} = require('@stellar/stellar-sdk')
 const OracleClient = require('@reflector/oracle-client')
 const {getMajority} = require('./utils/majority-helper')
 const {buildUpdates} = require('./updates-helper')
@@ -9,13 +9,14 @@ const ContractPendingTransaction = require('./models/transactions/contract-pendi
 const PeriodPendingTransaction = require('./models/transactions/period-pending-transaction')
 const AssetsPendingTransaction = require('./models/transactions/assets-pending-transaction')
 const NodesPendingTransaction = require('./models/transactions/nodes-pending-transaction')
+const {getContractState} = require('./entries-helper')
 
 /**
  * @typedef {import('./models/updates/update-base')} UpdateBase
  * @typedef {import('./models/updates/assets-update')} AssetsUpdate
  * @typedef {import('./models/updates/nodes-update')} NodesUpdate
  * @typedef {import('./models/updates/period-update')} PeriodUpdate
- * @typedef {import('./models/updates/wasm-update')} ContractUpdate
+ * @typedef {import('./models/updates/wasm-update')} WasmUpdate
  * @typedef {import('./models/configs/contract-config')} ContractConfig
  * @typedef {import('./models/configs/config')} Config
  * @typedef {import('./models/configs/config-envelope')} ConfigEnvelope
@@ -53,6 +54,25 @@ const NodesPendingTransaction = require('./models/transactions/nodes-pending-tra
  * @property {number} fee - fee
  * @property {string[]} sorobanRpc - soroban rpc urls
  * @property {string} oracleId - oracle id
+ * @property {string} admin - oracle admin
+ * @property {BigInt[]} prices - prices
+ * @property {number} timestamp - timestamp
+ * @property {Date} maxTime - tx max time
+ */
+
+/**
+ * @typedef {Object} ContractHash
+ * @property {string} hash - contract hash
+ * @property {string} oracleId - oracle id
+ */
+
+/**
+ * @typedef {Object} WasmUpdateOptions
+ * @property {Account} account - account
+ * @property {string} network - network
+ * @property {number} fee - fee
+ * @property {string[]} sorobanRpc - soroban rpc urls
+ * @property {string} newHash - new contract hash
  * @property {string} admin - oracle admin
  * @property {BigInt[]} prices - prices
  * @property {number} timestamp - timestamp
@@ -144,12 +164,32 @@ async function buildUpdateTransaction(updateOptions) {
         case UpdateType.PERIOD:
             tx = await buildPeriodUpdate(sorobanRpc, account, txOptions, update)
             break
-        case UpdateType.WASM:
-            //TODO: create wasm update contract so we could have single tx
-            //tx = await buildContractUpdate(sorobanRpc, account, txOptions, update)
-            throw new Error('Wasm update is not supported yet')
+        case UpdateType.WASM: {
+            const contractsData = [...currentConfig.contracts.values()]
+                .sort((a, b) => a.localeCompare(b))
+                .map(c => ({
+                    admin: c.admin,
+                    contract: c.oracleId,
+                    /**
+                     * @type {Promise<{hash: string, admin: string, lastTimestamp: BigInt, prices: BigInt[]}>}
+                     */
+                    contractStatePromise: getContractState(update.oracleId, sorobanRpc)
+                }))
+
+            await Promise.allSettled(contractsData.map(c => c.contractStatePromise))
+
+            if (contractsData.some(c => c.contractStatePromise.status === 'rejected'))
+                throw new Error(`Failed to get contract state. ${contractsData.find(c => c.contractStatePromise.status === 'rejected').reason?.message}`)
+
+            const contractState = contractsData.filter(c => c.contractStatePromise.value.hash !== update.wasmHash)
+            if (!contractState)
+                break //no updates that must be applied on blockchain
+            update.assignOracleId(contractState.contract)
+            tx = await buildContractUpdate(sorobanRpc, account, txOptions, update)
+            break
+        }
         default:
-            break //no updates that must bu applied on blockchain
+            break //no updates that must be applied on blockchain
     }
     return tx
 }
@@ -158,7 +198,7 @@ async function buildUpdateTransaction(updateOptions) {
  * @param {string[]} sorobanRpc - soroban rpc urls
  * @param {Account} account - account
  * @param {any} txOptions - transaction options
- * @param {ContractUpdate} update - contract update
+ * @param {WasmUpdate} update - contract update
  * @returns {Promise<ContractPendingTransaction>}
  */
 async function buildContractUpdate(sorobanRpc, account, txOptions, update) {

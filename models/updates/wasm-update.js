@@ -14,10 +14,33 @@ module.exports = class WasmUpdate extends UpdateBase {
         this.wasmHash = wasmHash
     }
 
+    /**
+     * @param {string} oracleId - oracle id
+     */
+    assignOracleId(oracleId) {
+        if (!oracleId)
+            throw new Error('oracleId is required')
+        if (this.oracleId)
+            throw new Error('oracleId is already assigned')
+        this.oracleId = oracleId
+    }
+
+    /**
+     * @type {string}
+     */
+    wasmHash
+
+    /**
+     * @type {string}
+     * @readonly
+     */
+    oracleId
+
     toPlainObject() {
         return sortObjectKeys({
             ...super.toPlainObject(),
-            wasmHash: this.wasmHash
+            wasmHash: this.wasmHash,
+            oracleId: this.oracleId
         })
     }
 }

@@ -102,7 +102,7 @@ module.exports = class Config extends IssuesContainer {
 
     __setWasm(wasmHash) {
         try {
-            if (wasmHash && wasmHash.length != 64)
+            if (wasmHash && wasmHash.length !== 64)
                 throw new Error('Wasm code is invalid')
             this.wasmHash = wasmHash
         } catch (err) {
