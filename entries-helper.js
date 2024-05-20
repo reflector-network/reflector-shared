@@ -22,52 +22,63 @@ function encodePriceRecordKey(timestamp, assetIndex) {
  * @returns {{hash: string, admin: string, lastTimestamp: BigInt, prices: BigInt[]}}
  */
 async function getContractState(contractId, sorobanRpc) {
+    const contractState = {
+        hash: null,
+        lastTimestamp: 0n,
+        prices: [],
+        isInitialized: false,
+        admin: null
+    }
+
     const key = xdr.ScVal.scvLedgerKeyContractInstance()
     const contractDataRequestFn = async (server) => await server.getContractData(contractId, key, SorobanRpc.Durability.Persistent)
     const contractData = await makeRequest(contractDataRequestFn, sorobanRpc)
     if (!contractData)
-        throw new Error('Failed to get contract data. Check contract id and network.')
+        return contractState
 
     const hash = contractData.val.contractData().val().instance().executable().wasmHash().toString('hex')
     const {admin, lastTimestamp, assetsLength} = tryGetParsedStateData(contractData.val.contractData().val().instance().storage())
 
-    const assetsEntriesKeys = []
-    const keys = []
-    for (let i = 0; i < assetsLength; i++) {
-        const priceRecordKey = encodePriceRecordKey(lastTimestamp, i)
-        keys.push(priceRecordKey)
-        assetsEntriesKeys.push(xdr.LedgerKey.contractData(
-            new xdr.LedgerKeyContractData({
-                contract: Address.fromString(contractId).toScAddress(),
-                key: new XdrLargeInt('u128', priceRecordKey).toU128(),
-                durability: xdr.ContractDataDurability.temporary()
-            })
-        ))
+    contractState.admin = admin
+    contractState.lastTimestamp = lastTimestamp
+    contractState.hash = hash
+    contractState.isInitialized = !!admin
+
+    if (assetsLength > 0) {
+        const assetsEntriesKeys = []
+        const keys = []
+        for (let i = 0; i < assetsLength; i++) {
+            const priceRecordKey = encodePriceRecordKey(lastTimestamp, i)
+            keys.push(priceRecordKey)
+            assetsEntriesKeys.push(xdr.LedgerKey.contractData(
+                new xdr.LedgerKeyContractData({
+                    contract: Address.fromString(contractId).toScAddress(),
+                    key: new XdrLargeInt('u128', priceRecordKey).toU128(),
+                    durability: xdr.ContractDataDurability.temporary()
+                })
+            ))
+        }
+
+        const assetsEntriesRequestFn = async (server) => (await server.getLedgerEntries(...assetsEntriesKeys))
+        const assetsEntries = (await makeRequest(assetsEntriesRequestFn, sorobanRpc))?.entries || []
+
+        const prices = Array(assetsLength).fill(0n)
+
+        for (const assetEntry of assetsEntries) {
+            const key = scValToBigInt(assetEntry.key.value().key())
+            const value = scValToBigInt(assetEntry.val.value().val())
+            const assetIndex = keys.indexOf(key)
+            if (assetIndex)
+                prices[keys.indexOf(key)] = value
+        }
+        contractState.prices = prices
     }
 
-    const assetsEntriesRequestFn = async (server) => (await server.getLedgerEntries(...assetsEntriesKeys))
-    const assetsEntries = (await makeRequest(assetsEntriesRequestFn, sorobanRpc))?.entries || []
-
-    const prices = Array(assetsLength).fill(0n)
-
-    for (const assetEntry of assetsEntries) {
-        const key = scValToBigInt(assetEntry.key.value().key())
-        const value = scValToBigInt(assetEntry.val.value().val())
-        const assetIndex = keys.indexOf(key)
-        if (assetIndex)
-            prices[keys.indexOf(key)] = value
-    }
-
-    return {
-        hash,
-        admin,
-        lastTimestamp,
-        prices
-    }
+    return contractState
 }
 
 function tryGetParsedStateData(storage) {
-    const data = {}
+    const data = {admin: null, lastTimestamp: 0n, assetsLength: 0}
     if (!storage)
         return data
     for (const entry of storage) {

@@ -161,7 +161,11 @@ test('getContractData existing data', async () => {
 }, 1000000)
 
 test('getContractData non existing data', async () => {
-    await expect(getContractState('CAFJZQWSED6YAWZU3GWRTOCNPPCGBN32L7QV43XX5LZLFTK6JLN34DLN', ['http://good.rpc.com']))
-        .rejects
-        .toThrowError('Failed to get contract data. Check contract id and network.')
+    const data = await getContractState('CAFJZQWSED6YAWZU3GWRTOCNPPCGBN32L7QV43XX5LZLFTK6JLN34DLN', ['http://good.rpc.com'])
+    expect(data).toBeDefined()
+    expect(data.admin).toBe(null)
+    expect(data.lastTimestamp).toBe(0n)
+    expect(data.isInitialized).toBe(false)
+    expect(data.prices).toStrictEqual([])
+    expect(data.hash).toBe(null)
 }, 1000000)

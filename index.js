@@ -58,6 +58,7 @@ const {
 } = require('./transaction-helper')
 
 const {buildUpdates} = require('./updates-helper')
+const {getContractState} = require('./entries-helper')
 
 module.exports.UpdateType = UpdateType
 module.exports.UpdateBase = UpdateBase
@@ -103,3 +104,5 @@ module.exports.buildUpdateTransaction = buildUpdateTransaction
 module.exports.buildPriceUpdateTransaction = buildPriceUpdateTransaction
 
 module.exports.buildUpdates = buildUpdates
+
+module.exports.getContractState = getContractState
