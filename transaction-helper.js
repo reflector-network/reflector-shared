@@ -166,22 +166,27 @@ async function buildUpdateTransaction(updateOptions) {
             break
         case UpdateType.WASM: {
             const contractsData = [...currentConfig.contracts.values()]
-                .sort((a, b) => a.localeCompare(b))
+                .sort((a, b) => a.oracleId.localeCompare(b.oracleId))
                 .map(c => ({
                     admin: c.admin,
-                    contract: c.oracleId,
-                    /**
-                     * @type {Promise<{hash: string, admin: string, lastTimestamp: BigInt, prices: BigInt[]}>}
-                     */
-                    contractStatePromise: getContractState(update.oracleId, sorobanRpc)
+                    contract: c.oracleId
                 }))
+            for (const conractData of contractsData)
+                conractData.contractStatePromise = getContractState(conractData.contract, sorobanRpc)
+                    .then(result => {
+                        conractData.contractState = result
+                    })
+                    .catch(error => {
+                        conractData.error = error
+                        throw new Error(`Failed to get contract state for ${conractData.contract}. ${error.message}`)
+                    })
 
             await Promise.allSettled(contractsData.map(c => c.contractStatePromise))
 
-            if (contractsData.some(c => c.contractStatePromise.status === 'rejected'))
-                throw new Error(`Failed to get contract state. ${contractsData.find(c => c.contractStatePromise.status === 'rejected').reason?.message}`)
+            if (contractsData.some(c => c.error))
+                throw new Error(`Failed to get contract state. ${contractsData.find(c => c.error).error?.message}`)
 
-            const contractsToUpdate = contractsData.filter(c => c.contractStatePromise.value.hash !== update.wasmHash)
+            const contractsToUpdate = contractsData.filter(c => c.contractState.hash !== update.wasmHash)
             if (contractsToUpdate.length === 0)
                 break //no updates that must be applied on blockchain
             update.assignContractsToUpdate(contractsToUpdate)
@@ -203,7 +208,7 @@ async function buildUpdateTransaction(updateOptions) {
  */
 async function buildContractUpdate(sorobanRpc, account, txOptions, update) {
     const contractToUpdate = update.contractsToUpdate[0]
-    const orcaleClient = new OracleClient(txOptions.network, sorobanRpc, contractToUpdate.contract)
+    const orcaleClient = new OracleClient(txOptions.networkPassphrase, sorobanRpc, contractToUpdate.contract)
     const tx = await orcaleClient.updateContract(
         account,
         {admin: contractToUpdate.admin, wasmHash: update.wasmHash},

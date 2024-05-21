@@ -19,7 +19,7 @@ function encodePriceRecordKey(timestamp, assetIndex) {
  * Returns hash of the data
  * @param {string} contractId - contract id
  * @param {string[]} sorobanRpc - soroban rpc urls
- * @returns {{hash: string, admin: string, lastTimestamp: BigInt, prices: BigInt[]}}
+ * @returns {{hash: string, admin: string, lastTimestamp: BigInt, prices: BigInt[], isInitialized: boolean}}
  */
 async function getContractState(contractId, sorobanRpc) {
     const contractState = {
