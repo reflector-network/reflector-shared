@@ -1,22 +1,16 @@
-const {StrKey} = require('@stellar/stellar-sdk')
 const Asset = require('../assets/asset')
-const {isValidContractId} = require('../../utils/contractId-helper')
 const {sortObjectKeys} = require('../../utils/serialization-helper')
 const IssuesContainer = require('../issues-container')
+const ContractConfigBase = require('./contract-config-base')
 
-module.exports = class ContractConfig extends IssuesContainer {
+module.exports = class OracleConfig extends ContractConfigBase {
     constructor(raw) {
-        super()
-        if (!raw) {
-            this.__addIssue(`settings: ${IssuesContainer.notDefined}`)
-            return
-        }
-        this.admin = !(raw.admin && StrKey.isValidEd25519PublicKey(raw.admin)) ? this.__addIssue(`admin: ${IssuesContainer.invalidOrNotDefined}`) : raw.admin
-        this.oracleId = !(raw.oracleId && isValidContractId(raw.oracleId)) ? this.__addIssue(`oracleId: ${IssuesContainer.invalidOrNotDefined}`) : raw.oracleId
+        super(raw)
         this.decimals = !(raw.decimals && raw.decimals > 0 && !isNaN(raw.decimals)) ? this.__addIssue(`decimals: ${IssuesContainer.invalidOrNotDefined}`) : raw.decimals
         this.timeframe = !(raw.timeframe && raw.timeframe > 0 && !isNaN(raw.timeframe)) ? this.__addIssue(`timeframe: ${IssuesContainer.invalidOrNotDefined}`) : raw.timeframe
+        if (this.timeframe % 1000 * 60 !== 0)
+            this.__addIssue('timeframe: Timeframe should be minutes in milliseconds')
         this.period = !(raw.period && !isNaN(raw.period) && raw.period > raw.timeframe) ? this.__addIssue(`period: ${IssuesContainer.invalidOrNotDefined}`) : raw.period
-        this.fee = !(raw.fee && raw.fee > 0 && !isNaN(raw.fee)) ? this.__addIssue(`fee: ${IssuesContainer.invalidOrNotDefined}`) : raw.fee
 
         this.__assignBaseAsset(raw.baseAsset)
 
@@ -62,16 +56,6 @@ module.exports = class ContractConfig extends IssuesContainer {
     }
 
     /**
-     * @type {string}
-     */
-    admin
-
-    /**
-     * @type {string}
-     */
-    oracleId
-
-    /**
      * @type {Asset}
      */
     baseAsset
@@ -97,41 +81,31 @@ module.exports = class ContractConfig extends IssuesContainer {
     period
 
     /**
-     * @type {number}
-     */
-    fee
-
-    /**
-     * @returns {string}
+     * @type {string}
      */
     dataSource
 
     toPlainObject() {
-        return sortObjectKeys({
-            admin: this.admin,
-            oracleId: this.oracleId,
-            baseAsset: this.baseAsset?.toPlainObject(),
-            decimals: this.decimals,
-            assets: this.assets.map(a => a.toPlainObject()),
-            timeframe: this.timeframe,
-            period: this.period,
-            fee: this.fee,
-            dataSource: this.dataSource
-        })
+        return sortObjectKeys(
+            ...super.toPlainObject(),
+            ...{
+                baseAsset: this.baseAsset?.toPlainObject(),
+                decimals: this.decimals,
+                assets: this.assets.map(a => a.toPlainObject()),
+                timeframe: this.timeframe,
+                period: this.period,
+                dataSource: this.dataSource
+            })
     }
 
     equals(other) {
-        if (!(other instanceof ContractConfig))
-            return false
-        return this.admin === other.admin
-            && this.oracleId === other.oracleId
+        return super.equals(other)
             && this.baseAsset.equals(other.baseAsset)
             && this.decimals === other.decimals
             && this.assets.length === other.assets.length
             && this.assets.every((asset, index) => asset.equals(other.assets[index]))
             && this.timeframe === other.timeframe
             && this.period === other.period
-            && this.fee === other.fee
             && this.dataSource === other.dataSource
     }
 }

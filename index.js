@@ -1,25 +1,25 @@
 const UpdateType = require('./models/updates/update-type')
 const UpdateBase = require('./models/updates/update-base')
-const AssetsUpdate = require('./models/updates/assets-update')
+const OracleAssetsUpdate = require('./models/updates/oracle/assets-update')
 const NodesUpdate = require('./models/updates/nodes-update')
-const PeriodUpdate = require('./models/updates/period-update')
+const OraclePeriodUpdate = require('./models/updates/oracle/period-update')
 const WasmUpdate = require('./models/updates/wasm-update')
 const ValidationError = require('./models/validation-error')
 const AssetType = require('./models/assets/asset-type')
 const Asset = require('./models/assets/asset')
 const IssuesContainer = require('./models/issues-container')
-const ContractConfig = require('./models/configs/contract-config')
+const OracleConfig = require('./models/configs/oracle-config')
 const ConfigEnvelope = require('./models/configs/config-envelope')
 const Config = require('./models/configs/config')
 const Node = require('./models/node')
 const PendingTransactionBase = require('./models/transactions/pending-transaction-base')
 const PendingTransactionType = require('./models/transactions/pending-transaction-type')
-const AssetsPendingTransaction = require('./models/transactions/assets-pending-transaction')
-const InitPendingTransaction = require('./models/transactions/init-pending-transaction')
+const OracleAssetsUpdateTransaction = require('./models/transactions/oracle/assets-update-transaction')
+const OracleInitTransaction = require('./models/transactions/oracle/init-transaction')
 const WasmPendingTransaction = require('./models/transactions/wasm-pending-transaction')
 const NodesPendingTransaction = require('./models/transactions/nodes-pending-transaction')
-const PeriodPendingTransaction = require('./models/transactions/period-pending-transaction')
-const PriceUpdatePendingTransaction = require('./models/transactions/price-update-pending-transaction')
+const OraclePeriodUpdateTransaction = require('./models/transactions/oracle/period-update-transaction')
+const PriceUpdatePendingTransaction = require('./models/transactions/oracle/price-update-transaction')
 
 const {
     isValidContractId,
@@ -49,38 +49,40 @@ const {
     verifySignature,
     getSignaturePayloadHash,
     getDataHash
-} = require('./signatures-helper')
+} = require('./helpers/signatures-helper')
 
 const {
-    buildInitTransaction,
-    buildUpdateTransaction,
-    buildPriceUpdateTransaction
-} = require('./transaction-helper')
+    buildUpdateTransaction
+} = require('./helpers/transactions/shared-transaction-helper')
 
-const {buildUpdates} = require('./updates-helper')
-const {getContractState} = require('./entries-helper')
+const {buildOracleInitTransaction, buildOraclePriceUpdateTransaction} = require('./helpers/transactions/oracle-transaction-helper')
+const {buildSubscriptionsInitTransaction, buildSubscriptionChargeTransaction, buildSubscriptionTriggerTransaction} = require('./helpers/transactions/subscriptions-transaction-helper')
+
+const {buildUpdates} = require('./helpers/updates-helper')
+const {getContractState, getOracleContractState, getSubscriptionsContractState} = require('./helpers/entries-helper')
 
 module.exports.UpdateType = UpdateType
 module.exports.UpdateBase = UpdateBase
-module.exports.AssetsUpdate = AssetsUpdate
+module.exports.OracleAssetsUpdate = OracleAssetsUpdate
 module.exports.NodesUpdate = NodesUpdate
-module.exports.PeriodUpdate = PeriodUpdate
+module.exports.OraclePeriodUpdate = OraclePeriodUpdate
 module.exports.WasmUpdate = WasmUpdate
 module.exports.ValidationError = ValidationError
 module.exports.AssetType = AssetType
 module.exports.Asset = Asset
 module.exports.IssuesContainer = IssuesContainer
-module.exports.ContractConfig = ContractConfig
+module.exports.OracleConfig = OracleConfig
 module.exports.Config = Config
 module.exports.ConfigEnvelope = ConfigEnvelope
 module.exports.Node = Node
 module.exports.PendingTransactionBase = PendingTransactionBase
 module.exports.PendingTransactionType = PendingTransactionType
-module.exports.AssetsPendingTransaction = AssetsPendingTransaction
-module.exports.InitPendingTransaction = InitPendingTransaction
+
+module.exports.OracleAssetsUpdateTransaction = OracleAssetsUpdateTransaction
+module.exports.OracleInitTransaction = OracleInitTransaction
 module.exports.WasmPendingTransaction = WasmPendingTransaction
 module.exports.NodesPendingTransaction = NodesPendingTransaction
-module.exports.PeriodPendingTransaction = PeriodPendingTransaction
+module.exports.OraclePeriodUpdateTransaction = OraclePeriodUpdateTransaction
 module.exports.PriceUpdatePendingTransaction = PriceUpdatePendingTransaction
 
 module.exports.isValidContractId = isValidContractId
@@ -99,10 +101,17 @@ module.exports.verifySignature = verifySignature
 module.exports.getSignaturePayloadHash = getSignaturePayloadHash
 module.exports.getDataHash = getDataHash
 
-module.exports.buildInitTransaction = buildInitTransaction
 module.exports.buildUpdateTransaction = buildUpdateTransaction
-module.exports.buildPriceUpdateTransaction = buildPriceUpdateTransaction
+
+module.exports.buildOracleInitTransaction = buildOracleInitTransaction
+module.exports.buildOraclePriceUpdateTransaction = buildOraclePriceUpdateTransaction
+
+module.exports.buildSubscriptionsInitTransaction = buildSubscriptionsInitTransaction
+module.exports.buildSubscriptionChargeTransaction = buildSubscriptionChargeTransaction
+module.exports.buildSubscriptionTriggerTransaction = buildSubscriptionTriggerTransaction
 
 module.exports.buildUpdates = buildUpdates
 
+module.exports.getOracleContractState = getOracleContractState
 module.exports.getContractState = getContractState
+module.exports.getSubscriptionsContractState = getSubscriptionsContractState

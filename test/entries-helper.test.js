@@ -1,7 +1,7 @@
 /*eslint-disable no-undef */
 const nock = require('nock')
 const {xdr, StrKey} = require('@stellar/stellar-sdk')
-const {getContractState} = require('../entries-helper')
+const {getContractState, getSubscriptions, getSubscriptionsContractState, getOracleContractState} = require('../helpers/entries-helper')
 
 const contractDataResponse = {
     "jsonrpc": "2.0",
@@ -156,16 +156,32 @@ beforeEach(() => {
 
 
 test('getContractData existing data', async () => {
-    const data = await getContractState('CBKZFI26PDCZUJ5HYYKVB5BWCNYUSNA5LVL4R2JTRVSOB4XEP7Y34OPN', ['http://bad.rpc.com', 'http://good.rpc.com'])
+    const data = await getOracleContractState('CBKZFI26PDCZUJ5HYYKVB5BWCNYUSNA5LVL4R2JTRVSOB4XEP7Y34OPN', ['http://bad.rpc.com', 'http://good.rpc.com'])
     expect(data).toBeDefined()
+    expect(data.admin).toBeDefined()
+    expect(data.lastTimestamp).toBeGreaterThan(0n)
+    expect(data.isInitialized).toBe(true)
+    expect(data.prices.length).toBeGreaterThan(0)
+    expect(data.hash).toBeDefined()
 }, 1000000)
 
 test('getContractData non existing data', async () => {
-    const data = await getContractState('CAFJZQWSED6YAWZU3GWRTOCNPPCGBN32L7QV43XX5LZLFTK6JLN34DLN', ['http://good.rpc.com'])
+    const data = await getOracleContractState('CAFJZQWSED6YAWZU3GWRTOCNPPCGBN32L7QV43XX5LZLFTK6JLN34DLN', ['http://good.rpc.com'])
     expect(data).toBeDefined()
     expect(data.admin).toBe(null)
     expect(data.lastTimestamp).toBe(0n)
     expect(data.isInitialized).toBe(false)
     expect(data.prices).toStrictEqual([])
     expect(data.hash).toBe(null)
+}, 1000000)
+
+test('getSubscriptionData', async () => {
+
+    const contractId = 'CBFZZVW5SKMVTXKHHQKGOLLHYTOVNSYA774GCROOBMYAKEYCP4THNEXQ'
+
+    const {lastSubscriptionsId} = await getSubscriptionsContractState(contractId, ['https://soroban-testnet.stellar.org'])
+
+    const data = await getSubscriptions(contractId, ['https://soroban-testnet.stellar.org'], lastSubscriptionsId)
+    expect(data).toBeDefined()
+    expect(data.length).toBe(Number(lastSubscriptionsId))
 }, 1000000)

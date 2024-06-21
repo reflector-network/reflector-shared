@@ -1,0 +1,213 @@
+const {xdr, SorobanRpc, scValToBigInt, scValToNative, Address, XdrLargeInt} = require('@stellar/stellar-sdk')
+
+async function makeRequest(requestFn, sorobanRpc) {
+    for (const serverRpc of sorobanRpc) {
+        try {
+            const server = new SorobanRpc.Server(serverRpc, {allowHttp: true})
+            return await requestFn(server)
+        } catch (e) {
+            console.error(`Failed to make request to ${serverRpc}: ${e}`)
+        }
+    }
+}
+
+function encodePriceRecordKey(timestamp, assetIndex) {
+    return (BigInt(timestamp) << 64n) | BigInt(assetIndex)
+}
+
+/**
+ * Returns contract instance
+ * @param {string} contractId - contract id
+ * @param {string[]} sorobanRpc - soroban rpc urls
+ * @returns {xdr.ScContractInstance|null}
+ */
+async function getContractInstance(contractId, sorobanRpc) {
+    const key = xdr.ScVal.scvLedgerKeyContractInstance()
+    const contractDataRequestFn = async (server) => await server.getContractData(contractId, key, SorobanRpc.Durability.Persistent)
+    const contractData = await makeRequest(contractDataRequestFn, sorobanRpc)
+    if (!contractData)
+        return null
+    return contractData.val.contractData().val().instance()
+}
+
+/**
+ * Returns native storage
+ * @param {xdr.ScMapEntry[]} values - values
+ * @returns {object}
+ */
+function getNativeStorage(values) {
+    const storage = {}
+    for (const value of values) {
+        const key = scValToNative(value.key())
+        const val = scValToNative(value.val())
+        storage[key] = val
+    }
+    return storage
+}
+
+/**
+ * Returns hash of the data
+ * @param {string} contractId - contract id
+ * @param {string[]} sorobanRpc - soroban rpc urls
+ * @returns {{hash: string, admin: string, lastTimestamp: BigInt, prices: BigInt[], isInitialized: boolean}}
+ */
+async function getOracleContractState(contractId, sorobanRpc) {
+    const contractState = {
+        hash: null,
+        lastTimestamp: 0n,
+        prices: [],
+        isInitialized: false,
+        admin: null
+    }
+
+    const instance = await getContractInstance(contractId, sorobanRpc)
+    if (!instance)
+        return contractState
+
+    const hash = instance.executable().wasmHash().toString('hex')
+    const {admin, last_timestamp: lastTimestamp, assets} = getNativeStorage(instance.storage())
+
+    contractState.admin = admin
+    contractState.lastTimestamp = lastTimestamp
+    contractState.hash = hash
+    contractState.isInitialized = !!admin
+
+    if (assets.length < 1)
+        return contractState
+
+    const assetsEntriesKeys = []
+    const keys = []
+    for (let i = 0; i < assets.length; i++) {
+        const priceRecordKey = encodePriceRecordKey(lastTimestamp, i)
+        keys.push(priceRecordKey)
+        assetsEntriesKeys.push(xdr.LedgerKey.contractData(
+            new xdr.LedgerKeyContractData({
+                contract: Address.fromString(contractId).toScAddress(),
+                key: new XdrLargeInt('u128', priceRecordKey).toU128(),
+                durability: xdr.ContractDataDurability.temporary()
+            })
+        ))
+    }
+
+    const assetsEntriesRequestFn = async (server) => (await server.getLedgerEntries(...assetsEntriesKeys))
+    const assetsEntries = (await makeRequest(assetsEntriesRequestFn, sorobanRpc))?.entries || []
+
+    const prices = Array(assets.length).fill(0n)
+
+    for (const assetEntry of assetsEntries) {
+        const key = scValToBigInt(assetEntry.key.value().key())
+        const value = scValToBigInt(assetEntry.val.value().val())
+        const assetIndex = keys.indexOf(key)
+        if (assetIndex)
+            prices[keys.indexOf(key)] = value
+    }
+    contractState.prices = prices
+
+    return contractState
+}
+
+/**
+ * Returns hash of the data
+ * @param {string} contractId - contract id
+ * @param {string[]} sorobanRpc - soroban rpc urls
+ * @returns {{hash: string, admin: string, lastSubscriptionsId: BigInt, isInitialized: boolean}}
+ */
+async function getSubscriptionsContractState(contractId, sorobanRpc) {
+    const contractState = {
+        hash: null,
+        lastSubscriptionsId: 0n,
+        isInitialized: false,
+        admin: null
+    }
+
+    const instance = await getContractInstance(contractId, sorobanRpc)
+    if (!instance)
+        return contractState
+
+    const hash = instance.executable().wasmHash().toString('hex')
+    const {admin, last_subscription_id: lastSubscriptionsId} = getNativeStorage(instance.storage())
+
+    contractState.admin = admin
+    contractState.lastSubscriptionsId = lastSubscriptionsId
+    contractState.hash = hash
+    contractState.isInitialized = !!admin
+
+    return contractState
+}
+
+async function getContractState(contractId, sorobanRpc) {
+    const contractState = {
+        hash: null,
+        isInitialized: false,
+        lastTimestamp: 0n,
+        admin: null
+    }
+
+    const instance = await getContractInstance(contractId, sorobanRpc)
+    if (!instance)
+        return contractState
+
+
+    const hash = instance.executable().wasmHash().toString('hex')
+    const {admin, last_timestamp: lastTimestamp} = getNativeStorage(instance.storage())
+
+    contractState.admin = admin
+    contractState.hash = hash
+    contractState.isInitialized = !!admin
+    contractState.lastTimestamp = lastTimestamp
+
+    return contractState
+}
+
+/**
+ * Returns subscriptions
+ * @param {string} contractId - contract id
+ * @param {string[]} sorobanRpc - soroban rpc urls
+ * @param {BigInt} max - max index
+ * @param {number} batchSize - batch size
+ * @returns {any[]}
+ */
+async function getSubscriptions(contractId, sorobanRpc, max, batchSize = 50) {
+    const subscriptions = []
+    let from = 0n
+    while (from < max) {
+        let to = from + BigInt(batchSize)
+        if (to > max)
+            to = max
+
+        const subscriptionsKeys = []
+        for (let i = from + 1n; i <= to; i++) {
+            subscriptionsKeys.push(xdr.LedgerKey.contractData(
+                new xdr.LedgerKeyContractData({
+                    contract: Address.fromString(contractId).toScAddress(),
+                    key: new XdrLargeInt('u64', i.toString()).toU64(),
+                    durability: xdr.ContractDataDurability.persistent()
+                })
+            ))
+        }
+
+        const subscriptionsEntriesRequestFn = async (server) => (await server.getLedgerEntries(...subscriptionsKeys))
+        const subscriptionsEntriesResult = (await makeRequest(subscriptionsEntriesRequestFn, sorobanRpc))
+        const subscriptionsEntries = subscriptionsEntriesResult?.entries || []
+
+        for (const subscriptionEntry of subscriptionsEntries) {
+            const id = scValToNative(subscriptionEntry.val.value().key())
+            const data = scValToNative(subscriptionEntry.val.value().val())
+            if (data.owner) {
+                subscriptions.push({id, ...data})
+            }
+        }
+        from = to
+        if (from >= max)
+            break
+    }
+
+    return subscriptions
+}
+
+module.exports = {
+    getSubscriptionsContractState,
+    getOracleContractState,
+    getContractState,
+    getSubscriptions
+}

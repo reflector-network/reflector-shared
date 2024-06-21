@@ -1,7 +1,7 @@
 const crypto = require('crypto')
 const {Keypair, xdr} = require('@stellar/stellar-sdk')
-const ValidationError = require('./models/validation-error')
-const {sortObjectKeys} = require('./utils/serialization-helper')
+const ValidationError = require('../models/validation-error')
+const {sortObjectKeys} = require('../utils/serialization-helper')
 
 function getDecoratedSignature(signature) {
     try {
@@ -16,9 +16,9 @@ function getDecoratedSignature(signature) {
 
 /**
  * Verifies signature
- * @param {string} publicKey
- * @param {string} signature
- * @param {string} hash
+ * @param {string} publicKey - public key
+ * @param {string} signature - signature
+ * @param {string} hash - hash to verify
  * @returns {boolean}
  */
 function verifySignature(publicKey, signature, hash) {
@@ -28,10 +28,10 @@ function verifySignature(publicKey, signature, hash) {
 
 /**
  * Returns hash of the data
- * @param {any} data
- * @param {string} pubkey
- * @param {number} nonce
- * @param {boolean} [rejected]
+ * @param {any} data - data to hash
+ * @param {string} pubkey - public key
+ * @param {number} nonce - nonce
+ * @param {boolean} [rejected] - is rejected
  * @returns {string}
  */
 function getSignaturePayloadHash(data, pubkey, nonce, rejected = false) {
@@ -48,8 +48,8 @@ function getSignaturePayloadHash(data, pubkey, nonce, rejected = false) {
 
 /**
  * Returns hash of the data
- * @param {any} data
- * @param {string} [pubkey]
+ * @param {any} data - data to hash
+ * @param {string} [pubkey] - public key
  * @returns {string}
  */
 function getDataHash(data, pubkey = null) {

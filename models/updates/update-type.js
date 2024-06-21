@@ -4,12 +4,15 @@
  * @enum {number}
  */
 const UpdateType = {
-    NODES: 1,
-    ASSETS: 2,
-    PERIOD: 3,
-    WASM: 4,
-    CONTRACTS: 5,
-    CONFIG: 6
+    NODES: 'nodes',
+    WASM: 'wasm',
+    CONTRACTS: 'contracts',
+    CONFIG: 'config',
+
+    ORACLE_ASSETS: 'oracle_assets',
+    ORACLE_PERIOD: 'oracle_period',
+
+    SUBSCRIPTIONS_FEE: 'subscriptions_fee'
 }
 
 module.exports = UpdateType

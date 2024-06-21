@@ -1,9 +1,9 @@
 /*eslint-disable no-undef */
 const {Keypair} = require('@stellar/stellar-sdk')
 const Config = require('../models/configs/config')
-const {buildUpdates} = require('../updates-helper')
-const PeriodUpdate = require('../models/updates/period-update')
-const AssetsUpdate = require('../models/updates/assets-update')
+const {buildUpdates} = require('../helpers/updates-helper')
+const OraclePeriodUpdate = require('../models/updates/oracle/period-update')
+const OracleAssetsUpdate = require('../models/updates/oracle/assets-update')
 const ContractsUpdate = require('../models/updates/contracts-update')
 const NodesUpdate = require('../models/updates/nodes-update')
 const WasmUpdate = require('../models/updates/wasm-update')
@@ -153,7 +153,7 @@ test('buildUpdates, period test', () => {
     newConfig.contracts.get(contractToUpdate).period = 9999999
     const updates = buildUpdates(1, config, newConfig)
     expect(updates.size).toBe(1)
-    expect(updates.get(contractToUpdate)).toBeInstanceOf(PeriodUpdate)
+    expect(updates.get(contractToUpdate)).toBeInstanceOf(OraclePeriodUpdate)
 })
 
 test('buildUpdates, new contract test', () => {
@@ -165,7 +165,7 @@ test('buildUpdates, new contract test', () => {
     })
     const updates = buildUpdates(1, config, newConfig)
     expect(updates.size).toBe(1)
-    expect(updates.get(contractToUpdate)).toBeInstanceOf(AssetsUpdate)
+    expect(updates.get(contractToUpdate)).toBeInstanceOf(OracleAssetsUpdate)
 })
 
 test('buildUpdates, contract remove/add test', () => {
@@ -210,11 +210,50 @@ test('buildUpdates, update node test', () => {
 
 test('buildUpdates, update wasm test', () => {
     const config = new Config(rawConfig)
-    const newConfig = new Config(rawConfig)
-    newConfig.wasmHash = '551723e0178208dd25c950bf78ab5618d47257a594654bbcaaf6cec8dc8c241c'
+    const newConfig = new Config({
+        ...rawConfig,
+        ...{
+            wasmHash: '551723e0178208dd25c950bf78ab5618d47257a594654bbcaaf6cec8dc8c241c'
+        }
+    })
     const updates = buildUpdates(1, config, newConfig)
     expect(updates.size).toBe(1)
     expect(updates.get(null)).toBeInstanceOf(WasmUpdate)
+})
+
+test('buildUpdates, update wasm test (multiple)', () => {
+    try {
+        const config = new Config(rawConfig)
+        const newConfig = new Config({
+            ...rawConfig,
+            ...{
+                wasmHash: {
+                    oracle: '551723e0178208dd25c950bf78ab5618d47257a594654bbcaaf6cec8dc8c241c',
+                    subcriptions: '551723e0178208dd25c950bf78ab5618d47257a594654bbcaaf6cec8dc8c241c'
+                }
+            }
+        })
+        expect(() => buildUpdates(1, config, newConfig)).toThrow(ValidationError)
+    } catch (e) {
+        console.log(e)
+    }
+})
+
+test('buildUpdates, update wasm test (remove)', () => {
+    try {
+        const config = new Config(rawConfig)
+        const newConfig = new Config({
+            ...rawConfig,
+            ...{
+                wasmHash: {
+                    oracle: '551723e0178208dd25c950bf78ab5618d47257a594654bbcaaf6cec8dc8c241c'
+                }
+            }
+        })
+        expect(() => buildUpdates(1, config, newConfig)).toThrow(ValidationError)
+    } catch (e) {
+        console.log(e)
+    }
 })
 
 test('buildUpdates, two fee updates', () => {

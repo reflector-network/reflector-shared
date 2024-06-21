@@ -1,4 +1,5 @@
 const {sortObjectKeys} = require('../../utils/serialization-helper')
+const ContractTypes = require('../configs/contract-type')
 const UpdateBase = require('./update-base')
 const UpdateType = require('./update-type')
 
@@ -6,12 +7,16 @@ module.exports = class WasmUpdate extends UpdateBase {
     /**
      * @param {BigInt} timestamp - pending update timestamp
      * @param {string} wasmHash - contract wasm hash
+     * @param {string} contractType - contract type
      */
-    constructor(timestamp, wasmHash) {
+    constructor(timestamp, wasmHash, contractType) {
         super(UpdateType.WASM, timestamp)
         if (!wasmHash || wasmHash.length !== 64)
             throw new Error('wasmHash is not valid')
+        if (!contractType || !ContractTypes.isValidType(contractType))
+            throw new Error('contractType is not valid')
         this.wasmHash = wasmHash
+        this.contractType = contractType
     }
 
     /**

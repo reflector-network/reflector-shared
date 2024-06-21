@@ -3,8 +3,6 @@ const {isValidContractId, encodeAssetContractId} = require('../../utils/contract
 const {sortObjectKeys} = require('../../utils/serialization-helper')
 const AssetType = require('./asset-type')
 
-const assetTypeValues = Object.values(AssetType)
-
 class Asset {
 
     /**
@@ -15,8 +13,8 @@ class Asset {
         if (!type || !code)
             throw new Error('Asset type and code must be defined')
 
-        if (!assetTypeValues.includes(type))
-            throw new Error(`Asset type must be one of ${assetTypeValues.join(', ')}`)
+        if (!AssetType.isValidType(type))
+            throw new Error(`Asset type is invalid: ${type}`)
 
         switch (type) {
             case AssetType.STELLAR: {
@@ -37,7 +35,7 @@ class Asset {
                 }
             }
                 break
-            case AssetType.GENERIC:
+            case AssetType.OTHER:
                 if (code.length > 32)
                     new Error('Asset code must be 32 characters or less')
                 break

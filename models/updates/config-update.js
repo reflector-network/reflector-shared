@@ -7,7 +7,7 @@ module.exports = class ConfigUpdate extends UpdateBase {
 
     /**
      * Global config update
-     * @param {BigInt} timestamp - pending update timestamp
+     * @param {number} timestamp - pending update timestamp
      * @param {Config} newConfig - pending update configs
      * @param {Config} currentConfig - current configs
      */

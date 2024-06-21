@@ -1,18 +1,18 @@
-const PendingTransactionBase = require('./pending-transaction-base')
-const PendingTransactionType = require('./pending-transaction-type')
+const PendingTransactionBase = require('../pending-transaction-base')
+const PendingTransactionType = require('../pending-transaction-type')
 
 /**
- * @typedef {import('../assets/asset')} Asset
+ * @typedef {import('../../assets/asset')} Asset
  */
 
-module.exports = class AssetsPendingTransaction extends PendingTransactionBase {
+module.exports = class OracleAssetsUpdateTransaction extends PendingTransactionBase {
     /**
      * @param {Transaction} transaction - transaction hash
      * @param {number} timestamp - transaction timestamp
      * @param {Asset[]} assets - assets update
      */
     constructor(transaction, timestamp, assets) {
-        super(transaction, timestamp, PendingTransactionType.ASSETS_UPDATE)
+        super(transaction, timestamp, PendingTransactionType.ORACLE_ASSETS_UPDATE)
         if (!assets || !assets.length)
             throw new Error('assets is required')
         this.assets = assets

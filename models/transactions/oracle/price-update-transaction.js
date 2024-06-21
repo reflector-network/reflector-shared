@@ -1,7 +1,7 @@
-const PendingTransactionBase = require('./pending-transaction-base')
-const PendingTransactionType = require('./pending-transaction-type')
+const PendingTransactionBase = require('../pending-transaction-base')
+const PendingTransactionType = require('../pending-transaction-type')
 
-class PriceUpdatePendingTransaction extends PendingTransactionBase {
+class OraclePriceUpdateTransaction extends PendingTransactionBase {
 
     /**
      * @param {Transaction} transaction - transaction hash
@@ -9,7 +9,7 @@ class PriceUpdatePendingTransaction extends PendingTransactionBase {
      * @param {BigInt[]} prices - pending update prices
      */
     constructor(transaction, timestamp, prices) {
-        super(transaction, timestamp, PendingTransactionType.PRICE_UPDATE)
+        super(transaction, timestamp, PendingTransactionType.ORACLE_PRICE_UPDATE)
         if (!prices || !prices.length)
             throw new Error('prices is required')
         if (!timestamp)
@@ -27,4 +27,4 @@ class PriceUpdatePendingTransaction extends PendingTransactionBase {
     }
 }
 
-module.exports = PriceUpdatePendingTransaction
+module.exports = OraclePriceUpdateTransaction

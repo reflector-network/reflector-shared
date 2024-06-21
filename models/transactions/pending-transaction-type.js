@@ -1,15 +1,25 @@
+const {SUBSCRIPTIONS} = require('../configs/contract-type')
+
 /**
  * Enum asset type
  * @readonly
- * @enum {number}
+ * @enum {string}
  */
 const PendingTransactionType = {
-    INIT: 1,
-    NODES_UPDATE: 2,
-    ASSETS_UPDATE: 3,
-    PERIOD_UPDATE: 4,
-    PRICE_UPDATE: 5,
-    CONTRACT_UPDATE: 6
+    CONTRACT_UPDATE: 'contract_update',
+    NODES_UPDATE: 'nodes_update',
+
+    ORACLE_INIT: 'oracle_init',
+    ORACLE_ASSETS_UPDATE: 'oracle_assets_update',
+    ORACLE_PERIOD_UPDATE: 'oracle_period_update',
+    ORACLE_PRICE_UPDATE: 'price_update',
+
+    SUBSCRIPTIONS_INIT: 'subscriptions_init',
+    SUBSCRIPTIONS_CREATE: 'subscriptions_create',
+    SUBSCRIPTIONS_HEARTBEAT: 'subscriptions_heartbeat',
+    SUBSCRIPTIONS_TRIGGER: 'subscriptions_trigger',
+    SUBSCRIPTIONS_UPDATE_FEE: 'subscriptions_update_fee',
+    SUBSCRIPTIONS_CHARGE: 'subscriptions_charge'
 }
 
 module.exports = PendingTransactionType

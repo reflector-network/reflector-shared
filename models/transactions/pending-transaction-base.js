@@ -13,7 +13,7 @@ module.exports = class PendingTransactionBase {
     /**
      * @param {Transaction} transaction - transaction hash
      * @param {number} timestamp - transaction timestamp
-     * @param {number} type - transaction type
+     * @param {string} type - transaction type
      */
     constructor(transaction, timestamp, type) {
         //instance of this abstract class cannot be created
@@ -39,7 +39,7 @@ module.exports = class PendingTransactionBase {
     transaction
 
     /**
-     * @type {number}
+     * @type {string}
      */
     type
 

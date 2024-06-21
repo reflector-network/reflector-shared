@@ -1,15 +1,15 @@
-const PendingTransactionBase = require('./pending-transaction-base')
-const PendingTransactionType = require('./pending-transaction-type')
+const PendingTransactionBase = require('../pending-transaction-base')
+const PendingTransactionType = require('../pending-transaction-type')
 
-module.exports = class PeriodPendingTransaction extends PendingTransactionBase {
+module.exports = class OraclePeriodUpdateTransaction extends PendingTransactionBase {
     /**
      * @param {Transaction} transaction - transaction hash
      * @param {number} timestamp - transaction timestamp
      * @param {number} period - period update
      */
     constructor(transaction, timestamp, period) {
-        super(transaction, timestamp, PendingTransactionType.ASSETS_UPDATE)
-        if (!period || period <= 0)
+        super(transaction, timestamp, PendingTransactionType.ORACLE_PERIOD_UPDATE)
+        if (!period || isNaN(period) || period <= 0)
             throw new Error('period is required')
         this.period = period
     }

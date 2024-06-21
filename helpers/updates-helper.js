@@ -1,18 +1,20 @@
-const ValidationError = require('./models/validation-error')
-const AssetsUpdate = require('./models/updates/assets-update')
-const NodesUpdate = require('./models/updates/nodes-update')
-const PeriodUpdate = require('./models/updates/period-update')
-const WasmUpdate = require('./models/updates/wasm-update')
-const Config = require('./models/configs/config')
-const ContractsUpdate = require('./models/updates/contracts-update')
-const ConfigUpdate = require('./models/updates/config-update')
+const ValidationError = require('../models/validation-error')
+const OracleAssetsUpdate = require('../models/updates/oracle/assets-update')
+const NodesUpdate = require('../models/updates/nodes-update')
+const OraclePeriodUpdate = require('../models/updates/oracle/period-update')
+const WasmUpdate = require('../models/updates/wasm-update')
+const Config = require('../models/configs/config')
+const ContractsUpdate = require('../models/updates/contracts-update')
+const ConfigUpdate = require('../models/updates/config-update')
+const ContractTypes = require('../models/configs/contract-type')
+const SubscriptionsFeeUpdate = require('../models/updates/subscriptions/base-fee-update')
 
 /**
  * Builds updates from current config and new config
  * @param {BigInt} timestamp - timestamp of the update
  * @param {Config} currentConfig - current config
  * @param {Config} newConfig - new config
- * @returns {Map<string, NodesUpdate|WasmUpdate|ContractsUpdate|AssetsUpdate|PeriodUpdate|null>} updates grouped by contract id
+ * @returns {Map<string, NodesUpdate|WasmUpdate|ContractsUpdate|OracleAssetsUpdate|OraclePeriodUpdate|SubscriptionsFeeUpdate|null>} updates grouped by contract id
  */
 function buildUpdates(timestamp, currentConfig, newConfig) {
     if (!(currentConfig instanceof Config))
@@ -100,8 +102,8 @@ function __tryGetNodesUpdate(timestamp, currentNodes, newNodes) {
 /**
  * Tries to get assets update
  * @param {BigInt} timestamp - timestamp of the update
- * @param {Map<string, ContractConfig>} currentConfigs - current contract configs
- * @param {Map<string, ContractConfig>} newConfigs - new contract configs
+ * @param {Map<string, ContractConfigBase>} currentConfigs - current contract configs
+ * @param {Map<string, ContractConfigBase>} newConfigs - new contract configs
  * @returns {Map<string, UpdateBase>}
  */
 function __tryGetContractsUpdate(timestamp, currentConfigs, newConfigs) {
@@ -111,28 +113,39 @@ function __tryGetContractsUpdate(timestamp, currentConfigs, newConfigs) {
 
     const updates = new Map()
     changes.modified.forEach(({newItem: newConfig, currentItem: currentConfig}) => {
-        if (newConfig.oracleId !== currentConfig.oracleId)
-            throw new ValidationError(`Contract ${currentConfig.oracleId}. OracleId can not be modified`)
-        if (!newConfig.baseAsset.equals(currentConfig.baseAsset))
-            throw new ValidationError(`Contract ${currentConfig.oracleId}. Base asset can not be modified`)
-        if (newConfig.timeframe !== currentConfig.timeframe)
-            throw new ValidationError(`Contract ${currentConfig.oracleId}. Timeframe can not be modified`)
-        if (newConfig.decimals !== currentConfig.decimals)
-            throw new ValidationError(`Contract ${currentConfig.oracleId}. Decimals can not be modified`)
-
         let contractUpdate = null
         function setContractUpdate(update) {
             if (contractUpdate)
-                throw new ValidationError(`Contract ${currentConfig.oracleId}. Only one update can be applied at a time`)
+                throw new ValidationError(`Contract ${currentConfig.contractId}. Only one update can be applied at a time`)
             contractUpdate = update
-            updates.set(newConfig.oracleId, contractUpdate)
+            updates.set(newConfig.contractId, contractUpdate)
         }
-        setContractUpdate(__tryGetAssetsUpdate(timestamp, newConfig.oracleId, newConfig.admin, currentConfig.assets, newConfig.assets))
+        if (newConfig.contractId !== currentConfig.contractId)
+            throw new ValidationError(`Contract ${currentConfig.contractId}. Contract id can not be modified`)
+        if (newConfig.admin !== currentConfig.admin)
+            throw new ValidationError(`Contract ${currentConfig.admin}. Admin can not be modified`)
+        if (newConfig.type !== currentConfig.type)
+            throw new ValidationError(`Contract ${currentConfig.type}. Type can not be modified`)
+        if (newConfig.type === ContractTypes.ORACLE) {
+            if (!newConfig.baseAsset.equals(currentConfig.baseAsset))
+                throw new ValidationError(`Contract ${currentConfig.contractId}. Base asset can not be modified`)
+            if (newConfig.timeframe !== currentConfig.timeframe)
+                throw new ValidationError(`Contract ${currentConfig.contractId}. Timeframe can not be modified`)
+            if (newConfig.decimals !== currentConfig.decimals)
+                throw new ValidationError(`Contract ${currentConfig.contractId}. Decimals can not be modified`)
+            setContractUpdate(
+                __tryGetAssetsUpdate(timestamp, newConfig.contractId, newConfig.admin, currentConfig.assets, newConfig.assets)
+            )
 
-        if (newConfig.period !== currentConfig.period)
-            setContractUpdate(new PeriodUpdate(timestamp, newConfig.oracleId, newConfig.admin, newConfig.period))
-
-        updates.set(newConfig.oracleId, contractUpdate)
+            if (newConfig.period !== currentConfig.period)
+                setContractUpdate(new OraclePeriodUpdate(timestamp, newConfig.contractId, newConfig.admin, newConfig.period))
+        } else if (newConfig.type === ContractTypes.SUBSCRIPTIONS) {
+            if (newConfig.token !== currentConfig.token)
+                throw new ValidationError(`Contract ${currentConfig.contractId}. Token can not be modified`)
+            if (newConfig.baseFee !== currentConfig.baseFee)
+                setContractUpdate(new SubscriptionsFeeUpdate(timestamp, newConfig.contractId, newConfig.admin, newConfig.baseFee))
+        }
+        updates.set(newConfig.contractId, contractUpdate)
     })
 
     return updates
@@ -141,42 +154,50 @@ function __tryGetContractsUpdate(timestamp, currentConfigs, newConfigs) {
 /**
  * Tries to get assets update
  * @param {BigInt} timestamp
- * @param {string} oracleId
+ * @param {string} contractId
  * @param {string} admin
  * @param {Asset[]} currentAssets
  * @param {Asset[]} newAssets
- * @returns {AssetsUpdate}
+ * @returns {OracleAssetsUpdate}
  */
-function __tryGetAssetsUpdate(timestamp, oracleId, admin, currentAssets, newAssets) {
-    const assetsChanges = __getArrayChanges(newAssets, currentAssets, 'code', `${oracleId}:assets`)
+function __tryGetAssetsUpdate(timestamp, contractId, admin, currentAssets, newAssets) {
+    const assetsChanges = __getArrayChanges(newAssets, currentAssets, 'code', `${contractId}:assets`)
     if (assetsChanges.removed.length > 0 || assetsChanges.modified.length > 0)
-        throw new ValidationError(`Contract ${oracleId}. Assets can not be modified or removed`)
+        throw new ValidationError(`Contract ${contractId}. Assets can not be modified or removed`)
 
     if (assetsChanges.added.length === 0)
         return null
     //check that all current assets are in new assets
     for (let i = 0; i < currentAssets.length; i++) {
         if (!currentAssets[i].equals(newAssets[i]))
-            throw new ValidationError(`Contract ${oracleId}. Assets can not be modified or removed`)
+            throw new ValidationError(`Contract ${contractId}. Assets can not be modified or removed`)
     }
-    return new AssetsUpdate(timestamp, oracleId, admin, assetsChanges.added)
+    return new OracleAssetsUpdate(timestamp, contractId, admin, assetsChanges.added)
 }
 
 
 /**
  * Tries to get wasm update
  * @param {BigInt} timestamp
- * @param {string} currentWasm
- * @param {string} newWasm
+ * @param {Map<string, string>} currentWasm
+ * @param {Map<string, string>} newWasm
  * @returns {WasmUpdate}
  */
 function __tryGetWasmUpdate(timestamp, currentWasm, newWasm) {
-    if (currentWasm === newWasm)
+    const changes = __getChanges(newWasm, currentWasm)
+
+    if (changes.added.length === 0 && changes.modified.length === 0)
         return null
-    if (!newWasm)
+
+    if (changes.removed.length > 0)
         throw new ValidationError('Wasm can not be removed')
 
-    return new WasmUpdate(timestamp, newWasm)
+    if (changes.added.length > 0 && changes.modified.length > 0)
+        throw new ValidationError('Only one wasm update can be applied at a time')
+
+    const newWasmHash = changes.added.length > 0 ? changes.added[0] : changes.modified[0].newItem
+
+    return new WasmUpdate(timestamp, newWasmHash.hash, newWasmHash.type)
 }
 
 /**
@@ -202,6 +223,11 @@ function __getChanges(newMap, currentMap) {
         current: currentMap
     }
 
+    if (changes.new.size === 0) {
+        changes.removed = [...changes.current.values()]
+        return changes
+    }
+
     const allKeys = new Set([...changes.new.keys(), ...changes.current.keys()])
 
     allKeys.forEach(key => {
@@ -212,7 +238,7 @@ function __getChanges(newMap, currentMap) {
         } else if (!newItem && currentItem) {
             changes.removed.push(currentItem)
         } else if (newItem && currentItem) {
-            if (newItem.equals(currentItem)) {
+            if (newItem.equals && newItem.equals(currentItem) || newItem === currentItem) {
                 changes.unmodified.push(newItem)
             } else {
                 changes.modified.push({newItem, currentItem})

@@ -3,12 +3,16 @@ const {sortObjectKeys} = require('../../utils/serialization-helper')
 const UpdateBase = require('./update-base')
 const UpdateType = require('./update-type')
 
+/**
+ * @typedef {import('../configs/oracle-config')} OracleConfig
+ */
+
 module.exports = class ContractsUpdate extends UpdateBase {
 
     /**
      * @param {BigInt} timestamp - pending update timestamp
-     * @param {Map<string, ContractConfig>} newConfigs - pending update configs
-     * @param {Map<string, ContractConfig>} currentConfigs - current configs
+     * @param {Map<string, OracleConfig>} newConfigs - pending update configs
+     * @param {Map<string, OracleConfig>} currentConfigs - current configs
      */
     constructor(timestamp, newConfigs, currentConfigs) {
         super(UpdateType.CONTRACTS, timestamp)
