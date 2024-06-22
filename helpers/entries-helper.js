@@ -37,11 +37,12 @@ async function getContractInstance(contractId, sorobanRpc) {
  */
 function getNativeStorage(values) {
     const storage = {}
-    for (const value of values) {
-        const key = scValToNative(value.key())
-        const val = scValToNative(value.val())
-        storage[key] = val
-    }
+    if (values)
+        for (const value of values) {
+            const key = scValToNative(value.key())
+            const val = scValToNative(value.val())
+            storage[key] = val
+        }
     return storage
 }
 
@@ -68,11 +69,11 @@ async function getOracleContractState(contractId, sorobanRpc) {
     const {admin, last_timestamp: lastTimestamp, assets} = getNativeStorage(instance.storage())
 
     contractState.admin = admin
-    contractState.lastTimestamp = lastTimestamp
+    contractState.lastTimestamp = lastTimestamp || 0n
     contractState.hash = hash
     contractState.isInitialized = !!admin
 
-    if (assets.length < 1)
+    if (!assets || assets.length < 1 || !lastTimestamp)
         return contractState
 
     const assetsEntriesKeys = []
@@ -154,7 +155,7 @@ async function getContractState(contractId, sorobanRpc) {
     contractState.admin = admin
     contractState.hash = hash
     contractState.isInitialized = !!admin
-    contractState.lastTimestamp = lastTimestamp
+    contractState.lastTimestamp = lastTimestamp || 0n
 
     return contractState
 }
