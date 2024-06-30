@@ -93,6 +93,8 @@ class Asset {
             return false
         if (this.type === other.type && this.code === other.code)
             return true
+        if (!network)
+            return false
         if (this.type === AssetType.STELLAR && other.type === AssetType.STELLAR)
             return this.toOracleContractAsset(network).code === other.toOracleContractAsset(network).code
         return false
