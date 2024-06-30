@@ -83,10 +83,19 @@ class Asset {
         })
     }
 
-    equals(other) {
+    /**
+     * @param {Asset} other - asset to compare
+     * @param {string} network - network passphrase for full asset comparison for stellar assets
+     * @returns {boolean}
+     */
+    equals(other, network) {
         if (!(other instanceof Asset))
             return false
-        return this.type === other.type && this.code === other.code
+        if (this.type === other.type && this.code === other.code)
+            return true
+        if (this.type === AssetType.STELLAR && other.type === AssetType.STELLAR)
+            return this.toOracleContractAsset(network).code === other.toOracleContractAsset(network).code
+        return false
     }
 }
 
