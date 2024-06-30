@@ -179,9 +179,10 @@ test('getSubscriptionData', async () => {
 
     const contractId = 'CBFZZVW5SKMVTXKHHQKGOLLHYTOVNSYA774GCROOBMYAKEYCP4THNEXQ'
 
-    const {lastSubscriptionsId} = await getSubscriptionsContractState(contractId, ['https://soroban-testnet.stellar.org'])
+    const {lastSubscriptionId} = await getSubscriptionsContractState(contractId, ['https://soroban-testnet.stellar.org'])
 
-    const data = await getSubscriptions(contractId, ['https://soroban-testnet.stellar.org'], lastSubscriptionsId)
+    const data = await getSubscriptions(contractId, ['https://soroban-testnet.stellar.org'], lastSubscriptionId)
     expect(data).toBeDefined()
-    expect(data.length).toBe(Number(lastSubscriptionsId))
+    expect(data.length).toBe(1)
+    expect(data[0]).toBe(Number(lastSubscriptionId))
 }, 1000000)

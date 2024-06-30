@@ -16,6 +16,18 @@ const AssetType = {
             default:
                 return false
         }
+    },
+    getType: (type) => {
+        switch (type.toUpperCase()) {
+            case AssetType.STELLAR:
+            case 'STELLAR':
+                return AssetType.STELLAR
+            case AssetType.OTHER:
+            case 'OTHER':
+                return AssetType.OTHER
+            default:
+                throw new Error(`Asset type ${type} is not supported`)
+        }
     }
 }
 

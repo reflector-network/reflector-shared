@@ -5,28 +5,28 @@ module.exports = class SubscriptionsTriggerTransaction extends PendingTransactio
     /**
      * @param {Transaction} transaction - transaction
      * @param {number} timestamp - transaction timestamp
-     * @param {number[]} ids - ids of subscriptions
-     * @param {boolean} isHeartbeat - is heartbeat
+     * @param {BigInt[]} heartbeatIds - heartbeat subscriptions ids
+     * @param {BigInt[]} triggerIds - heartbeat subscriptions ids
      */
-    constructor(transaction, timestamp, ids, isHeartbeat) {
+    constructor(transaction, timestamp, heartbeatIds, triggerIds) {
         super(transaction, timestamp, PendingTransactionType.SUBSCRIPTIONS_TRIGGER)
-        if (!ids || !ids.length)
-            throw new Error('ids is required')
-        this.ids = ids
-        this.isHeartbeat = isHeartbeat
+        if (!heartbeatIds && !heartbeatIds.length && !triggerIds && !triggerIds.length)
+            throw new Error('heartbeatIds or triggerIds is required')
+        this.heartbeatIds = heartbeatIds
+        this.triggerIds = triggerIds
     }
 
     /**
-     * @type {number[]}
+     * @type {BigInt[]}
      */
-    ids
+    heartbeatIds
 
     /**
-     * @type {boolean}
+     * @type {BigInt[]}
      */
-    isHeartbeat
+    triggerIds
 
     getDebugInfo() {
-        return `Pending trigger tx: ids: ${this.ids.join(',')}, isHeartbeat: ${this.isHeartbeat}, timestamp: ${this.timestamp}, type: ${this.type}, hash: ${this.hashHex}`
+        return `Pending trigger tx: heartbeatIds: ${this.heartbeatIds.map(id => id.toString()).join(',')}, triggerIds: ${this.triggerIds.map(id => id.toString()).join(',')}, timestamp: ${this.timestamp}, type: ${this.type}, hash: ${this.hashHex}`
     }
 }

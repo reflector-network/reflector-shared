@@ -327,25 +327,8 @@ test('buildSubscriptionsTriggerTransaction', async () => {
         account,
         admin: contract.admin,
         timestamp: 100000,
-        ids: [1n],
-        fee: contract.fee,
-        maxTime: new Date(normalizeTimestamp(Date.now(), 1000) + 10000)
-    })
-    expect(transaction).toBeDefined()
-}, 10000)
-
-test('buildSubscriptionsHeartbeatTransaction', async () => {
-    const currentConfig = new Config(rawConfig)
-    const contract = currentConfig.contracts.get(subscriptoionsContract)
-    const transaction = await buildSubscriptionTriggerTransaction({
-        contractId: oracleContract,
-        network: 'testnet',
-        sorobanRpc,
-        account,
-        admin: contract.admin,
-        timestamp: 100000,
-        ids: [1n],
-        isHeartbeat: true,
+        triggerIds: [1n],
+        heartbeatIds: [1n],
         fee: contract.fee,
         maxTime: new Date(normalizeTimestamp(Date.now(), 1000) + 10000)
     })
@@ -389,5 +372,5 @@ test('buildGlobalConfigUpdateTransaction', async () => {
 
 test('account sequence', () => {
     //there is total 6 updates, so the sequence should be 6
-    expect(account.sequence).toBe(11)
+    expect(account.sequence).toBe(10)
 })

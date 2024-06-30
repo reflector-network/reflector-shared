@@ -86,7 +86,7 @@ module.exports = class OracleConfig extends ContractConfigBase {
     dataSource
 
     toPlainObject() {
-        return sortObjectKeys(
+        return sortObjectKeys({
             ...super.toPlainObject(),
             ...{
                 baseAsset: this.baseAsset?.toPlainObject(),
@@ -95,7 +95,8 @@ module.exports = class OracleConfig extends ContractConfigBase {
                 timeframe: this.timeframe,
                 period: this.period,
                 dataSource: this.dataSource
-            })
+            }
+        })
     }
 
     equals(other) {

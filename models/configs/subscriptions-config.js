@@ -15,13 +15,13 @@ module.exports = class SubscriptionsConfig extends ContractConfigBase {
     __assignDataSource(dataSources) {
         try {
 
-            if (!Array.isArray(dataSources) || dataSources.length === 0)
-                throw new Error(IssuesContainer.invalidOrNotDefined)
-
-            if (dataSources.length === 1 && dataSources[0] === '*') { //all contracts are data sources
+            if (dataSources === '*') { //all contracts are data sources
                 this.dataSources = dataSources
                 return
             }
+
+            if (!Array.isArray(dataSources) || dataSources.length === 0)
+                throw new Error(IssuesContainer.invalidOrNotDefined)
 
             for (const dataSource of dataSources) {
                 if (!isValidContractId(dataSource))
