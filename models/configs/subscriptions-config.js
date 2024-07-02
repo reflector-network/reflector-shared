@@ -51,13 +51,14 @@ module.exports = class SubscriptionsConfig extends ContractConfigBase {
     dataSources
 
     toPlainObject() {
-        return sortObjectKeys(
+        return sortObjectKeys({
             ...super.toPlainObject(),
             ...{
                 baseFee: this.baseFee,
                 token: this.token,
                 dataSources: this.dataSources
-            })
+            }
+        })
     }
 
     equals(other) {
