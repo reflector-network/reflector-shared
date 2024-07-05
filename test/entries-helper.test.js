@@ -1,7 +1,7 @@
 /*eslint-disable no-undef */
 const nock = require('nock')
 const {xdr, StrKey} = require('@stellar/stellar-sdk')
-const {getContractState, getSubscriptions, getSubscriptionsContractState, getOracleContractState} = require('../helpers/entries-helper')
+const {getSubscriptions, getSubscriptionsContractState, getOracleContractState} = require('../helpers/entries-helper')
 
 const contractDataResponse = {
     "jsonrpc": "2.0",

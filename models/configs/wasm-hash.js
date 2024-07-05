@@ -6,6 +6,12 @@ module.exports = class WasmHash {
         if (!raw) {
             throw new Error('Wasm hash item is not defined')
         }
+
+        if (typeof raw === 'string') {
+            raw = {hash: raw, type: ContractTypes.ORACLE}
+            this.isLegacy = true
+        }
+
         if (!raw.hash || typeof raw.hash !== 'string' || raw.hash.length !== 64)
             throw new Error(`Wasm hash is not valid: ${raw.hash}`)
 
@@ -27,7 +33,16 @@ module.exports = class WasmHash {
      */
     type
 
+
+    /**
+     * @type {boolean}
+     */
+    isLegacy = false
+
     toPlainObject() {
+        if (this.isLegacy) {
+            return this.hash
+        }
         return sortObjectKeys({
             hash: this.hash,
             type: this.type

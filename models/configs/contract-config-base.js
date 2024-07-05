@@ -4,12 +4,31 @@ const {sortObjectKeys} = require('../../utils/serialization-helper')
 const IssuesContainer = require('../issues-container')
 const ContractTypes = require('./contract-type')
 
+function isLegacyContract(raw) {
+    return raw.oracleId || !raw.contractId || !raw.type
+}
+
+function normalizeContract(raw) {
+    const rawClone = {...raw}
+    if (rawClone.oracleId && rawClone.type || rawClone.oracleId && rawClone.contractId)
+        throw new Error(`Cannot mix legacy and new contract format. ${rawClone.oracleId || rawClone.contractId}`)
+    if (!rawClone.type)
+        rawClone.type = ContractTypes.ORACLE
+    if (!rawClone.contractId)
+        rawClone.contractId = rawClone.oracleId
+    return rawClone
+}
+
 module.exports = class ContractConfigBase extends IssuesContainer {
     constructor(raw) {
         super()
         if (!raw) {
             this.__addIssue(`settings: ${IssuesContainer.notDefined}`)
             return
+        }
+        if (isLegacyContract(raw)) {
+            raw = normalizeContract(raw)
+            this.isLegacy = true
         }
         this.admin = !(raw.admin && StrKey.isValidEd25519PublicKey(raw.admin)) ? this.__addIssue(`admin: ${IssuesContainer.invalidOrNotDefined}`) : raw.admin
         this.contractId = !(raw.contractId && isValidContractId(raw.contractId)) ? this.__addIssue(`contractId: ${IssuesContainer.invalidOrNotDefined}`) : raw.contractId
@@ -37,13 +56,24 @@ module.exports = class ContractConfigBase extends IssuesContainer {
      */
     type
 
+    /**
+     * @type {boolean}
+     */
+    isLegacy = false
+
     toPlainObject() {
-        return sortObjectKeys({
+        const plainObject = {
             admin: this.admin,
             contractId: this.contractId,
             fee: this.fee,
             type: this.type
-        })
+        }
+        if (this.isLegacy) {
+            plainObject.oracleId = this.contractId
+            delete plainObject.contractId
+            delete plainObject.type
+        }
+        return sortObjectKeys(plainObject)
     }
 
     equals(other) {

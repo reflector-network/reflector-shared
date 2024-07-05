@@ -14,10 +14,9 @@ const WasmHash = require('./wasm-hash')
  */
 
 function getContract(raw) {
-    if (!raw)
-        return null
     switch (raw.type) {
         case ContractTypes.ORACLE:
+        case undefined:
             return new OracleConfig(raw)
         case ContractTypes.SUBSCRIPTIONS:
             return new SubscriptionsConfig(raw)
@@ -28,11 +27,13 @@ function getContract(raw) {
 
 function getWasmHash(raw) {
     if (!raw)
-        return null
+        return {}
     //check if string
     const wasmMap = new Map()
-    if (typeof raw === 'string') //backward compatibility
-        raw = {oracle: {type: ContractTypes.ORACLE, hash: raw}}
+    if (typeof raw === 'string') {//backward compatibility
+        raw = {[ContractTypes.ORACLE]: new WasmHash(raw)}
+        wasmMap.isLegacy = true
+    }
 
     const keys = Object.keys(raw)
 
@@ -42,21 +43,6 @@ function getWasmHash(raw) {
         wasmMap.set(key, new WasmHash(raw[key]))
     }
     return wasmMap
-}
-
-/**
- * Normalize contract object for compatibility with old contracts
- * @param {object} raw - raw contract object
- * @returns {object}
- */
-function normalizeContract(raw) {
-    if (!raw)
-        return null
-    if (!raw.type)
-        raw.type = ContractTypes.ORACLE
-    if (!raw.contractId)
-        raw.contractId = raw.oracleId
-    return raw
 }
 
 module.exports = class Config extends IssuesContainer {
@@ -104,6 +90,13 @@ module.exports = class Config extends IssuesContainer {
      */
     network = null
 
+    /**
+     * @type {boolean}
+     */
+    get isLegacy() {
+        return [...this.wasmHash.values()].some(wasm => wasm.isLegacy) || [...this.contracts.values()].some(contract => contract.isLegacy)
+    }
+
     __setContracts(contracts) {
         try {
             const allKeys = Object.keys(contracts)
@@ -111,7 +104,11 @@ module.exports = class Config extends IssuesContainer {
             if (allKeys.length !== contractIds.size)
                 throw new Error('Duplicate contractId found in contracts')
             for (const contractId of contractIds) {
-                const contractRaw = normalizeContract(contracts[contractId])
+                const contractRaw = contracts[contractId]
+                if (!contractRaw) {
+                    this.__addIssue(`contracts.${contractId}: ${IssuesContainer.notDefined}`)
+                    continue
+                }
                 const contract = getContract(contractRaw)
                 if (contract.contractId !== contractId)
                     this.__addIssue(`contracts.${contractId}: contractId '${contract.contractId}' does not match key '${contractId}'`)
@@ -208,10 +205,13 @@ module.exports = class Config extends IssuesContainer {
     }
 
     toPlainObject() {
+        const wasmHash = this.wasmHash.isLegacy
+            ? (Object.keys(this.wasmHash).length > 0 ? this.wasmHash.get(ContractTypes.ORACLE).hash : undefined)
+            : mapToPlainObject(this.wasmHash)
         return sortObjectKeys({
             contracts: mapToPlainObject(this.contracts),
             nodes: mapToPlainObject(this.nodes),
-            wasmHash: mapToPlainObject(this.wasmHash),
+            wasmHash,
             minDate: this.minDate,
             systemAccount: this.systemAccount,
             network: this.network
