@@ -65,6 +65,7 @@ module.exports = class SubscriptionsConfig extends ContractConfigBase {
         return super.equals(other)
             && this.baseFee === other.baseFee
             && this.token === other.token
-            && this.dataSources.every((dataSource, index) => dataSource === other.dataSources[index])
+            && ((this.dataSources === '*' && other.dataSources === '*')
+                || this.dataSources.every((dataSource, index) => dataSource === other.dataSources[index]))
     }
 }
