@@ -26,10 +26,10 @@ function getContract(raw) {
 }
 
 function getWasmHash(raw) {
-    if (!raw)
-        return {}
-    //check if string
     const wasmMap = new Map()
+    if (!raw)
+        return wasmMap
+
     if (typeof raw === 'string') {//backward compatibility
         raw = {[ContractTypes.ORACLE]: new WasmHash(raw)}
         wasmMap.isLegacy = true

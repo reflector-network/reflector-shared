@@ -3,7 +3,7 @@ const nock = require('nock')
 const {xdr, StrKey} = require('@stellar/stellar-sdk')
 const {getSubscriptions, getSubscriptionsContractState, getOracleContractState} = require('../helpers/entries-helper')
 
-const contractDataResponse = {
+const oracleInstanceResponse = {
     "jsonrpc": "2.0",
     "id": 1,
     "result": {
@@ -19,7 +19,7 @@ const contractDataResponse = {
     }
 }
 
-const entriesResponse = {
+const oracleEntriesResponse = {
     "jsonrpc": "2.0",
     "id": 1,
     "result": {
@@ -125,6 +125,42 @@ const entriesResponse = {
     }
 }
 
+const subsInstanceResponse = {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "result": {
+        "entries": [
+            {
+                "key": "AAAABgAAAAGZYdVm/xzsK5FZPyKyEs22eeu340r88xFTQSQZaIDQwwAAABQAAAAB",
+                "xdr": "AAAABgAAAAAAAAABmWHVZv8c7CuRWT8ishLNtnnrt+NK/PMRU0EkGWiA0MMAAAAUAAAAAQAAABMAAAAAx4MH2QtPGM+YfwgF06oyel8SYBt9+wcgvydzPGaDcLUAAAABAAAABAAAAA4AAAAFYWRtaW4AAAAAAAASAAAAAAAAAAAxNtZY6JYz7w65jwknuCQtV2yBh6yaMARB5wUiOs9eXQAAAA4AAAAIYmFzZV9mZWUAAAAFAAAAAAAAADIAAAAOAAAAFGxhc3Rfc3Vic2NyaXB0aW9uX2lkAAAABQAAAAAAAAABAAAADgAAAAV0b2tlbgAAAAAAABIAAAABSF/vaJrBLVRJsPsGT1EWBsDfhWod97UUYk+vS0vGv+k=",
+                "lastModifiedLedgerSeq": 487887,
+                "liveUntilLedgerSeq": 2561468
+            }
+        ],
+        "latestLedger": 488525
+    }
+}
+
+const subsEntriesResponse = {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "result": {
+        "entries": [
+            {
+                "key": "AAAABgAAAAGZYdVm/xzsK5FZPyKyEs22eeu340r88xFTQSQZaIDQwwAAAAUAAAAAAAAAAQAAAAE=",
+                "xdr": "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",
+                "lastModifiedLedgerSeq": 487881,
+                "liveUntilLedgerSeq": 2561478
+            }
+        ],
+        "latestLedger": 488545
+    }
+}
+
+function isContractInstanceRequest(rawData) {
+    return !xdr.LedgerKey.fromXDR(rawData, 'base64').contractData().key().value()
+}
+
 beforeEach(() => {
     nock('http://bad.rpc.com')
         .persist()
@@ -134,11 +170,21 @@ beforeEach(() => {
         .persist()
         .post(() => true)
         .reply((uri, requestBody) => {
-            if (requestBody.params.keys.length === 1) {
-                const key = StrKey.encodeContract(xdr.LedgerKey.fromXDR(requestBody.params.keys[0], 'base64').contractData().contract().value())
-                if (key === 'CBKZFI26PDCZUJ5HYYKVB5BWCNYUSNA5LVL4R2JTRVSOB4XEP7Y34OPN')
-                    return [200, contractDataResponse]
-                else {
+            const uriParams = new URLSearchParams(uri.substring(2))
+            switch (uriParams.get('reqData')) {
+                case 'oracle': {
+                    if (isContractInstanceRequest(requestBody.params.keys[0]))
+                        return [200, oracleInstanceResponse]
+                    else
+                        return [200, oracleEntriesResponse]
+                }
+                case 'subs': {
+                    if (isContractInstanceRequest(requestBody.params.keys[0]))
+                        return [200, subsInstanceResponse]
+                    else
+                        return [200, subsEntriesResponse]
+                }
+                default:
                     return [200, {
                         "jsonrpc": "2.0",
                         "id": 1,
@@ -147,16 +193,13 @@ beforeEach(() => {
                             "latestLedger": 1641313
                         }
                     }]
-                }
-            } else {
-                return [200, entriesResponse]
             }
         })
 })
 
 
 test('getContractData existing data', async () => {
-    const data = await getOracleContractState('CBKZFI26PDCZUJ5HYYKVB5BWCNYUSNA5LVL4R2JTRVSOB4XEP7Y34OPN', ['http://bad.rpc.com', 'http://good.rpc.com'])
+    const data = await getOracleContractState('CBKZFI26PDCZUJ5HYYKVB5BWCNYUSNA5LVL4R2JTRVSOB4XEP7Y34OPN', ['http://bad.rpc.com', 'http://good.rpc.com?reqData=oracle'])
     expect(data).toBeDefined()
     expect(data.admin).toBeDefined()
     expect(data.lastTimestamp).toBeGreaterThan(0n)
@@ -166,7 +209,7 @@ test('getContractData existing data', async () => {
 }, 1000000)
 
 test('getContractData non existing data', async () => {
-    const data = await getOracleContractState('CAFJZQWSED6YAWZU3GWRTOCNPPCGBN32L7QV43XX5LZLFTK6JLN34DLN', ['http://good.rpc.com'])
+    const data = await getOracleContractState('CAFJZQWSED6YAWZU3GWRTOCNPPCGBN32L7QV43XX5LZLFTK6JLN34DLN', ['http://good.rpc.com?reqData=none'])
     expect(data).toBeDefined()
     expect(data.admin).toBe(null)
     expect(data.lastTimestamp).toBe(0n)
@@ -177,12 +220,12 @@ test('getContractData non existing data', async () => {
 
 test('getSubscriptionData', async () => {
 
-    const contractId = 'CBFZZVW5SKMVTXKHHQKGOLLHYTOVNSYA774GCROOBMYAKEYCP4THNEXQ'
+    const contractId = 'CCMWDVLG74OOYK4RLE7SFMQSZW3HT25X4NFPZ4YRKNASIGLIQDIMHMOL'
 
-    const {lastSubscriptionId} = await getSubscriptionsContractState(contractId, ['https://soroban-testnet.stellar.org'])
+    const {lastSubscriptionId} = await getSubscriptionsContractState(contractId, ['http://good.rpc.com?reqData=subs'])
 
-    const data = await getSubscriptions(contractId, ['https://soroban-testnet.stellar.org'], lastSubscriptionId)
+    const data = await getSubscriptions(contractId, ['http://good.rpc.com?reqData=subs'], lastSubscriptionId)
     expect(data).toBeDefined()
     expect(data.length).toBe(1)
-    expect(data[0]).toBe(Number(lastSubscriptionId))
+    expect(data[0].id).toBe(lastSubscriptionId)
 }, 1000000)

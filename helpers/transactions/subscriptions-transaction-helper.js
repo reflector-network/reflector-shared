@@ -32,8 +32,7 @@ const SubscriptionsChargeTransaction = require('../../models/transactions/subscr
  * @property {string} contractId - contract id
  * @property {string} admin - contract admin
  * @property {number} timestamp - timestamp
- * @property {BigInt[]} triggerIds - trigger subscription ids
- * @property {BigInt[]} heartbeatIds - heartbeat subscription ids
+ * @property {Buffer} triggerHash - trigger hash
  * @property {Date} maxTime - tx max time
  */
 
@@ -88,14 +87,14 @@ async function buildSubscriptionFeeUpdateTransaction(sorobanRpc, account, txOpti
  * @returns {Promise<OraclePeriodUpdateTransaction>}
  */
 async function buildSubscriptionTriggerTransaction(triggerOptions) {
-    const {ids, triggerIds, heartbeatIds, contractId, admin, sorobanRpc, network, account, fee, maxTime, timestamp} = triggerOptions
+    const {ids, triggerHash, contractId, admin, sorobanRpc, network, account, fee, maxTime, timestamp} = triggerOptions
     const subscriptionsClient = new SubscriptionsClient(network, sorobanRpc, contractId)
     const tx = await subscriptionsClient.trigger(
         account,
-        {ids, timestamp, heartbeatIds, triggerIds, admin},
+        {ids, timestamp, triggerHash, admin},
         {fee, networkPassphrase: network, timebounds: {minTime: 0, maxTime}}
     )
-    return new SubscriptionsTriggerTransaction(tx, timestamp, heartbeatIds, triggerIds)
+    return new SubscriptionsTriggerTransaction(tx, timestamp, triggerHash)
 }
 
 /**

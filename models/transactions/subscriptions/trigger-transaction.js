@@ -5,28 +5,21 @@ module.exports = class SubscriptionsTriggerTransaction extends PendingTransactio
     /**
      * @param {Transaction} transaction - transaction
      * @param {number} timestamp - transaction timestamp
-     * @param {BigInt[]} heartbeatIds - heartbeat subscriptions ids
-     * @param {BigInt[]} triggerIds - heartbeat subscriptions ids
+     * @param {Buffer} triggerHash - trigger hash
      */
-    constructor(transaction, timestamp, heartbeatIds, triggerIds) {
+    constructor(transaction, timestamp, triggerHash) {
         super(transaction, timestamp, PendingTransactionType.SUBSCRIPTIONS_TRIGGER)
-        if (!heartbeatIds && !heartbeatIds.length && !triggerIds && !triggerIds.length)
-            throw new Error('heartbeatIds or triggerIds is required')
-        this.heartbeatIds = heartbeatIds
-        this.triggerIds = triggerIds
+        if (!triggerHash)
+            throw new Error('triggerHash is required')
+        this.triggerHash = triggerHash
     }
 
     /**
-     * @type {BigInt[]}
+     * @type {Buffer}
      */
-    heartbeatIds
-
-    /**
-     * @type {BigInt[]}
-     */
-    triggerIds
+    triggerHash
 
     getDebugInfo() {
-        return `Pending trigger tx: heartbeatIds: ${this.heartbeatIds.map(id => id.toString()).join(',')}, triggerIds: ${this.triggerIds.map(id => id.toString()).join(',')}, timestamp: ${this.timestamp}, type: ${this.type}, hash: ${this.hashHex}`
+        return `Pending trigger tx: triggerHash: ${this.triggerHash.toString('base64')}, timestamp: ${this.timestamp}, type: ${this.type}, hash: ${this.hashHex}`
     }
 }

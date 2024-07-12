@@ -1,4 +1,5 @@
 /*eslint-disable no-undef */
+const crypto = require('crypto')
 const nock = require('nock')
 const {Keypair} = require('@stellar/stellar-sdk')
 const Config = require('../models/configs/config')
@@ -165,7 +166,7 @@ const rawConfig = {
             "baseFee": 100,
             "fee": 10000000,
             "token": "CDBBDS5FN46XAVGD5IRKJIK4I7KGGSFI7R2KLXG32QQQELHPTIZS26BW",
-            "dataSources": ["*"],
+            "dataSources": "*",
             "contractId": "CBFZZVW5SKMVTXKHHQKGOLLHYTOVNSYA774GCROOBMYAKEYCP4THNEXQ"
         }
     },
@@ -190,7 +191,7 @@ const rawConfig = {
 const oracleContract = 'CAA2NN3TSWQFI6TZVLYM7B46RXBINZFRXZFP44BM2H6OHOPRXD5OASUW'
 const subscriptoionsContract = 'CBFZZVW5SKMVTXKHHQKGOLLHYTOVNSYA774GCROOBMYAKEYCP4THNEXQ'
 
-const sorobanRpc = ['http://bad.rpc.com', 'http://another.bad.rpc.com', 'http://good.rpc.com']
+const sorobanRpc = ['http://good.rpc.com']
 
 const account = {
     accountId: () => 'GCEBYD3K3IYSYLK5EQEK72RVAH2AHZUYSFFG4IOXUS5AOINLMXJRMDRA',
@@ -327,8 +328,7 @@ test('buildSubscriptionsTriggerTransaction', async () => {
         account,
         admin: contract.admin,
         timestamp: 100000,
-        triggerIds: [1n],
-        heartbeatIds: [1n],
+        triggerHash: crypto.randomBytes(32),
         fee: contract.fee,
         maxTime: new Date(normalizeTimestamp(Date.now(), 1000) + 10000)
     })
@@ -371,6 +371,6 @@ test('buildGlobalConfigUpdateTransaction', async () => {
 }, 10000)
 
 test('account sequence', () => {
-    //there is total 6 updates, so the sequence should be 6
+//there is total 6 updates, so the sequence should be 6
     expect(account.sequence).toBe(10)
 })

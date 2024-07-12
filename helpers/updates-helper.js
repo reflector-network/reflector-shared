@@ -186,7 +186,7 @@ function __tryGetAssetsUpdate(timestamp, contractId, admin, currentAssets, newAs
 function __tryGetWasmUpdate(timestamp, currentWasm, newWasm) {
     const changes = __getChanges(newWasm, currentWasm)
 
-    if (changes.added.length === 0 && changes.modified.length === 0)
+    if (changes.added.length === 0 && changes.modified.length === 0 && changes.removed.length === 0)
         return null
 
     if (changes.removed.length > 0)

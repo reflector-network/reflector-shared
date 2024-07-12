@@ -240,20 +240,10 @@ test('buildUpdates, update wasm test (multiple)', () => {
 })
 
 test('buildUpdates, update wasm test (remove)', () => {
-    try {
-        const config = new Config(rawConfig)
-        const newConfig = new Config({
-            ...rawConfig,
-            ...{
-                wasmHash: {
-                    oracle: '551723e0178208dd25c950bf78ab5618d47257a594654bbcaaf6cec8dc8c241c'
-                }
-            }
-        })
-        expect(() => buildUpdates(1, config, newConfig)).toThrow(ValidationError)
-    } catch (e) {
-        console.log(e)
-    }
+    const config = new Config(rawConfig)
+    const newConfig = new Config(rawConfig)
+    newConfig.wasmHash = new Map()
+    expect(() => buildUpdates(1, config, newConfig)).toThrow(ValidationError)
 })
 
 test('buildUpdates, two fee updates', () => {

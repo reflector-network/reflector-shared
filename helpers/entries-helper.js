@@ -196,6 +196,22 @@ async function getSubscriptions(contractId, sorobanRpc, max, batchSize = 50) {
     return subscriptions
 }
 
+/**
+ * Returns subscription by id
+ * @param {string} contractId - contract id
+ * @param {string[]} sorobanRpc - soroban rpc urls
+ * @param {BigInt} id - subscription id
+ * @returns {any}
+ */
+async function getSubscriptionById(contractId, sorobanRpc, id) {
+    const key = __getSubscriptionKey(contractId, id)
+    const subscriptionEntryRequestFn = async (server) => (await server.getLedgerEntries(...[key]))
+    const subscriptionEntries = (await makeRequest(subscriptionEntryRequestFn, sorobanRpc))?.entries || []
+    if (subscriptionEntries.length < 1)
+        return null
+    return __getSubscriptionObject(subscriptionEntries[0])
+}
+
 function __getSubscriptionKey(contractId, id) {
     return xdr.LedgerKey.contractData(
         new xdr.LedgerKeyContractData({
@@ -210,15 +226,6 @@ function __getSubscriptionObject(subscriptionEntry) {
     const id = scValToNative(subscriptionEntry.val.value().key())
     const data = scValToNative(subscriptionEntry.val.value().val())
     return {id, ...data}
-}
-
-async function getSubscriptionById(contractId, sorobanRpc, id) {
-    const key = __getSubscriptionKey(contractId, id)
-    const subscriptionEntryRequestFn = async (server) => (await server.getLedgerEntries(...[key]))
-    const subscriptionEntries = (await makeRequest(subscriptionEntryRequestFn, sorobanRpc))?.entries || []
-    if (subscriptionEntries.length < 1)
-        return null
-    return __getSubscriptionObject(subscriptionEntries[0])
 }
 
 module.exports = {

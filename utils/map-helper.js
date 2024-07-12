@@ -10,7 +10,9 @@ function areMapsEqual(map, otherMap) {
             return false
         }
 
-        return value.equals ? value.equals(otherMap.get(key)) : value === otherMap.get(key)
+        const areEqual = value.equals ? value.equals(otherMap.get(key)) : value === otherMap.get(key)
+        if (!areEqual)
+            return false
     }
 
     return true
