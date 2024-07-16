@@ -186,8 +186,19 @@ async function getSubscriptions(contractId, sorobanRpc, max, batchSize = 50) {
         const subscriptionsEntriesResult = (await makeRequest(subscriptionsEntriesRequestFn, sorobanRpc))
         const subscriptionsEntries = subscriptionsEntriesResult?.entries || []
 
-        for (const subscriptionEntry of subscriptionsEntries)
-            subscriptions.push(__getSubscriptionObject(subscriptionEntry))
+        for (const subscriptionKey of subscriptionsKeys) {
+            const subscriptionIndex = subscriptionsEntries.findIndex(entry => {
+                if (!entry.strKey)
+                    entry.strKey = entry.key.toXDR('base64') //cache xdr for filtering
+                return entry.strKey === subscriptionKey.strKey
+            })
+            if (subscriptionIndex < 0) { //not found
+                subscriptions.push(null)
+                continue
+            }
+            const subscription = subscriptionsEntries.splice(subscriptionIndex, 1)[0] //remove from array to speed up search
+            subscriptions.push(__getSubscriptionObject(subscription))
+        }
         from = to
         if (from >= max)
             break
@@ -213,16 +224,20 @@ async function getSubscriptionById(contractId, sorobanRpc, id) {
 }
 
 function __getSubscriptionKey(contractId, id) {
-    return xdr.LedgerKey.contractData(
+    const contractData = xdr.LedgerKey.contractData(
         new xdr.LedgerKeyContractData({
             contract: Address.fromString(contractId).toScAddress(),
             key: new XdrLargeInt('u64', id.toString()).toU64(),
             durability: xdr.ContractDataDurability.persistent()
         })
     )
+    contractData.strKey = contractData.toXDR('base64') //cache xdr for filtering
+    return contractData
 }
 
 function __getSubscriptionObject(subscriptionEntry) {
+    if (!subscriptionEntry)
+        return null
     const id = scValToNative(subscriptionEntry.val.value().key())
     const data = scValToNative(subscriptionEntry.val.value().val())
     return {id, ...data}

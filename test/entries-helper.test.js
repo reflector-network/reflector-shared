@@ -224,8 +224,9 @@ test('getSubscriptionData', async () => {
 
     const {lastSubscriptionId} = await getSubscriptionsContractState(contractId, ['http://good.rpc.com?reqData=subs'])
 
-    const data = await getSubscriptions(contractId, ['http://good.rpc.com?reqData=subs'], lastSubscriptionId)
+    const data = await getSubscriptions(contractId, ['http://good.rpc.com?reqData=subs'], 2)
     expect(data).toBeDefined()
-    expect(data.length).toBe(1)
+    expect(data.length).toBe(2)
     expect(data[0].id).toBe(lastSubscriptionId)
+    expect(data[1]).toBe(null)
 }, 1000000)
