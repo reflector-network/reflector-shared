@@ -151,7 +151,7 @@ async function getContractState(contractId, sorobanRpc) {
 
 
     const hash = instance.executable().wasmHash().toString('hex')
-    const {admin, last_timestamp: lastTimestamp, last_subscription_id: lastSubscriptionsId} = getNativeStorage(instance.storage())
+    const {admin, last_timestamp: lastTimestamp, last: lastSubscriptionsId} = getNativeStorage(instance.storage())
 
     contractState.admin = admin
     contractState.hash = hash
