@@ -130,7 +130,7 @@ async function buildContractUpdate(sorobanRpc, account, txOptions, update) {
         {admin: contractToUpdate.admin, wasmHash: update.wasmHash},
         txOptions
     )
-    return new WasmPendingTransaction(tx, update.timestamp, update.wasmHash.hash, update.contractsToUpdate.length > 1)
+    return new WasmPendingTransaction(tx, update.timestamp, update.wasmHash, update.contractsToUpdate.length > 1)
 }
 
 function getClientByType(contractType, network, sorobanRpc, contractId) {
