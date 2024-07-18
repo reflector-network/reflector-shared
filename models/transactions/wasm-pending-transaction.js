@@ -10,7 +10,7 @@ module.exports = class WasmPendingTransaction extends PendingTransactionBase {
      */
     constructor(transaction, timestamp, wasmHash, hasMoreTxns) {
         super(transaction, timestamp, PendingTransactionType.CONTRACT_UPDATE)
-        if (!wasmHash || wasmHash.length !== 128)
+        if (!wasmHash || wasmHash.length !== 64)
             throw new Error('wasmHash is not valid')
         this.wasmHash = wasmHash
         this.hasMoreTxns = hasMoreTxns
