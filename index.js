@@ -31,7 +31,9 @@ const {
 
 const {
     getMajority,
-    hasMajority
+    hasMajority,
+    isAllowedValidatorsUpdate,
+    filterRemovedValidators
 } = require('./utils/majority-helper')
 
 const {
@@ -94,6 +96,8 @@ module.exports.encodeAssetContractId = encodeAssetContractId
 module.exports.getNetworkIdHash = getNetworkIdHash
 module.exports.getMajority = getMajority
 module.exports.hasMajority = hasMajority
+module.exports.isAllowedValidatorsUpdate = isAllowedValidatorsUpdate
+module.exports.filterRemovedValidators = filterRemovedValidators
 module.exports.areMapsEqual = areMapsEqual
 module.exports.mapToPlainObject = mapToPlainObject
 module.exports.sortObjectKeys = sortObjectKeys
