@@ -9,6 +9,7 @@ module.exports = class ConfigEnvelope {
         this.__setConfig(rawEnvelope.config)
         this.__setSignatures(rawEnvelope.signatures)
         this.__setTimestamp(rawEnvelope.timestamp)
+        this.allowEarlySubmission = !!rawEnvelope.allowEarlySubmission
     }
 
     /**
@@ -25,6 +26,11 @@ module.exports = class ConfigEnvelope {
      * @type {number}
      */
     timestamp = null
+
+    /**
+     * @type {boolean}
+     */
+    allowEarlySubmission = false
 
     __setConfig(config) {
         if (!config)

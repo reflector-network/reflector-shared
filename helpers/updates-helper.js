@@ -8,6 +8,7 @@ const ContractsUpdate = require('../models/updates/contracts-update')
 const ConfigUpdate = require('../models/updates/config-update')
 const ContractTypes = require('../models/configs/contract-type')
 const SubscriptionsFeeUpdate = require('../models/updates/subscriptions/base-fee-update')
+const {getMajority} = require('../utils/majority-helper')
 
 /**
  * Builds updates from current config and new config
@@ -90,6 +91,9 @@ function __tryGetGlobalUpdate(timestamp, currentConfig, newConfig) {
  * @returns {NodesUpdate}
  */
 function __tryGetNodesUpdate(timestamp, currentNodes, newNodes) {
+    const majority = getMajority(currentNodes.size)
+    if (newNodes.size < majority)
+        throw new ValidationError('New nodes count is less than majority')
     const changes = __getChanges(newNodes, currentNodes)
     if (changes.added.length === 0 && changes.removed.length === 0 && changes.modified.length === 0)
         return null
