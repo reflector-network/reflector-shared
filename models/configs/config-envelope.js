@@ -9,7 +9,7 @@ module.exports = class ConfigEnvelope {
         this.__setConfig(rawEnvelope.config)
         this.__setSignatures(rawEnvelope.signatures)
         this.__setTimestamp(rawEnvelope.timestamp)
-        this.allowEarlySubmission = !!rawEnvelope.allowEarlySubmission
+        this.__setAllowEarlySubmission(rawEnvelope.allowEarlySubmission)
     }
 
     /**
@@ -31,6 +31,10 @@ module.exports = class ConfigEnvelope {
      * @type {boolean}
      */
     allowEarlySubmission = false
+
+    __setAllowEarlySubmission(allowEarlySubmission) {
+        this.allowEarlySubmission = !!allowEarlySubmission
+    }
 
     __setConfig(config) {
         if (!config)
@@ -59,7 +63,8 @@ module.exports = class ConfigEnvelope {
         return sortObjectKeys({
             config: this.config.toPlainObject(),
             signatures: this.signatures.map(s => s.toPlainObject()),
-            timestamp: this.timestamp
+            timestamp: this.timestamp,
+            allowEarlySubmission: this.allowEarlySubmission
         })
     }
 
