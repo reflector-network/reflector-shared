@@ -138,6 +138,11 @@ const rawConfig = {
             "pubkey": "GDQFOLVYRNYBTQ2WCXOANDAAM4BSZMLJUEI6CO2PMOCOVDS6SKM2AMRQ",
             "url": "ws://127.0.0.1:3001",
             "domain": "node1.com"
+        },
+        "GAL3OTXUY6SWY7BSS6EB43RY4EYH5LHJPKVANA6ACMLJEX7IVTJXEL26": {
+            "pubkey": "GAL3OTXUY6SWY7BSS6EB43RY4EYH5LHJPKVANA6ACMLJEX7IVTJXEL26",
+            "url": "ws://127.0.0.1:3002",
+            "domain": "node2.com"
         }
     },
     "systemAccount": "GCEBYD3K3IYSYLK5EQEK72RVAH2AHZUYSFFG4IOXUS5AOINLMXJRMDRA",
