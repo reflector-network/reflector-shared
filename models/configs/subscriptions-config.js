@@ -8,31 +8,6 @@ module.exports = class SubscriptionsConfig extends ContractConfigBase {
         super(raw)
         this.baseFee = !(raw.baseFee && !isNaN(raw.baseFee) && raw.baseFee > 0) ? this.__addIssue(`baseFee: ${IssuesContainer.invalidOrNotDefined}`) : raw.baseFee
         this.token = !(raw.token && isValidContractId(raw.token)) ? this.__addIssue(`token: ${IssuesContainer.invalidOrNotDefined}`) : raw.token
-
-        this.__assignDataSource(raw.dataSources)
-    }
-
-    __assignDataSource(dataSources) {
-        try {
-
-            if (dataSources === '*') { //all contracts are data sources
-                this.dataSources = dataSources
-                return
-            }
-
-            if (!Array.isArray(dataSources) || dataSources.length === 0)
-                throw new Error(IssuesContainer.invalidOrNotDefined)
-
-            for (const dataSource of dataSources) {
-                if (!isValidContractId(dataSource))
-                    throw new Error(`Invalid data source: ${dataSource}`)
-                if (this.dataSources.findIndex(ds => ds === dataSource) >= 0)
-                    throw new Error('Duplicate data source found in data sources')
-            }
-            this.dataSources = dataSources
-        } catch (err) {
-            this.__addIssue(`dataSources: ${err.message}`)
-        }
     }
 
     /**
@@ -44,11 +19,6 @@ module.exports = class SubscriptionsConfig extends ContractConfigBase {
      * @type {string}
      */
     token
-
-    /**
-     * @returns {string[]}
-     */
-    dataSources
 
     toPlainObject() {
         return sortObjectKeys({
@@ -65,7 +35,5 @@ module.exports = class SubscriptionsConfig extends ContractConfigBase {
         return super.equals(other)
             && this.baseFee === other.baseFee
             && this.token === other.token
-            && ((this.dataSources === '*' && other.dataSources === '*')
-                || this.dataSources.every((dataSource, index) => dataSource === other.dataSources[index]))
     }
 }

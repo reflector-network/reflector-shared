@@ -55,7 +55,6 @@ const legacyConfig = {
             "baseFee": 100,
             "fee": 10000000,
             "token": "CDBBDS5FN46XAVGD5IRKJIK4I7KGGSFI7R2KLXG32QQQELHPTIZS26BW",
-            "dataSources": "*",
             "contractId": "CBFZZVW5SKMVTXKHHQKGOLLHYTOVNSYA774GCROOBMYAKEYCP4THNEXQ"
         }
     },
