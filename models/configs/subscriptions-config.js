@@ -25,8 +25,7 @@ module.exports = class SubscriptionsConfig extends ContractConfigBase {
             ...super.toPlainObject(),
             ...{
                 baseFee: this.baseFee,
-                token: this.token,
-                dataSources: this.dataSources
+                token: this.token
             }
         })
     }
