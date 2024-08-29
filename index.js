@@ -33,7 +33,8 @@ const {
     getMajority,
     hasMajority,
     isAllowedValidatorsUpdate,
-    filterRemovedValidators
+    filterRemovedValidators,
+    areAllSignaturesPresent
 } = require('./utils/majority-helper')
 
 const {
@@ -98,6 +99,7 @@ module.exports.getMajority = getMajority
 module.exports.hasMajority = hasMajority
 module.exports.isAllowedValidatorsUpdate = isAllowedValidatorsUpdate
 module.exports.filterRemovedValidators = filterRemovedValidators
+module.exports.areAllSignaturesPresent = areAllSignaturesPresent
 module.exports.areMapsEqual = areMapsEqual
 module.exports.mapToPlainObject = mapToPlainObject
 module.exports.sortObjectKeys = sortObjectKeys

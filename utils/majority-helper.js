@@ -16,6 +16,12 @@ function filterRemovedValidators(currentValidators, newValidators) {
     return currentValidators.filter(node => newValidators.includes(node))
 }
 
+/**
+ * Check if the validators update is allowed
+ * @param {string[]} currentValidators - current validators
+ * @param {string[]} newValidators - new validators
+ * @returns {boolean}
+ */
 function isAllowedValidatorsUpdate(currentValidators, newValidators) {
     const validators = filterRemovedValidators(currentValidators, newValidators)
     //get current validators majority
@@ -23,9 +29,25 @@ function isAllowedValidatorsUpdate(currentValidators, newValidators) {
     return validators.length >= majority
 }
 
+/**
+ * Check if all signatures are present
+ * @param {string[]} currentValidators - current validators
+ * @param {string[]} newValidators - new validators
+ * @param {{pubkey:string}[]} signatures - signatures to check
+ * @returns {boolean}
+ */
+function areAllSignaturesPresent(currentValidators, newValidators, signatures) {
+    const requiredNodes = filterRemovedValidators(currentValidators, newValidators)
+    return requiredNodes
+        .every(node =>
+            signatures.some(signature => signature.pubkey === node)
+        )
+}
+
 module.exports = {
     hasMajority,
     getMajority,
     filterRemovedValidators,
-    isAllowedValidatorsUpdate
+    isAllowedValidatorsUpdate,
+    areAllSignaturesPresent
 }
