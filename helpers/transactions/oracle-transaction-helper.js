@@ -67,7 +67,7 @@ async function buildOracleInitTransaction(initOptions) {
             assets: assets.map(a => a.toOracleContractAsset(network)),
             period,
             baseAsset: baseAsset.toOracleContractAsset(network),
-            decimals,
+            decimals: decimals || initOptions.decimals, //legacy support. config.decimals will be removed in the future
             resolution: timeframe
         },
         {fee, networkPassphrase: network, timebounds: {minTime: 0, maxTime}}

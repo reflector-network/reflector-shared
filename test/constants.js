@@ -19,7 +19,6 @@ const legacyConfig = {
                 "type": 2
             },
             "dataSource": "exchanges",
-            "decimals": 14,
             "fee": 10000000,
             "oracleId": "CAA2NN3TSWQFI6TZVLYM7B46RXBINZFRXZFP44BM2H6OHOPRXD5OASUW",
             "period": 86400000,

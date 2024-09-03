@@ -6,11 +6,12 @@ const ContractConfigBase = require('./contract-config-base')
 module.exports = class OracleConfig extends ContractConfigBase {
     constructor(raw) {
         super(raw)
-        this.decimals = !(raw.decimals && raw.decimals > 0 && !isNaN(raw.decimals)) ? this.__addIssue(`decimals: ${IssuesContainer.invalidOrNotDefined}`) : raw.decimals
         this.timeframe = !(raw.timeframe && raw.timeframe > 0 && !isNaN(raw.timeframe)) ? this.__addIssue(`timeframe: ${IssuesContainer.invalidOrNotDefined}`) : raw.timeframe
         if (this.timeframe % 1000 * 60 !== 0)
             this.__addIssue('timeframe: Timeframe should be minutes in milliseconds')
         this.period = !(raw.period && !isNaN(raw.period) && raw.period > raw.timeframe) ? this.__addIssue(`period: ${IssuesContainer.invalidOrNotDefined}`) : raw.period
+
+        this.__assignDecimals(raw.decimals)
 
         this.__assignBaseAsset(raw.baseAsset)
 
@@ -55,6 +56,19 @@ module.exports = class OracleConfig extends ContractConfigBase {
         }
     }
 
+    __assignDecimals(decimals) {
+        try {
+            if (!decimals)
+                return
+            if (decimals < 0 || isNaN(decimals))
+                throw new Error('Decimals should be a positive number')
+            this.decimals = decimals
+            this.__decimalsSet = true
+        } catch (err) {
+            this.__addIssue(`decimals: ${err.message}`)
+        }
+    }
+
     /**
      * @type {Asset}
      */
@@ -62,6 +76,7 @@ module.exports = class OracleConfig extends ContractConfigBase {
 
     /**
      * @type {number}
+     * @deprecated
      */
     decimals
 
@@ -90,7 +105,7 @@ module.exports = class OracleConfig extends ContractConfigBase {
             ...super.toPlainObject(),
             ...{
                 baseAsset: this.baseAsset?.toPlainObject(),
-                decimals: this.decimals,
+                decimals: this.__decimalsSet ? this.decimals : undefined,
                 assets: this.assets.map(a => a.toPlainObject()),
                 timeframe: this.timeframe,
                 period: this.period,

@@ -4,6 +4,7 @@ const {sortObjectKeys} = require('../../utils/serialization-helper')
 const {areMapsEqual, mapToPlainObject} = require('../../utils/map-helper')
 const {getDataHash, getSignaturePayloadHash} = require('../../helpers/signatures-helper')
 const IssuesContainer = require('../issues-container')
+const Asset = require('../assets/asset')
 const ContractTypes = require('./contract-type')
 const OracleConfig = require('./oracle-config')
 const SubscriptionsConfig = require('./subscriptions-config')
@@ -58,6 +59,8 @@ module.exports = class Config extends IssuesContainer {
         this.__setMinDate(raw.minDate)
         this.__setSystemAccount(raw.systemAccount)
         this.__setNetwork(raw.network)
+        this.__setDecimals(raw.decimals)
+        this.__setBaseAssets(raw.baseAssets)
     }
 
     /**
@@ -89,6 +92,19 @@ module.exports = class Config extends IssuesContainer {
      * @type {string}
      */
     network = null
+
+    /**
+     * @type {number}
+     * @optional
+     */
+    decimals = undefined
+
+    /**
+     * Default base assets for different data sources
+     * @type {Map<string, string>}
+     * @optional
+     */
+    baseAssets = undefined
 
     /**
      * @type {boolean}
@@ -189,6 +205,38 @@ module.exports = class Config extends IssuesContainer {
         }
     }
 
+    __setDecimals(decimals) {
+        try {
+            if (!decimals)
+                return
+            if (decimals < 0 || isNaN(decimals))
+                throw new Error('Decimals should be a number')
+            this.decimals = decimals
+        } catch (err) {
+            this.__addIssue(`decimals: ${err.message}`)
+        }
+    }
+
+    __setBaseAssets(baseAssets) {
+        try {
+            if (!baseAssets)
+                return
+            const allKeys = Object.keys(baseAssets)
+            const dataSources = new Set(allKeys)
+            if (allKeys.length !== dataSources.size)
+                throw new Error('Duplicate asset code found in baseAssets')
+            this.baseAssets = new Map()
+            for (const dataSource of dataSources) {
+                const asset = baseAssets[dataSource]
+                if (!asset)
+                    throw new Error(`baseAssets.${dataSource}: ${IssuesContainer.notDefined}`)
+                this.baseAssets.set(dataSource, new Asset(asset.type, asset.code))
+            }
+        } catch (err) {
+            this.__addIssue(`baseAssets: ${err.message}`)
+        }
+    }
+
     getHash() {
         const rawConfig = this.toPlainObject()
         const hash = getDataHash(rawConfig)
@@ -214,7 +262,9 @@ module.exports = class Config extends IssuesContainer {
             wasmHash,
             minDate: this.minDate,
             systemAccount: this.systemAccount,
-            network: this.network
+            network: this.network,
+            decimals: this.decimals,
+            baseAssets: this.baseAssets ? mapToPlainObject(this.baseAssets) : undefined
         })
     }
 
@@ -227,5 +277,7 @@ module.exports = class Config extends IssuesContainer {
             && (ignoreMinDate ? true : this.minDate === other.minDate)
             && this.systemAccount === other.systemAccount
             && this.network === other.network
+            && this.decimals === other.decimals
+            && (this.baseAssets === other.baseAssets || areMapsEqual(this.baseAssets, other.baseAssets)) //baseAssets is optional
     }
 }

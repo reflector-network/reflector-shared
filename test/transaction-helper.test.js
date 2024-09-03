@@ -114,7 +114,6 @@ const rawConfig = {
                 "type": 2
             },
             "dataSource": "coinmarketcap",
-            "decimals": 14,
             "fee": 10000000,
             "oracleId": "CAA2NN3TSWQFI6TZVLYM7B46RXBINZFRXZFP44BM2H6OHOPRXD5OASUW",
             "period": 86400000,
@@ -208,6 +207,8 @@ account.incrementSequenceNumber = () => {
     account.sequence++
 }
 
+const defaultDecimals = 14
+
 test('buildOracleInitTransaction', async () => {
     const currentConfig = new Config(rawConfig)
     const config = currentConfig.contracts.get(oracleContract)
@@ -217,6 +218,7 @@ test('buildOracleInitTransaction', async () => {
         sorobanRpc,
         account,
         maxTime: new Date(normalizeTimestamp(Date.now(), 1000) + 10000),
+        decimals: defaultDecimals,
         fee: 1000000
     })
     expect(transaction).toBeDefined()
@@ -375,6 +377,6 @@ test('buildGlobalConfigUpdateTransaction', async () => {
 }, 10000)
 
 test('account sequence', () => {
-//there is total 6 updates, so the sequence should be 6
+    //there is total 6 updates, so the sequence should be 6
     expect(account.sequence).toBe(10)
 })
