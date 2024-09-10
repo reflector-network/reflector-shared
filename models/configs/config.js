@@ -61,6 +61,7 @@ module.exports = class Config extends IssuesContainer {
         this.__setNetwork(raw.network)
         this.__setDecimals(raw.decimals)
         this.__setBaseAssets(raw.baseAssets)
+        this.rsaKey = raw.rsaKey
     }
 
     /**
@@ -105,6 +106,11 @@ module.exports = class Config extends IssuesContainer {
      * @optional
      */
     baseAssets = undefined
+
+    /**
+     * @type {string} - base64 encoded RSA private key
+     */
+    rsaKey
 
     /**
      * @type {boolean}
@@ -264,7 +270,8 @@ module.exports = class Config extends IssuesContainer {
             systemAccount: this.systemAccount,
             network: this.network,
             decimals: this.decimals,
-            baseAssets: this.baseAssets ? mapToPlainObject(this.baseAssets) : undefined
+            baseAssets: this.baseAssets ? mapToPlainObject(this.baseAssets) : undefined,
+            rsaKey: this.rsaKey
         })
     }
 
@@ -279,5 +286,6 @@ module.exports = class Config extends IssuesContainer {
             && this.network === other.network
             && this.decimals === other.decimals
             && (this.baseAssets === other.baseAssets || areMapsEqual(this.baseAssets, other.baseAssets)) //baseAssets is optional
+            && this.rsaKey === other.rsaKey
     }
 }
