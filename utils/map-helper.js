@@ -18,7 +18,7 @@ function areMapsEqual(map, otherMap) {
     return true
 }
 
-function mapToPlainObject(map) {
+function mapToPlainObject(map, asLegacy = true) {
     if (!map)
         return
     if (!(map instanceof Map))
@@ -26,7 +26,7 @@ function mapToPlainObject(map) {
     const plainObj = {}
     for (const [key, value] of map) {
         if (value && typeof value.toPlainObject === 'function') {
-            plainObj[key] = value.toPlainObject()
+            plainObj[key] = value.toPlainObject(asLegacy)
         } else {
             plainObj[key] = value
         }

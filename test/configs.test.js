@@ -14,6 +14,12 @@ test('legacy config hash test', () => {
     expect(configHash).toBe(rawConfigHash)
 }, 1000000)
 
+test('convert to new format config test', () => {
+    const config = new Config(legacyConfig)
+    const newConfig = new Config(config.toPlainObject(false))
+    expect(newConfig.isLegacy).toBe(false)
+}, 1000000)
+
 
 test('mixed legacy config test', () => {
     const config = new Config(mixedLegacyConfig)

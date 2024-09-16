@@ -39,8 +39,8 @@ module.exports = class WasmHash {
      */
     isLegacy = false
 
-    toPlainObject() {
-        if (this.isLegacy) {
+    toPlainObject(asLegacy = true) {
+        if (this.isLegacy && asLegacy) {
             return this.hash
         }
         return sortObjectKeys({

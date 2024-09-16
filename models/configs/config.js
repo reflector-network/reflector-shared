@@ -258,13 +258,13 @@ module.exports = class Config extends IssuesContainer {
         return hash
     }
 
-    toPlainObject() {
-        const wasmHash = this.wasmHash.isLegacy
+    toPlainObject(asLegacy = true) {
+        const wasmHash = this.wasmHash.isLegacy && asLegacy
             ? (Object.keys(this.wasmHash).length > 0 ? this.wasmHash.get(ContractTypes.ORACLE).hash : undefined)
             : mapToPlainObject(this.wasmHash)
         return sortObjectKeys({
-            contracts: mapToPlainObject(this.contracts),
-            nodes: mapToPlainObject(this.nodes),
+            contracts: mapToPlainObject(this.contracts, asLegacy),
+            nodes: mapToPlainObject(this.nodes, asLegacy),
             wasmHash,
             minDate: this.minDate,
             systemAccount: this.systemAccount,

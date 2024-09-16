@@ -20,9 +20,9 @@ module.exports = class SubscriptionsConfig extends ContractConfigBase {
      */
     token
 
-    toPlainObject() {
+    toPlainObject(asLegacy = true) {
         return sortObjectKeys({
-            ...super.toPlainObject(),
+            ...super.toPlainObject(asLegacy),
             ...{
                 baseFee: this.baseFee,
                 token: this.token

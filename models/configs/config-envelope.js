@@ -59,9 +59,9 @@ module.exports = class ConfigEnvelope {
         this.timestamp = timestamp
     }
 
-    toPlainObject() {
+    toPlainObject(asLegacy = true) {
         return sortObjectKeys({
-            config: this.config.toPlainObject(),
+            config: this.config.toPlainObject(asLegacy),
             signatures: this.signatures.map(s => s.toPlainObject()),
             timestamp: this.timestamp,
             allowEarlySubmission: this.allowEarlySubmission

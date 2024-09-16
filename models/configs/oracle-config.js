@@ -100,9 +100,9 @@ module.exports = class OracleConfig extends ContractConfigBase {
      */
     dataSource
 
-    toPlainObject() {
+    toPlainObject(asLegacy = true) {
         return sortObjectKeys({
-            ...super.toPlainObject(),
+            ...super.toPlainObject(asLegacy),
             ...{
                 baseAsset: this.baseAsset?.toPlainObject(),
                 decimals: this.__decimalsSet ? this.decimals : undefined,

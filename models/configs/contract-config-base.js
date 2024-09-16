@@ -61,14 +61,14 @@ module.exports = class ContractConfigBase extends IssuesContainer {
      */
     isLegacy = false
 
-    toPlainObject() {
+    toPlainObject(asLegacy = true) {
         const plainObject = {
             admin: this.admin,
             contractId: this.contractId,
             fee: this.fee,
             type: this.type
         }
-        if (this.isLegacy) {
+        if (this.isLegacy && asLegacy) {
             plainObject.oracleId = this.contractId
             delete plainObject.contractId
             delete plainObject.type
