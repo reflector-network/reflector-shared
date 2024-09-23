@@ -222,6 +222,7 @@ test('buildOracleInitTransaction', async () => {
         fee: 1000000
     })
     expect(transaction).toBeDefined()
+    account.incrementSequenceNumber()
 }, 10000)
 
 test('buildOracleUpdateTransaction', async () => {
@@ -265,6 +266,7 @@ test('buildOracleUpdateTransaction', async () => {
         expect(transaction).toBeDefined()
         expect(transaction).not.toBeNull()
     }
+    account.incrementSequenceNumber()
 }, 10000)
 
 test('buildOraclePriceUpdateTransaction', async () => {
@@ -282,6 +284,7 @@ test('buildOraclePriceUpdateTransaction', async () => {
         maxTime: new Date(normalizeTimestamp(Date.now(), 1000) + 10000)
     })
     expect(transaction).toBeDefined()
+    account.incrementSequenceNumber()
 }, 10000)
 
 
@@ -298,6 +301,7 @@ test('buildSubscriptionsInitTransaction', async () => {
         fee: 1000000
     })
     expect(transaction).toBeDefined()
+    account.incrementSequenceNumber()
 }, 10000)
 
 test('buildSubscriptionsUpdateTransaction', async () => {
@@ -322,6 +326,7 @@ test('buildSubscriptionsUpdateTransaction', async () => {
         expect(transaction).toBeDefined()
         expect(transaction).not.toBeNull()
     }
+    account.incrementSequenceNumber()
 }, 10000)
 
 test('buildSubscriptionsTriggerTransaction', async () => {
@@ -339,6 +344,7 @@ test('buildSubscriptionsTriggerTransaction', async () => {
         maxTime: new Date(normalizeTimestamp(Date.now(), 1000) + 10000)
     })
     expect(transaction).toBeDefined()
+    account.incrementSequenceNumber()
 }, 10000)
 
 test('buildSubscriptionsChargeTransaction', async () => {
@@ -356,6 +362,7 @@ test('buildSubscriptionsChargeTransaction', async () => {
         maxTime: new Date(normalizeTimestamp(Date.now(), 1000) + 10000)
     })
     expect(transaction).toBeDefined()
+    account.incrementSequenceNumber()
 }, 10000)
 
 
@@ -374,6 +381,7 @@ test('buildGlobalConfigUpdateTransaction', async () => {
         fee: 1000000
     })
     expect(transaction).toBeNull()
+    account.incrementSequenceNumber()
 }, 10000)
 
 test('account sequence', () => {
