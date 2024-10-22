@@ -9,6 +9,7 @@ const {getContractState} = require('../entries-helper')
 const ContractTypes = require('../../models/configs/contract-type')
 const {buildOracleAssetsUpdateTransaction, buildOraclePeriodUpdateTransaction} = require('./oracle-transaction-helper')
 const {buildSubscriptionFeeUpdateTransaction} = require('./subscriptions-transaction-helper')
+const {buildDAODepositsUpdateTransaction} = require('./dao-transaction-helper')
 
 /**
  * @typedef {import('../../models/updates/nodes-update')} NodesUpdate
@@ -18,6 +19,7 @@ const {buildSubscriptionFeeUpdateTransaction} = require('./subscriptions-transac
  * @typedef {import('../../models/transactions/oracle/period-update-transaction')} OraclePeriodUpdateTransaction
  * @typedef {import('../../models/transactions/oracle/assets-update-transaction')} OracleAssetsUpdateTransaction
  * @typedef {import('../../models/transactions/subscriptions/fee-update-transaction')} SubscriptionsFeeUpdateTransaction
+ * @typedef {import('../../models/transactions/dao/deposits-update-transaction')} DAODepositsUpdateTransaction
  */
 
 
@@ -35,7 +37,7 @@ const {buildSubscriptionFeeUpdateTransaction} = require('./subscriptions-transac
 
 /**
  * @param {UpdateOptions} updateOptions - transaction options
- * @returns {Promise<OracleAssetsUpdateTransaction|NodesPendingTransaction|OraclePeriodUpdateTransaction|WasmPendingTransaction|SubscriptionsFeeUpdateTransaction>}
+ * @returns {Promise<OracleAssetsUpdateTransaction|NodesPendingTransaction|OraclePeriodUpdateTransaction|WasmPendingTransaction|SubscriptionsFeeUpdateTransaction|DAODepositsUpdateTransaction>}
  */
 async function buildUpdateTransaction(updateOptions) {
     const {network, maxTime, fee, timestamp, currentConfig, sorobanRpc, newConfig, account} = updateOptions
@@ -108,6 +110,9 @@ async function buildUpdateTransaction(updateOptions) {
             break
         case UpdateType.SUBSCRIPTIONS_FEE:
             tx = await buildSubscriptionFeeUpdateTransaction(sorobanRpc, account, txOptions, update)
+            break
+        case UpdateType.DAO_DEPOSITS:
+            tx = await buildDAODepositsUpdateTransaction(sorobanRpc, account, txOptions, update)
             break
         default:
             break //no updates that must be applied on blockchain

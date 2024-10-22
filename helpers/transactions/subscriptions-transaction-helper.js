@@ -7,8 +7,6 @@ const SubscriptionsChargeTransaction = require('../../models/transactions/subscr
 /**
  * @typedef {import('../../models/updates/subscriptions/base-fee-update')} SubscriptionsFeeUpdate
  * @typedef {import('../../models/configs/subscriptions-config')} SubscriptionsConfig
- * @typedef {import('../../models/configs/config')} Config
- * @typedef {import('../../models/configs/config-envelope')} ConfigEnvelope
  * @typedef {import('@stellar/stellar-sdk').Account} Account
  * @typedef {import('../../models/transactions/pending-transaction-base')} PendingTransactionBase
  */

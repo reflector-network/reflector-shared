@@ -3,7 +3,7 @@ const crypto = require('crypto')
 const nock = require('nock')
 const {Keypair} = require('@stellar/stellar-sdk')
 const Config = require('../models/configs/config')
-const {buildOracleInitTransaction, buildUpdateTransaction, buildOraclePriceUpdateTransaction, buildSubscriptionsInitTransaction, buildSubscriptionTriggerTransaction, buildSubscriptionChargeTransaction} = require('../index')
+const {buildOracleInitTransaction, buildUpdateTransaction, buildOraclePriceUpdateTransaction, buildSubscriptionsInitTransaction, buildSubscriptionTriggerTransaction, buildSubscriptionChargeTransaction, buildDAOInitTransaction} = require('../index')
 const Asset = require('../models/assets/asset')
 const Node = require('../models/node')
 const {normalizeTimestamp} = require('../utils/timestamp-helper')
@@ -166,6 +166,22 @@ const rawConfig = {
             "fee": 10000000,
             "token": "CDBBDS5FN46XAVGD5IRKJIK4I7KGGSFI7R2KLXG32QQQELHPTIZS26BW",
             "contractId": "CBFZZVW5SKMVTXKHHQKGOLLHYTOVNSYA774GCROOBMYAKEYCP4THNEXQ"
+        },
+        "CDB7K2IT4NXDV66BGOESQSSTGVJXZWDGA3DM6P3U2W435IBY6U7GVUII": {
+            type: ContractTypes.DAO,
+            "admin": "GAU4KKD63RYJ36OEV4IPVBQ5NEQOC5L3SQSS7GX2JRG3SQHAMFTQTF2G",
+            "initAmount": 100000000000,
+            "startDate": 1630000000,
+            "fee": 10000000,
+            "depositParams": {
+                "0": 100000,
+                "1": 10000000,
+                "2": 10000,
+                "3": 10000000
+            },
+            "token": "CDBBDS5FN46XAVGD5IRKJIK4I7KGGSFI7R2KLXG32QQQELHPTIZS26BW",
+            "contractId": "CDB7K2IT4NXDV66BGOESQSSTGVJXZWDGA3DM6P3U2W435IBY6U7GVUII",
+            "developer": "GCEBYD3K3IYSYLK5EQEK72RVAH2AHZUYSFFG4IOXUS5AOINLMXJRMDRA"
         }
     },
     "minDate": 0,
@@ -193,6 +209,7 @@ const rawConfig = {
 
 const oracleContract = 'CAA2NN3TSWQFI6TZVLYM7B46RXBINZFRXZFP44BM2H6OHOPRXD5OASUW'
 const subscriptoionsContract = 'CBFZZVW5SKMVTXKHHQKGOLLHYTOVNSYA774GCROOBMYAKEYCP4THNEXQ'
+const daoContract = 'CDB7K2IT4NXDV66BGOESQSSTGVJXZWDGA3DM6P3U2W435IBY6U7GVUII'
 
 const sorobanRpc = ['http://good.rpc.com']
 
@@ -384,7 +401,26 @@ test('buildGlobalConfigUpdateTransaction', async () => {
     account.incrementSequenceNumber()
 }, 10000)
 
+
+test('buildDAOInitTransaction', async () => {
+    const currentConfig = new Config(rawConfig)
+    const contract = currentConfig.contracts.get(daoContract)
+    const transaction = await buildDAOInitTransaction({
+        contractId: daoContract,
+        network: 'testnet',
+        config: contract,
+        sorobanRpc,
+        account,
+        admin: contract.admin,
+        timestamp: 100000,
+        fee: contract.fee,
+        maxTime: new Date(normalizeTimestamp(Date.now(), 1000) + 10000)
+    })
+    expect(transaction).toBeDefined()
+    account.incrementSequenceNumber()
+}, 10000)
+
 test('account sequence', () => {
     //there is total 6 updates, so the sequence should be 6
-    expect(account.sequence).toBe(10)
+    expect(account.sequence).toBe(11)
 })

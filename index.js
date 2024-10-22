@@ -11,6 +11,8 @@ const IssuesContainer = require('./models/issues-container')
 const ContractConfigBase = require('./models/configs/contract-config-base')
 const OracleConfig = require('./models/configs/oracle-config')
 const SubscriptionsConfig = require('./models/configs/subscriptions-config')
+const DAOConfig = require('./models/configs/dao-config')
+const BallotCategories = require('./models/ballot-categories')
 const ConfigEnvelope = require('./models/configs/config-envelope')
 const Config = require('./models/configs/config')
 const Node = require('./models/node')
@@ -63,9 +65,10 @@ const {
 
 const {buildOracleInitTransaction, buildOraclePriceUpdateTransaction} = require('./helpers/transactions/oracle-transaction-helper')
 const {buildSubscriptionsInitTransaction, buildSubscriptionChargeTransaction, buildSubscriptionTriggerTransaction} = require('./helpers/transactions/subscriptions-transaction-helper')
+const {buildDAOInitTransaction, buildDAODepositsUpdateTransaction, buildDAOVoteTransaction, buildDAOUnlockTransaction} = require('./helpers/transactions/dao-transaction-helper')
+const {getContractState, getOracleContractState, getSubscriptionsContractState, getSubscriptions, getSubscriptionById} = require('./helpers/entries-helper')
 
 const {buildUpdates} = require('./helpers/updates-helper')
-const {getContractState, getOracleContractState, getSubscriptionsContractState, getSubscriptions, getSubscriptionById} = require('./helpers/entries-helper')
 
 module.exports.UpdateType = UpdateType
 module.exports.UpdateBase = UpdateBase
@@ -79,6 +82,7 @@ module.exports.Asset = Asset
 module.exports.IssuesContainer = IssuesContainer
 module.exports.OracleConfig = OracleConfig
 module.exports.SubscriptionsConfig = SubscriptionsConfig
+module.exports.DAOConfig = DAOConfig
 module.exports.ContractConfigBase = ContractConfigBase
 module.exports.Config = Config
 module.exports.ConfigEnvelope = ConfigEnvelope
@@ -87,6 +91,7 @@ module.exports.PendingTransactionBase = PendingTransactionBase
 module.exports.PendingTransactionType = PendingTransactionType
 
 module.exports.ContractTypes = ContractTypes
+module.exports.BallotCategories = BallotCategories
 
 module.exports.OracleAssetsUpdateTransaction = OracleAssetsUpdateTransaction
 module.exports.OracleInitTransaction = OracleInitTransaction
@@ -122,6 +127,11 @@ module.exports.buildOraclePriceUpdateTransaction = buildOraclePriceUpdateTransac
 module.exports.buildSubscriptionsInitTransaction = buildSubscriptionsInitTransaction
 module.exports.buildSubscriptionChargeTransaction = buildSubscriptionChargeTransaction
 module.exports.buildSubscriptionTriggerTransaction = buildSubscriptionTriggerTransaction
+
+module.exports.buildDAOInitTransaction = buildDAOInitTransaction
+module.exports.buildDAODepositsUpdateTransaction = buildDAODepositsUpdateTransaction
+module.exports.buildDAOVoteTransaction = buildDAOVoteTransaction
+module.exports.buildDAOUnlockTransaction = buildDAOUnlockTransaction
 
 module.exports.buildUpdates = buildUpdates
 

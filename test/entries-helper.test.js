@@ -1,7 +1,7 @@
 /*eslint-disable no-undef */
 const nock = require('nock')
 const {xdr} = require('@stellar/stellar-sdk')
-const {getSubscriptions, getSubscriptionsContractState, getOracleContractState} = require('../helpers/entries-helper')
+const {getSubscriptions, getSubscriptionsContractState, getOracleContractState, getContractState} = require('../helpers/entries-helper')
 
 const oracleInstanceResponse = {
     "jsonrpc": "2.0",
@@ -163,6 +163,22 @@ const subsEntriesResponse = {
     }
 }
 
+const daoInstanceResponse = {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "result": {
+        "entries": [
+            {
+                "key": "AAAABgAAAAHD9WkT4246+8EziShKUzVTfNhmBsbPP3TVub6gOPU+agAAABQAAAAB",
+                "xdr": "AAAABgAAAAAAAAABw/VpE+NuOvvBM4koSlM1U3zYZgbGzz901bm+oDj1PmoAAAAUAAAAAQAAABMAAAAAPJlgJI98rKXlOpSoMRZN9NKvXUNvIhimYJUE4SVMY8gAAAABAAAADwAAAAMAAAAAAAAACgAAAAAAAAAAAAAAAAABhqAAAAADAAAAAQAAAAoAAAAAAAAAAAAAAAAAmJaBAAAAAwAAAAIAAAAKAAAAAAAAAAAAAAAAAAAnEgAAAAMAAAADAAAACgAAAAAAAAAAAAAAAACYloMAAAAOAAAAOEdBV0szR05PRU1aRExORkVBRTNSV0E2T01CSzdCM1hRT0tCRUxaUUlSSzZQWlJQRFBWSjRKUlFEAAAACgAAAAAAAAAAAAAAAAAAAAAAAAAOAAAAOEdCVkhBUk9XN1AyRFEzUTNFVUpIR0tFSTdPMlNJWVlUTktWSEJENkQ2WTczNUtLNVlMQ01ETktBAAAACgAAAAAAAAAAAAAAAALcbAAAAAAOAAAAOEdDRENNNExVSVk2NlQyUU5MSVFQVExITkdJVVdJQkNST0hHTUZSRjI0S0hBVTZKU01VMkhNNEFOAAAACgAAAAAAAAAAAAAAAALcbAAAAAAOAAAAOEdDR0JTVEtTS0ZUM0gyQVU2NElHQzJGT0lLV01RWlJJN0dZVEtSVEFJRVBHWkNLTk9OWVZZR0kzAAAACgAAAAAAAAAAAAAAAALcbAAAAAAOAAAAOEdDWUhPQ1JUTFI1RVc2WlJCSTVZWUNCVUNZT1FZSlFSUUlZSkszU0FVTU1BUkdXWVJQM041NTNFAAAACgAAAAAAAAAAAAAAAALcbAAAAAAOAAAAOEdEWVhGQ1BITTJUNVA3RkUyWDVCSlBOSlY1QlpTQ1ZQNkJFVTdHTkkyWEI0UkxUVlpYTkxIRUlOAAAACgAAAAAAAAAAAAAAAALcbAAAAAAOAAAABWFkbWluAAAAAAAAEgAAAAAAAAAAKcUoftxwnfnErxD6hh1pIOF1e5QlL5r6TE25QOBhZwkAAAAOAAAAC2Rhb19iYWxhbmNlAAAAAAoAAAAAAAAAAAAAABc2lUUAAAAADgAAAA5sYXN0X2JhbGxvdF9pZAAAAAAABQAAAAAAAAABAAAADgAAAAtsYXN0X3VubG9jawAAAAAFAAAAAGcJTrwAAAAOAAAABXRva2VuAAAAAAAAEgAAAAG2UwPMoDgzMNFA752Cezs4GZ9mQzj6aUWVr6pz/tzq/w==",
+                "lastModifiedLedgerSeq": 508998,
+                "liveUntilLedgerSeq": 2582579
+            }
+        ],
+        "latestLedger": 573556
+    }
+}
+
 function isContractInstanceRequest(rawData) {
     return !xdr.LedgerKey.fromXDR(rawData, 'base64').contractData().key().value()
 }
@@ -189,6 +205,9 @@ beforeEach(() => {
                         return [200, subsInstanceResponse]
                     else
                         return [200, subsEntriesResponse]
+                }
+                case 'dao': {
+                    return [200, daoInstanceResponse]
                 }
                 default:
                     return [200, {
@@ -237,4 +256,15 @@ test('getSubscriptionData', async () => {
     expect(data[0].id).toBe(1n)
     expect(data[1].id).toBe(2n)
     expect(data[2]).toBe(null)
+}, 1000000)
+
+
+test('getDAOData', async () => {
+
+    const contractId = 'CDB7K2IT4NXDV66BGOESQSSTGVJXZWDGA3DM6P3U2W435IBY6U7GVUII'
+
+    const {lastBallotId, lastUnlock} = await getContractState(contractId, ['http://good.rpc.com?reqData=dao'])
+    expect(lastBallotId).toBeGreaterThan(0n)
+    expect(lastUnlock).toBeGreaterThan(0n)
+
 }, 1000000)

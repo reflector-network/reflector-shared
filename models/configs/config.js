@@ -9,6 +9,7 @@ const ContractTypes = require('./contract-type')
 const OracleConfig = require('./oracle-config')
 const SubscriptionsConfig = require('./subscriptions-config')
 const WasmHash = require('./wasm-hash')
+const DAOConfig = require('./dao-config')
 
 /**
  * @typedef {import('./contract-config-base')} ContractConfigBase
@@ -21,6 +22,8 @@ function getContract(raw) {
             return new OracleConfig(raw)
         case ContractTypes.SUBSCRIPTIONS:
             return new SubscriptionsConfig(raw)
+        case ContractTypes.DAO:
+            return new DAOConfig(raw)
         default:
             throw new Error(`Unknown contract type: ${raw.type}`)
     }

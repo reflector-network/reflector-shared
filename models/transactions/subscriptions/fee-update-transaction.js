@@ -12,7 +12,7 @@ module.exports = class SubscriptionsFeeUpdateTransaction extends PendingTransact
      * @param {number} fee - new fee
      */
     constructor(transaction, timestamp, fee) {
-        super(transaction, timestamp, PendingTransactionType.SUBSCRIPTIONS_UPDATE_FEE)
+        super(transaction, timestamp, PendingTransactionType.SUBSCRIPTIONS_FEE_UPDATE)
         if (!fee || isNaN(fee) || fee <= 0)
             throw new Error('fee is required')
         this.fee = fee
