@@ -276,6 +276,15 @@ test('buildUpdates, update subscriptions fee', () => {
     expect(updates.get(subcriptions)).toBeInstanceOf(SubscriptionsFeeUpdate)
 })
 
+test('buildUpdates, add dao contract', () => {
+    const config = new Config(rawConfig)
+    config.contracts.delete(dao)
+    const newConfig = new Config(rawConfig)
+    const updates = buildUpdates(1, config, newConfig)
+    expect(updates.size).toBe(1)
+    expect(updates.get(null)).toBeInstanceOf(ContractsUpdate)
+})
+
 test('buildUpdates, update dao deposits', () => {
     const config = new Config(rawConfig)
     const newConfig = new Config(rawConfig)

@@ -75,7 +75,8 @@ module.exports = class DAOConfig extends ContractConfigBase {
                 initAmount: this.initAmount,
                 token: this.token,
                 startDate: this.startDate,
-                depositParams: mapToPlainObject(this.depositParams)
+                depositParams: mapToPlainObject(this.depositParams),
+                developer: this.developer
             }
         })
     }
@@ -86,5 +87,6 @@ module.exports = class DAOConfig extends ContractConfigBase {
             && this.token === other.token
             && this.startDate === other.startDate
             && areMapsEqual(this.depositParams, other.depositParams)
+            && this.developer === other.developer
     }
 }
