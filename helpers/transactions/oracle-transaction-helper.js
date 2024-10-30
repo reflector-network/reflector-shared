@@ -6,27 +6,9 @@ const OracleAssetsUpdateTransaction = require('../../models/transactions/oracle/
 
 /**
  * @typedef {import('../../models/updates/oracle/assets-update')} OracleAssetsUpdate
- * @typedef {import('../../models/updates/nodes-update')} NodesUpdate
  * @typedef {import('../../models/updates/oracle/period-update')} OraclePeriodUpdate
- * @typedef {import('../../models/updates/wasm-update')} WasmUpdate
  * @typedef {import('../../models/configs/oracle-config')} OracleConfig
- * @typedef {import('../../models/configs/config')} Config
- * @typedef {import('../../models/configs/config-envelope')} ConfigEnvelope
  * @typedef {import('@stellar/stellar-sdk').Account} Account
- * @typedef {import('../../models/transactions/pending-transaction-base')} PendingTransactionBase
- */
-
-
-/**
- * @typedef {Object} UpdateOptions
- * @property {string} network - network
- * @property {string[]} sorobanRpc - soroban rpc urls
- * @property {Config} currentConfig - current contract config
- * @property {Config} newConfig - pending contract config
- * @property {Account} account - account
- * @property {number} timestamp - timestamp
- * @property {Date} maxTime - tx max time
- * @property {number} fee - fee
  */
 
 /**

@@ -12,7 +12,9 @@ const UpdateType = {
     ORACLE_ASSETS: 'oracle_assets',
     ORACLE_PERIOD: 'oracle_period',
 
-    SUBSCRIPTIONS_FEE: 'subscriptions_fee'
+    SUBSCRIPTIONS_FEE: 'subscriptions_fee',
+
+    DAO_DEPOSITS: 'dao_deposits'
 }
 
 module.exports = UpdateType

@@ -1,5 +1,3 @@
-const {SUBSCRIPTIONS} = require('../configs/contract-type')
-
 /**
  * Enum asset type
  * @readonly
@@ -18,8 +16,13 @@ const PendingTransactionType = {
     SUBSCRIPTIONS_CREATE: 'subscriptions_create',
     SUBSCRIPTIONS_HEARTBEAT: 'subscriptions_heartbeat',
     SUBSCRIPTIONS_TRIGGER: 'subscriptions_trigger',
-    SUBSCRIPTIONS_UPDATE_FEE: 'subscriptions_update_fee',
-    SUBSCRIPTIONS_CHARGE: 'subscriptions_charge'
+    SUBSCRIPTIONS_FEE_UPDATE: 'subscriptions_fee_update',
+    SUBSCRIPTIONS_CHARGE: 'subscriptions_charge',
+
+    DAO_INIT: 'dao_init',
+    DAO_UNLOCK: 'dao_unlock',
+    DAO_VOTE: 'dao_vote',
+    DAO_DEPOSITS_UPDATE: 'dao_deposits_update'
 }
 
 module.exports = PendingTransactionType

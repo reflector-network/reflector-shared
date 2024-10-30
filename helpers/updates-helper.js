@@ -8,6 +8,7 @@ const ContractsUpdate = require('../models/updates/contracts-update')
 const ConfigUpdate = require('../models/updates/config-update')
 const ContractTypes = require('../models/configs/contract-type')
 const SubscriptionsFeeUpdate = require('../models/updates/subscriptions/base-fee-update')
+const DAODepositsUpdate = require('../models/updates/dao/deposits-update')
 const {isAllowedValidatorsUpdate} = require('../utils/majority-helper')
 
 /**
@@ -147,11 +148,43 @@ function __tryGetContractsUpdate(timestamp, currentConfigs, newConfigs) {
                 throw new ValidationError(`Contract ${currentConfig.contractId}. Token can not be modified`)
             if (newConfig.baseFee !== currentConfig.baseFee)
                 setContractUpdate(new SubscriptionsFeeUpdate(timestamp, newConfig.contractId, newConfig.admin, newConfig.baseFee))
+        } else if (newConfig.type === ContractTypes.DAO) {
+            if (newConfig.token !== currentConfig.token)
+                throw new ValidationError(`Contract ${currentConfig.contractId}. Token can not be modified`)
+            if (newConfig.initAmount !== currentConfig.initAmount)
+                throw new ValidationError(`Contract ${currentConfig.contractId}. Init amount can not be modified`)
+            if (newConfig.startDate !== currentConfig.startDate)
+                throw new ValidationError(`Contract ${currentConfig.contractId}. Start date can not be modified`)
+            setContractUpdate(
+                __tryGetDepositsUpdate(
+                    timestamp,
+                    newConfig.contractId,
+                    newConfig.admin,
+                    currentConfig.depositParams,
+                    newConfig.depositParams
+                )
+            )
         }
         updates.set(newConfig.contractId, contractUpdate)
     })
 
     return updates
+}
+
+/**
+ * Tries to get deposits update
+ * @param {BigInt} timestamp
+ * @param {string} contractId
+ * @param {string} admin
+ * @param {Map<number, string>} currentDeposits
+ * @param {Map<number, string>} newDeposits
+ * @returns {DAODepositsUpdate}
+ */
+function __tryGetDepositsUpdate(timestamp, contractId, admin, currentDeposits, newDeposits) {
+    const changes = __getChanges(newDeposits, currentDeposits)
+    if (changes.added.length === 0 && changes.removed.length === 0 && changes.modified.length === 0)
+        return null
+    return new DAODepositsUpdate(timestamp, contractId, admin, newDeposits)
 }
 
 /**

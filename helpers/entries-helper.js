@@ -142,6 +142,8 @@ async function getContractState(contractId, sorobanRpc) {
         isInitialized: false,
         lastTimestamp: 0n,
         lastSubscriptionsId: 0n,
+        lastBallotId: 0n,
+        lastUnlock: 0n,
         admin: null
     }
 
@@ -151,13 +153,21 @@ async function getContractState(contractId, sorobanRpc) {
 
 
     const hash = instance.executable().wasmHash().toString('hex')
-    const {admin, last_timestamp: lastTimestamp, last: lastSubscriptionsId} = getNativeStorage(instance.storage())
+    const {
+        admin,
+        last_timestamp: lastTimestamp,
+        last: lastSubscriptionsId,
+        last_ballot_id: lastBallotId,
+        last_unlock: lastUnlock
+    } = getNativeStorage(instance.storage())
 
     contractState.admin = admin
     contractState.hash = hash
     contractState.isInitialized = !!admin
     contractState.lastTimestamp = lastTimestamp || 0n
     contractState.lastSubscriptionsId = lastSubscriptionsId || 0n
+    contractState.lastBallotId = lastBallotId || 0n
+    contractState.lastUnlock = lastUnlock || 0n
 
     return contractState
 }
