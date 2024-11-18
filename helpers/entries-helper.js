@@ -1,9 +1,9 @@
-const {xdr, SorobanRpc, scValToBigInt, scValToNative, Address, XdrLargeInt, contract} = require('@stellar/stellar-sdk')
+const {xdr, rpc, scValToBigInt, scValToNative, Address, XdrLargeInt} = require('@stellar/stellar-sdk')
 
 async function makeRequest(requestFn, sorobanRpc) {
     for (const serverRpc of sorobanRpc) {
         try {
-            const server = new SorobanRpc.Server(serverRpc, {allowHttp: true})
+            const server = new rpc.Server(serverRpc, {allowHttp: true})
             return await requestFn(server)
         } catch (e) {
             console.error(`Failed to make request to ${serverRpc}: ${e}`)
@@ -23,7 +23,7 @@ function encodePriceRecordKey(timestamp, assetIndex) {
  */
 async function getContractInstance(contractId, sorobanRpc) {
     const key = xdr.ScVal.scvLedgerKeyContractInstance()
-    const contractDataRequestFn = async (server) => await server.getContractData(contractId, key, SorobanRpc.Durability.Persistent)
+    const contractDataRequestFn = async (server) => await server.getContractData(contractId, key, rpc.Durability.Persistent)
     const contractData = await makeRequest(contractDataRequestFn, sorobanRpc)
     if (!contractData)
         return null
