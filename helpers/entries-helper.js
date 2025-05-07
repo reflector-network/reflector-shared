@@ -50,7 +50,7 @@ function getNativeStorage(values) {
  * Returns hash of the data
  * @param {string} contractId - contract id
  * @param {string[]} sorobanRpc - soroban rpc urls
- * @returns {{hash: string, admin: string, lastTimestamp: BigInt, prices: BigInt[], isInitialized: boolean}}
+ * @returns {{hash: string, admin: string, lastTimestamp: BigInt, prices: BigInt[], isInitialized: boolean, assetTtls: BigInt[]}}
  */
 async function getOracleContractState(contractId, sorobanRpc) {
     const contractState = {
@@ -58,7 +58,8 @@ async function getOracleContractState(contractId, sorobanRpc) {
         lastTimestamp: 0n,
         prices: [],
         isInitialized: false,
-        admin: null
+        admin: null,
+        assetTtls: []
     }
 
     const instance = await getContractInstance(contractId, sorobanRpc)
@@ -66,12 +67,13 @@ async function getOracleContractState(contractId, sorobanRpc) {
         return contractState
 
     const hash = instance.executable().wasmHash().toString('hex')
-    const {admin, last_timestamp: lastTimestamp, assets} = getNativeStorage(instance.storage())
+    const {admin, last_timestamp: lastTimestamp, assets, asset_ttls: assetTtls} = getNativeStorage(instance.storage())
 
     contractState.admin = admin
     contractState.lastTimestamp = lastTimestamp || 0n
     contractState.hash = hash
     contractState.isInitialized = !!admin
+    contractState.assetTtls = assetTtls || []
 
     if (!assets || assets.length < 1 || !lastTimestamp)
         return contractState
@@ -99,8 +101,8 @@ async function getOracleContractState(contractId, sorobanRpc) {
         const key = scValToBigInt(assetEntry.key.value().key())
         const value = scValToBigInt(assetEntry.val.value().val())
         const assetIndex = keys.indexOf(key)
-        if (assetIndex)
-            prices[keys.indexOf(key)] = value
+        if (assetIndex >= 0)
+            prices[assetIndex] = value
     }
     contractState.prices = prices
 
