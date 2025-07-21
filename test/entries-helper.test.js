@@ -169,9 +169,8 @@ test('getContractData existing data', async () => {
     expect(data.admin).toBeDefined()
     expect(data.lastTimestamp).toBeGreaterThan(0n)
     expect(data.isInitialized).toBe(true)
-    expect(data.prices.length).toBeGreaterThan(0)
     expect(data.hash).toBeDefined()
-    expect(data.assetTtls.length).toBe(data.prices.length)
+    expect(data.assetTtls.length).toBeGreaterThan(0)
 }, 1000000)
 
 test('getContractData non existing data', async () => {
@@ -180,7 +179,6 @@ test('getContractData non existing data', async () => {
     expect(data.admin).toBe(null)
     expect(data.lastTimestamp).toBe(0n)
     expect(data.isInitialized).toBe(false)
-    expect(data.prices).toStrictEqual([])
     expect(data.hash).toBe(null)
 }, 1000000)
 

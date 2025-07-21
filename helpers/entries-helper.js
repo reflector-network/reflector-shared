@@ -33,15 +33,23 @@ async function getContractInstance(contractId, sorobanRpc) {
 /**
  * Returns native storage
  * @param {xdr.ScMapEntry[]} values - values
+ * @param {string[]} [keys] - keys to extract from storage (optional)
  * @returns {object}
  */
-function getNativeStorage(values) {
+function getNativeStorage(values, keys = []) {
     const storage = {}
     if (values)
         for (const value of values) {
             const key = scValToNative(value.key())
+            if (keys.length > 0 && !keys.includes(key))
+                continue
             const val = scValToNative(value.val())
             storage[key] = val
+            if (keys.includes(key)) {
+                keys.splice(keys.indexOf(key), 1) //remove key from array to speed up search
+                if (keys.length === 0)
+                    break
+            }
         }
     return storage
 }
@@ -50,13 +58,12 @@ function getNativeStorage(values) {
  * Returns hash of the data
  * @param {string} contractId - contract id
  * @param {string[]} sorobanRpc - soroban rpc urls
- * @returns {{hash: string, admin: string, lastTimestamp: BigInt, prices: BigInt[], isInitialized: boolean, assetTtls: BigInt[]}}
+ * @returns {{hash: string, admin: string, lastTimestamp: BigInt, isInitialized: boolean, assetTtls: BigInt[]}}
  */
 async function getOracleContractState(contractId, sorobanRpc) {
     const contractState = {
         hash: null,
         lastTimestamp: 0n,
-        prices: [],
         isInitialized: false,
         admin: null,
         assetTtls: []
@@ -67,44 +74,13 @@ async function getOracleContractState(contractId, sorobanRpc) {
         return contractState
 
     const hash = instance.executable().wasmHash().toString('hex')
-    const {admin, last_timestamp: lastTimestamp, assets, asset_ttls: assetTtls} = getNativeStorage(instance.storage())
+    const {admin, last_timestamp: lastTimestamp, asset_ttls: assetTtls} = getNativeStorage(instance.storage(), ['admin', 'last_timestamp', 'asset_ttls'])
 
     contractState.admin = admin
     contractState.lastTimestamp = lastTimestamp || 0n
     contractState.hash = hash
     contractState.isInitialized = !!admin
     contractState.assetTtls = assetTtls || []
-
-    if (!assets || assets.length < 1 || !lastTimestamp)
-        return contractState
-
-    const assetsEntriesKeys = []
-    const keys = []
-    for (let i = 0; i < assets.length; i++) {
-        const priceRecordKey = encodePriceRecordKey(lastTimestamp, i)
-        keys.push(priceRecordKey)
-        assetsEntriesKeys.push(xdr.LedgerKey.contractData(
-            new xdr.LedgerKeyContractData({
-                contract: Address.fromString(contractId).toScAddress(),
-                key: new XdrLargeInt('u128', priceRecordKey).toU128(),
-                durability: xdr.ContractDataDurability.temporary()
-            })
-        ))
-    }
-
-    const assetsEntriesRequestFn = async (server) => (await server.getLedgerEntries(...assetsEntriesKeys))
-    const assetsEntries = (await makeRequest(assetsEntriesRequestFn, sorobanRpc))?.entries || []
-
-    const prices = Array(assets.length).fill(0n)
-
-    for (const assetEntry of assetsEntries) {
-        const key = scValToBigInt(assetEntry.key.value().key())
-        const value = scValToBigInt(assetEntry.val.value().val())
-        const assetIndex = keys.indexOf(key)
-        if (assetIndex >= 0)
-            prices[assetIndex] = value
-    }
-    contractState.prices = prices
 
     return contractState
 }
@@ -128,7 +104,7 @@ async function getSubscriptionsContractState(contractId, sorobanRpc) {
         return contractState
 
     const hash = instance.executable().wasmHash().toString('hex')
-    const {admin, last: lastSubscriptionId} = getNativeStorage(instance.storage())
+    const {admin, last: lastSubscriptionId} = getNativeStorage(instance.storage(), ['admin', 'last'])
 
     contractState.admin = admin
     contractState.lastSubscriptionId = lastSubscriptionId
@@ -161,7 +137,7 @@ async function getContractState(contractId, sorobanRpc) {
         last: lastSubscriptionsId,
         last_ballot_id: lastBallotId,
         last_unlock: lastUnlock
-    } = getNativeStorage(instance.storage())
+    } = getNativeStorage(instance.storage(), ['admin', 'last_timestamp', 'last', 'last_ballot_id', 'last_unlock'])
 
     contractState.admin = admin
     contractState.hash = hash
