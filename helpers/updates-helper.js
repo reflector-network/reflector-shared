@@ -10,6 +10,8 @@ const ContractTypes = require('../models/configs/contract-type')
 const SubscriptionsFeeUpdate = require('../models/updates/subscriptions/base-fee-update')
 const DAODepositsUpdate = require('../models/updates/dao/deposits-update')
 const {isAllowedValidatorsUpdate} = require('../utils/majority-helper')
+const OracleRetentionUpdate = require('../models/updates/oracle/retention-update')
+const OracleCacheSizeUpdate = require('../models/updates/oracle/cache-size-update')
 
 /**
  * Builds updates from current config and new config
@@ -143,6 +145,14 @@ function __tryGetContractsUpdate(timestamp, currentConfigs, newConfigs) {
 
             if (newConfig.period !== currentConfig.period)
                 setContractUpdate(new OraclePeriodUpdate(timestamp, newConfig.contractId, newConfig.admin, newConfig.period))
+
+            if (newConfig.retentionConfig?.token !== currentConfig.retentionConfig?.token ||
+                newConfig.retentionConfig?.fee !== currentConfig.retentionConfig?.fee)
+                setContractUpdate(new OracleRetentionUpdate(timestamp, newConfig.contractId, newConfig.admin, newConfig.retentionConfig))
+
+            if (newConfig.cacheSize !== currentConfig.cacheSize)
+                setContractUpdate(new OracleCacheSizeUpdate(timestamp, newConfig.contractId, newConfig.admin, newConfig.cacheSize))
+
         } else if (newConfig.type === ContractTypes.SUBSCRIPTIONS) {
             if (newConfig.token !== currentConfig.token)
                 throw new ValidationError(`Contract ${currentConfig.contractId}. Token can not be modified`)

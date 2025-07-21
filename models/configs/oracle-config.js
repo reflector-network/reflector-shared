@@ -18,6 +18,10 @@ module.exports = class OracleConfig extends ContractConfigBase {
         this.__assignAssets(raw.assets)
 
         this.__assignDataSource(raw.dataSource)
+
+        this.__assignCacheSize(raw.cacheSize)
+
+        this.__assignRetentionConfig(raw.retentionConfig)
     }
 
     __assignBaseAsset(asset) {
@@ -58,7 +62,7 @@ module.exports = class OracleConfig extends ContractConfigBase {
 
     __assignDecimals(decimals) {
         try {
-            if (!decimals)
+            if (!decimals && decimals !== 0)
                 return
             if (decimals < 0 || isNaN(decimals))
                 throw new Error('Decimals should be a positive number')
@@ -66,6 +70,36 @@ module.exports = class OracleConfig extends ContractConfigBase {
             this.__decimalsSet = true
         } catch (err) {
             this.__addIssue(`decimals: ${err.message}`)
+        }
+    }
+
+    __assignCacheSize(cacheSize) {
+        try {
+            if (!cacheSize && cacheSize !== 0) {
+                this.cacheSize = 0
+                return
+            }
+            if (cacheSize < 0 || isNaN(cacheSize))
+                throw new Error('Cache size should be a positive number')
+            this.cacheSize = cacheSize
+            this.__cacheSizeSet = true
+        } catch (err) {
+            this.__addIssue(`cacheSize: ${err.message}`)
+        }
+    }
+
+    __assignRetentionConfig(retentionConfig) {
+        try {
+            if (!retentionConfig)
+                return
+            if (!retentionConfig.fee || typeof retentionConfig.fee !== 'string' || !BigInt(retentionConfig.fee))
+                throw new Error('retentionConfig.fee must be a BigInt string')
+            if (!retentionConfig.token || typeof retentionConfig.token !== 'string')
+                throw new Error('retentionConfig.token must be a string')
+            this.retentionConfig = {...retentionConfig, fee: BigInt(retentionConfig.fee)}
+            this.__retentionConfigSet = true
+        } catch (err) {
+            this.__addIssue(`retentionConfig: ${err.message}`)
         }
     }
 
@@ -109,7 +143,12 @@ module.exports = class OracleConfig extends ContractConfigBase {
                 assets: this.assets.map(a => a.toPlainObject()),
                 timeframe: this.timeframe,
                 period: this.period,
-                dataSource: this.dataSource
+                dataSource: this.dataSource,
+                cacheSize: this.__cacheSizeSet ? this.cacheSize : undefined,
+                retentionConfig: this.__retentionConfigSet ? {
+                    token: this.retentionConfig.token,
+                    fee: this.retentionConfig.fee.toString()
+                } : undefined
             }
         })
     }
@@ -123,5 +162,8 @@ module.exports = class OracleConfig extends ContractConfigBase {
             && this.timeframe === other.timeframe
             && this.period === other.period
             && this.dataSource === other.dataSource
+            && this.cacheSize === other.cacheSize
+            && this.retentionConfig?.token === other.retentionConfig?.token
+            && this.retentionConfig?.fee === other.retentionConfig?.fee
     }
 }

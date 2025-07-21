@@ -3,6 +3,8 @@ const OracleInitTransaction = require('../../models/transactions/oracle/init-tra
 const PriceUpdatePendingTransaction = require('../../models/transactions/oracle/price-update-transaction')
 const OraclePeriodUpdateTransaction = require('../../models/transactions/oracle/period-update-transaction')
 const OracleAssetsUpdateTransaction = require('../../models/transactions/oracle/assets-update-transaction')
+const OracleCacheSizeUpdateTransaction = require('../../models/transactions/oracle/cache-size-update-transaction')
+const OracleRetentionUpdateTransaction = require('../../models/transactions/oracle/retention-update-transaction')
 
 /**
  * @typedef {import('../../models/updates/oracle/assets-update')} OracleAssetsUpdate
@@ -19,6 +21,7 @@ const OracleAssetsUpdateTransaction = require('../../models/transactions/oracle/
  * @property {Account} account - account
  * @property {Date} maxTime - tx max time
  * @property {number} fee - fee
+ * @property {number} [decimals] - decimals, used for legacy support
  */
 
 /**
@@ -50,7 +53,8 @@ async function buildOracleInitTransaction(initOptions) {
             period,
             baseAsset: baseAsset.toOracleContractAsset(network),
             decimals: decimals || initOptions.decimals, //legacy support. config.decimals will be removed in the future
-            resolution: timeframe
+            resolution: timeframe,
+            cacheSize: config.cacheSize
         },
         {fee, networkPassphrase: network, timebounds: {minTime: 0, maxTime}}
     )
@@ -113,9 +117,41 @@ async function buildOracleAssetsUpdateTransaction(sorobanRpc, account, txOptions
     return new OracleAssetsUpdateTransaction(tx, update.timestamp, update.assets)
 }
 
+/**
+ * @param {string[]} sorobanRpc - soroban rpc urls
+ * @param {Account} account - account
+ * @param {any} txOptions - transaction options
+ * @param {OracleCacheSizeUpdate} update - pending update
+ * @return {Promise<OracleCacheSizeUpdateTransaction>}
+ */
+async function buildOracleCacheSizeUpdateTransaction(sorobanRpc, account, txOptions, update) {
+    const orcaleClient = new OracleClient(txOptions.networkPassphrase, sorobanRpc, update.contractId)
+    const tx = await orcaleClient.setCacheSize(
+        account,
+        {admin: update.admin, cacheSize: update.cacheSize},
+        txOptions
+    )
+    return new OracleCacheSizeUpdateTransaction(tx, update.timestamp, update.cacheSize)
+}
+
+async function buildOracleRetentionUpdateTransaction(sorobanRpc, account, txOptions, update) {
+    const orcaleClient = new OracleClient(txOptions.networkPassphrase, sorobanRpc, update.contractId)
+    const tx = await orcaleClient.setRetentionConfig(
+        account,
+        {
+            admin: update.admin,
+            retentionConfig: update.retentionConfig
+        },
+        txOptions
+    )
+    return new OracleRetentionUpdateTransaction(tx, update.timestamp, update.retentionConfig)
+}
+
 module.exports = {
     buildOracleInitTransaction,
     buildOraclePeriodUpdateTransaction,
     buildOracleAssetsUpdateTransaction,
-    buildOraclePriceUpdateTransaction
+    buildOraclePriceUpdateTransaction,
+    buildOracleCacheSizeUpdateTransaction,
+    buildOracleRetentionUpdateTransaction
 }

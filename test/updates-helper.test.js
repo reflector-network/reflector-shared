@@ -10,6 +10,8 @@ const WasmUpdate = require('../models/updates/wasm-update')
 const ValidationError = require('../models/validation-error')
 const DAODepositsUpdate = require('../models/updates/dao/deposits-update')
 const SubscriptionsFeeUpdate = require('../models/updates/subscriptions/base-fee-update')
+const OracleCacheSizeUpdate = require('../models/updates/oracle/cache-size-update')
+const OracleRetentionUpdate = require('../models/updates/oracle/retention-update')
 
 const rawConfig = {
     "contracts": {
@@ -362,4 +364,25 @@ test('buildUpdates, change sys account', () => {
     newConfig.systemAccount = Keypair.random().publicKey()
     const update = buildUpdates(1, config, newConfig)
     expect(update.size).toBe(1)
+})
+
+test('buildUpdates, change cache size', () => {
+    const config = new Config(rawConfig)
+    const newConfig = new Config(rawConfig)
+    newConfig.contracts.get(oracleToUpdate).cacheSize = 9999999
+    const update = buildUpdates(1, config, newConfig)
+    expect(update.size).toBe(1)
+    expect(update.get(oracleToUpdate)).toBeInstanceOf(OracleCacheSizeUpdate)
+})
+
+test('buildUpdates, change retention config', () => {
+    const config = new Config(rawConfig)
+    const newConfig = new Config(rawConfig)
+    newConfig.contracts.get(oracleToUpdate).retentionConfig = {
+        token: 'GDU4KKD63RYJ36OEV4IPVBQ5NEQOC5L3SQSS7GX2JRG3SQHAMFTQTF2G',
+        fee: 10000000n
+    }
+    const update = buildUpdates(1, config, newConfig)
+    expect(update.size).toBe(1)
+    expect(update.get(oracleToUpdate)).toBeInstanceOf(OracleRetentionUpdate)
 })
