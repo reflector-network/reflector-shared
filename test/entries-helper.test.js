@@ -123,87 +123,92 @@ function isContractInstanceRequest(rawData) {
     return !xdr.LedgerKey.fromXDR(rawData, 'base64').contractData().key().value()
 }
 
-beforeEach(() => {
-    nock('http://bad.rpc.com')
-        .persist()
-        .post(() => true)
-        .reply(503)
-    nock('http://good.rpc.com')
-        .persist()
-        .post(() => true)
-        .reply((uri, requestBody) => {
-            const uriParams = new URLSearchParams(uri.substring(2))
-            switch (uriParams.get('reqData')) {
-                case 'oracle': {
-                    if (isContractInstanceRequest(requestBody.params.keys[0]))
-                        return [200, oracleInstanceResponse]
-                    else
-                        return [200, oracleEntriesResponse]
+
+describe('entries helper', () => {
+
+    beforeEach(() => {
+        nock('http://bad.rpc.com')
+            .persist()
+            .post(() => true)
+            .reply(503)
+        nock('http://good.rpc.com')
+            .persist()
+            .post(() => true)
+            .reply((uri, requestBody) => {
+                const uriParams = new URLSearchParams(uri.substring(2))
+                switch (uriParams.get('reqData')) {
+                    case 'oracle': {
+                        if (isContractInstanceRequest(requestBody.params.keys[0]))
+                            return [200, oracleInstanceResponse]
+                        else
+                            return [200, oracleEntriesResponse]
+                    }
+                    case 'subs': {
+                        if (isContractInstanceRequest(requestBody.params.keys[0]))
+                            return [200, subsInstanceResponse]
+                        else
+                            return [200, subsEntriesResponse]
+                    }
+                    case 'dao': {
+                        return [200, daoInstanceResponse]
+                    }
+                    default:
+                        return [200, {
+                            "jsonrpc": "2.0",
+                            "id": 1,
+                            "result": {
+                                "entries": [],
+                                "latestLedger": 1641313
+                            }
+                        }]
                 }
-                case 'subs': {
-                    if (isContractInstanceRequest(requestBody.params.keys[0]))
-                        return [200, subsInstanceResponse]
-                    else
-                        return [200, subsEntriesResponse]
-                }
-                case 'dao': {
-                    return [200, daoInstanceResponse]
-                }
-                default:
-                    return [200, {
-                        "jsonrpc": "2.0",
-                        "id": 1,
-                        "result": {
-                            "entries": [],
-                            "latestLedger": 1641313
-                        }
-                    }]
-            }
-        })
+            })
+    })
+
+
+    test('getContractData existing data', async () => {
+        const data = await getOracleContractState('CB7YJYJCYH5IJVZEVF63FPFV2G3SRG72DWITTYOMT4MXMTC3AGPIPSIC', ['http://bad.rpc.com', 'http://good.rpc.com?reqData=oracle'])
+        expect(data).toBeDefined()
+        expect(data.admin).toBeDefined()
+        expect(data.lastTimestamp).toBeGreaterThan(0n)
+        expect(data.isInitialized).toBe(true)
+        expect(data.hash).toBeDefined()
+        expect(data.assetTtls.length).toBeGreaterThan(0)
+    }, 1000000)
+
+    test('getContractData non existing data', async () => {
+        const data = await getOracleContractState('CAFJZQWSED6YAWZU3GWRTOCNPPCGBN32L7QV43XX5LZLFTK6JLN34DLN', ['http://good.rpc.com?reqData=none'])
+        expect(data).toBeDefined()
+        expect(data.admin).toBe(null)
+        expect(data.lastTimestamp).toBe(0n)
+        expect(data.isInitialized).toBe(false)
+        expect(data.hash).toBe(null)
+    }, 1000000)
+
+    test('getSubscriptionData', async () => {
+
+        const contractId = 'CDAREEFGZQYIPPUXMP4SGRXMGGZJDGPHYYDZGGMK4A5XLUZYWKRWOTOA'
+
+        const {lastSubscriptionId} = await getSubscriptionsContractState(contractId, ['http://good.rpc.com?reqData=subs'])
+        expect(lastSubscriptionId).toBeGreaterThan(0n)
+
+        const data = await getSubscriptions(contractId, ['http://good.rpc.com?reqData=subs'], 3)
+        expect(data).toBeDefined()
+        expect(data.length).toBe(3)
+        expect(data[0].id).toBe(1n)
+        expect(data[1].id).toBe(2n)
+        expect(data[2]).toBe(null)
+    }, 1000000)
+
+
+    test('getDAOData', async () => {
+
+        const contractId = 'CDB7K2IT4NXDV66BGOESQSSTGVJXZWDGA3DM6P3U2W435IBY6U7GVUII'
+
+        const {lastBallotId, lastUnlock} = await getContractState(contractId, ['http://good.rpc.com?reqData=dao'])
+        expect(lastBallotId).toBeGreaterThan(0n)
+        expect(lastUnlock).toBeGreaterThan(0n)
+
+    }, 1000000)
+
 })
-
-
-test('getContractData existing data', async () => {
-    const data = await getOracleContractState('CB7YJYJCYH5IJVZEVF63FPFV2G3SRG72DWITTYOMT4MXMTC3AGPIPSIC', ['http://bad.rpc.com', 'http://good.rpc.com?reqData=oracle'])
-    expect(data).toBeDefined()
-    expect(data.admin).toBeDefined()
-    expect(data.lastTimestamp).toBeGreaterThan(0n)
-    expect(data.isInitialized).toBe(true)
-    expect(data.hash).toBeDefined()
-    expect(data.assetTtls.length).toBeGreaterThan(0)
-}, 1000000)
-
-test('getContractData non existing data', async () => {
-    const data = await getOracleContractState('CAFJZQWSED6YAWZU3GWRTOCNPPCGBN32L7QV43XX5LZLFTK6JLN34DLN', ['http://good.rpc.com?reqData=none'])
-    expect(data).toBeDefined()
-    expect(data.admin).toBe(null)
-    expect(data.lastTimestamp).toBe(0n)
-    expect(data.isInitialized).toBe(false)
-    expect(data.hash).toBe(null)
-}, 1000000)
-
-test('getSubscriptionData', async () => {
-
-    const contractId = 'CDAREEFGZQYIPPUXMP4SGRXMGGZJDGPHYYDZGGMK4A5XLUZYWKRWOTOA'
-
-    const {lastSubscriptionId} = await getSubscriptionsContractState(contractId, ['http://good.rpc.com?reqData=subs'])
-    expect(lastSubscriptionId).toBeGreaterThan(0n)
-
-    const data = await getSubscriptions(contractId, ['http://good.rpc.com?reqData=subs'], 3)
-    expect(data).toBeDefined()
-    expect(data.length).toBe(3)
-    expect(data[0].id).toBe(1n)
-    expect(data[1].id).toBe(2n)
-    expect(data[2]).toBe(null)
-}, 1000000)
-
-
-test('getDAOData', async () => {
-
-    const contractId = 'CDB7K2IT4NXDV66BGOESQSSTGVJXZWDGA3DM6P3U2W435IBY6U7GVUII'
-
-    const {lastBallotId, lastUnlock} = await getContractState(contractId, ['http://good.rpc.com?reqData=dao'])
-    expect(lastBallotId).toBeGreaterThan(0n)
-    expect(lastUnlock).toBeGreaterThan(0n)
-
-}, 1000000)

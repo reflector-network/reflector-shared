@@ -68,7 +68,7 @@ async function buildSubscriptionsInitTransaction(initOptions) {
  * @param {Account} account - account
  * @param {any} txOptions - transaction options
  * @param {SubscriptionsFeeUpdate} update - period update
- * @returns {Promise<OraclePeriodUpdateTransaction>}
+ * @returns {Promise<SubscriptionsFeeUpdateTransaction>}
  */
 async function buildSubscriptionFeeUpdateTransaction(sorobanRpc, account, txOptions, update) {
     const subscriptionsClient = new SubscriptionsClient(txOptions.networkPassphrase, sorobanRpc, update.contractId)
@@ -82,7 +82,7 @@ async function buildSubscriptionFeeUpdateTransaction(sorobanRpc, account, txOpti
 
 /**
  * @param {TriggerOptions} triggerOptions - trigger options
- * @returns {Promise<OraclePeriodUpdateTransaction>}
+ * @returns {Promise<SubscriptionsTriggerTransaction>}
  */
 async function buildSubscriptionTriggerTransaction(triggerOptions) {
     const {ids, triggerHash, contractId, admin, sorobanRpc, network, account, fee, maxTime, timestamp} = triggerOptions
@@ -97,7 +97,7 @@ async function buildSubscriptionTriggerTransaction(triggerOptions) {
 
 /**
  * @param {ChargeOptions} chargeOptions - charge options
- * @returns {Promise<OraclePeriodUpdateTransaction>}
+ * @returns {Promise<SubscriptionsChargeTransaction>}
  */
 async function buildSubscriptionChargeTransaction(chargeOptions) {
     const {ids, contractId, admin, account, sorobanRpc, network, fee, maxTime, timestamp} = chargeOptions

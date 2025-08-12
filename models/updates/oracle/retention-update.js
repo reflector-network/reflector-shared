@@ -2,7 +2,7 @@ const {sortObjectKeys} = require('../../../utils/serialization-helper')
 const UpdateType = require('../update-type')
 const ContractUpdateBase = require('../contract-update-base')
 
-module.exports = class OracleRetentionUpdate extends ContractUpdateBase {
+module.exports = class OracleRetentionConfigUpdate extends ContractUpdateBase {
     /**
      * @param {number} timestamp - pending update timestamp
      * @param {string} contractId - oracle id

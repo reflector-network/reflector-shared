@@ -1,7 +1,7 @@
 const ValidationError = require('../models/validation-error')
 const OracleAssetsUpdate = require('../models/updates/oracle/assets-update')
 const NodesUpdate = require('../models/updates/nodes-update')
-const OraclePeriodUpdate = require('../models/updates/oracle/period-update')
+const OracleHistoryPeriodUpdate = require('../models/updates/oracle/history-period-update')
 const WasmUpdate = require('../models/updates/wasm-update')
 const Config = require('../models/configs/config')
 const ContractsUpdate = require('../models/updates/contracts-update')
@@ -10,7 +10,7 @@ const ContractTypes = require('../models/configs/contract-type')
 const SubscriptionsFeeUpdate = require('../models/updates/subscriptions/base-fee-update')
 const DAODepositsUpdate = require('../models/updates/dao/deposits-update')
 const {isAllowedValidatorsUpdate} = require('../utils/majority-helper')
-const OracleRetentionUpdate = require('../models/updates/oracle/retention-update')
+const OracleRetentionConfigUpdate = require('../models/updates/oracle/retention-update')
 const OracleCacheSizeUpdate = require('../models/updates/oracle/cache-size-update')
 
 /**
@@ -144,11 +144,15 @@ function __tryGetContractsUpdate(timestamp, currentConfigs, newConfigs) {
             )
 
             if (newConfig.period !== currentConfig.period)
-                setContractUpdate(new OraclePeriodUpdate(timestamp, newConfig.contractId, newConfig.admin, newConfig.period))
+                setContractUpdate(
+                    new OracleHistoryPeriodUpdate(timestamp, newConfig.contractId, newConfig.admin, newConfig.period)
+                )
 
             if (newConfig.retentionConfig?.token !== currentConfig.retentionConfig?.token ||
                 newConfig.retentionConfig?.fee !== currentConfig.retentionConfig?.fee)
-                setContractUpdate(new OracleRetentionUpdate(timestamp, newConfig.contractId, newConfig.admin, newConfig.retentionConfig))
+                setContractUpdate(
+                    new OracleRetentionConfigUpdate(timestamp, newConfig.contractId, newConfig.admin, newConfig.retentionConfig)
+                )
 
             if (newConfig.cacheSize !== currentConfig.cacheSize)
                 setContractUpdate(new OracleCacheSizeUpdate(timestamp, newConfig.contractId, newConfig.admin, newConfig.cacheSize))

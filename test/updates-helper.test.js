@@ -2,7 +2,7 @@
 const {Keypair} = require('@stellar/stellar-sdk')
 const Config = require('../models/configs/config')
 const {buildUpdates} = require('../helpers/updates-helper')
-const OraclePeriodUpdate = require('../models/updates/oracle/period-update')
+const OracleHistoryRetetionPeriodUpdate = require('../models/updates/oracle/history-period-update')
 const OracleAssetsUpdate = require('../models/updates/oracle/assets-update')
 const ContractsUpdate = require('../models/updates/contracts-update')
 const NodesUpdate = require('../models/updates/nodes-update')
@@ -182,207 +182,210 @@ const oracleToUpdate2 = 'CBMZO5MRIBFL457FBK5FEWZ4QJTYL3XWID7QW7SWDSDOQI5H4JN7XPZ
 const subcriptions = 'CBFZZVW5SKMVTXKHHQKGOLLHYTOVNSYA774GCROOBMYAKEYCP4THNEXQ'
 const dao = 'CDB7K2IT4NXDV66BGOESQSSTGVJXZWDGA3DM6P3U2W435IBY6U7GVUII'
 
-test('buildUpdates, period test', () => {
-    const config = new Config(rawConfig)
-    const newConfig = new Config(rawConfig)
-    newConfig.contracts.get(oracleToUpdate).period = 9999999
-    const updates = buildUpdates(1, config, newConfig)
-    expect(updates.size).toBe(1)
-    expect(updates.get(oracleToUpdate)).toBeInstanceOf(OraclePeriodUpdate)
-})
+describe('updates helper', () => {
 
-test('buildUpdates, new contract test', () => {
-    const config = new Config(rawConfig)
-    const newConfig = new Config(rawConfig)
-    newConfig.contracts.get(oracleToUpdate).assets.push({
-        "code": "TEST",
-        "type": 2
+    test('buildUpdates, period test', () => {
+        const config = new Config(rawConfig)
+        const newConfig = new Config(rawConfig)
+        newConfig.contracts.get(oracleToUpdate).period = 9999999
+        const updates = buildUpdates(1, config, newConfig)
+        expect(updates.size).toBe(1)
+        expect(updates.get(oracleToUpdate)).toBeInstanceOf(OracleHistoryRetetionPeriodUpdate)
     })
-    const updates = buildUpdates(1, config, newConfig)
-    expect(updates.size).toBe(1)
-    expect(updates.get(oracleToUpdate)).toBeInstanceOf(OracleAssetsUpdate)
-})
 
-test('buildUpdates, contract remove/add test', () => {
-
-    const config = new Config(rawConfig)
-    const newConfig = new Config(rawConfig)
-    newConfig.contracts.delete(oracleToUpdate)
-    let updates = buildUpdates(1, config, newConfig)
-    expect(updates.size).toBe(1)
-    expect(updates.get(null)).toBeInstanceOf(ContractsUpdate)
-
-    updates = buildUpdates(1, newConfig, config)
-    expect(updates.size).toBe(1)
-    expect(updates.get(null)).toBeInstanceOf(ContractsUpdate)
-})
-
-test('buildUpdates, node remove/add test', () => {
-
-    const config = new Config(rawConfig)
-    const newConfig = new Config(rawConfig)
-    const nodePubkey = 'GCR6ZOFMKDWX5OMUDQZHQWD2FEE4WCWQJOBMRZRQM5BVTPKJ7LL35TBF'
-    newConfig.nodes.delete(nodePubkey)
-    let updates = buildUpdates(1, config, newConfig)
-    expect(updates.size).toBe(1)
-    expect(updates.get(null)).toBeInstanceOf(NodesUpdate)
-
-    updates = buildUpdates(1, newConfig, config)
-    expect(updates.size).toBe(1)
-    expect(updates.get(null)).toBeInstanceOf(NodesUpdate)
-})
-
-test('buildUpdates, update node test', () => {
-
-    const config = new Config(rawConfig)
-    const newConfig = new Config(rawConfig)
-    const nodePubkey = 'GCR6ZOFMKDWX5OMUDQZHQWD2FEE4WCWQJOBMRZRQM5BVTPKJ7LL35TBF'
-    newConfig.nodes.get(nodePubkey).url = 'ws://localhost:3000'
-    const secondPubkey = 'GDQFOLVYRNYBTQ2WCXOANDAAM4BSZMLJUEI6CO2PMOCOVDS6SKM2AMRQ'
-    newConfig.nodes.get(secondPubkey).domain = 'newdomain.com'
-    const updates = buildUpdates(1, config, newConfig)
-    expect(updates.size).toBe(1)
-    expect(updates.get(null)).toBeInstanceOf(NodesUpdate)
-})
-
-test('buildUpdates, update two nodes test', () => {
-
-    const config = new Config(rawConfig)
-    const newConfig = new Config(rawConfig)
-    const nodePubkey = 'GCR6ZOFMKDWX5OMUDQZHQWD2FEE4WCWQJOBMRZRQM5BVTPKJ7LL35TBF'
-    newConfig.nodes.get(nodePubkey).url = 'ws://localhost:3000'
-    const updates = buildUpdates(1, config, newConfig)
-    expect(updates.size).toBe(1)
-    expect(updates.get(null)).toBeInstanceOf(NodesUpdate)
-})
-
-test('buildUpdates, update wasm test', () => {
-    const config = new Config(rawConfig)
-    const newConfig = new Config({
-        ...rawConfig,
-        ...{
-            wasmHash: '551723e0178208dd25c950bf78ab5618d47257a594654bbcaaf6cec8dc8c241c'
-        }
+    test('buildUpdates, new contract test', () => {
+        const config = new Config(rawConfig)
+        const newConfig = new Config(rawConfig)
+        newConfig.contracts.get(oracleToUpdate).assets.push({
+            "code": "TEST",
+            "type": 2
+        })
+        const updates = buildUpdates(1, config, newConfig)
+        expect(updates.size).toBe(1)
+        expect(updates.get(oracleToUpdate)).toBeInstanceOf(OracleAssetsUpdate)
     })
-    const updates = buildUpdates(1, config, newConfig)
-    expect(updates.size).toBe(1)
-    expect(updates.get(null)).toBeInstanceOf(WasmUpdate)
-})
 
-test('buildUpdates, update subscriptions fee', () => {
-    const config = new Config(rawConfig)
-    const newConfig = new Config(rawConfig)
-    newConfig.contracts.get(subcriptions).baseFee = 9999999
-    const updates = buildUpdates(1, config, newConfig)
-    expect(updates.size).toBe(1)
-    expect(updates.get(subcriptions)).toBeInstanceOf(SubscriptionsFeeUpdate)
-})
+    test('buildUpdates, contract remove/add test', () => {
 
-test('buildUpdates, add dao contract', () => {
-    const config = new Config(rawConfig)
-    config.contracts.delete(dao)
-    const newConfig = new Config(rawConfig)
-    const updates = buildUpdates(1, config, newConfig)
-    expect(updates.size).toBe(1)
-    expect(updates.get(null)).toBeInstanceOf(ContractsUpdate)
-})
+        const config = new Config(rawConfig)
+        const newConfig = new Config(rawConfig)
+        newConfig.contracts.delete(oracleToUpdate)
+        let updates = buildUpdates(1, config, newConfig)
+        expect(updates.size).toBe(1)
+        expect(updates.get(null)).toBeInstanceOf(ContractsUpdate)
 
-test('buildUpdates, update dao deposits', () => {
-    const config = new Config(rawConfig)
-    const newConfig = new Config(rawConfig)
-    newConfig.contracts.get(dao).depositParams.forEach((value, key) => {
-        newConfig.contracts.get(dao).depositParams.set(key, value + 1)
+        updates = buildUpdates(1, newConfig, config)
+        expect(updates.size).toBe(1)
+        expect(updates.get(null)).toBeInstanceOf(ContractsUpdate)
     })
-    const updates = buildUpdates(1, config, newConfig)
-    expect(updates.size).toBe(1)
-    expect(updates.get(dao)).toBeInstanceOf(DAODepositsUpdate)
-})
 
-test('buildUpdates, update wasm test (multiple)', () => {
-    try {
+    test('buildUpdates, node remove/add test', () => {
+
+        const config = new Config(rawConfig)
+        const newConfig = new Config(rawConfig)
+        const nodePubkey = 'GCR6ZOFMKDWX5OMUDQZHQWD2FEE4WCWQJOBMRZRQM5BVTPKJ7LL35TBF'
+        newConfig.nodes.delete(nodePubkey)
+        let updates = buildUpdates(1, config, newConfig)
+        expect(updates.size).toBe(1)
+        expect(updates.get(null)).toBeInstanceOf(NodesUpdate)
+
+        updates = buildUpdates(1, newConfig, config)
+        expect(updates.size).toBe(1)
+        expect(updates.get(null)).toBeInstanceOf(NodesUpdate)
+    })
+
+    test('buildUpdates, update node test', () => {
+
+        const config = new Config(rawConfig)
+        const newConfig = new Config(rawConfig)
+        const nodePubkey = 'GCR6ZOFMKDWX5OMUDQZHQWD2FEE4WCWQJOBMRZRQM5BVTPKJ7LL35TBF'
+        newConfig.nodes.get(nodePubkey).url = 'ws://localhost:3000'
+        const secondPubkey = 'GDQFOLVYRNYBTQ2WCXOANDAAM4BSZMLJUEI6CO2PMOCOVDS6SKM2AMRQ'
+        newConfig.nodes.get(secondPubkey).domain = 'newdomain.com'
+        const updates = buildUpdates(1, config, newConfig)
+        expect(updates.size).toBe(1)
+        expect(updates.get(null)).toBeInstanceOf(NodesUpdate)
+    })
+
+    test('buildUpdates, update two nodes test', () => {
+
+        const config = new Config(rawConfig)
+        const newConfig = new Config(rawConfig)
+        const nodePubkey = 'GCR6ZOFMKDWX5OMUDQZHQWD2FEE4WCWQJOBMRZRQM5BVTPKJ7LL35TBF'
+        newConfig.nodes.get(nodePubkey).url = 'ws://localhost:3000'
+        const updates = buildUpdates(1, config, newConfig)
+        expect(updates.size).toBe(1)
+        expect(updates.get(null)).toBeInstanceOf(NodesUpdate)
+    })
+
+    test('buildUpdates, update wasm test', () => {
         const config = new Config(rawConfig)
         const newConfig = new Config({
             ...rawConfig,
             ...{
-                wasmHash: {
-                    oracle: '551723e0178208dd25c950bf78ab5618d47257a594654bbcaaf6cec8dc8c241c',
-                    subcriptions: '551723e0178208dd25c950bf78ab5618d47257a594654bbcaaf6cec8dc8c241c'
-                }
+                wasmHash: '551723e0178208dd25c950bf78ab5618d47257a594654bbcaaf6cec8dc8c241c'
             }
         })
+        const updates = buildUpdates(1, config, newConfig)
+        expect(updates.size).toBe(1)
+        expect(updates.get(null)).toBeInstanceOf(WasmUpdate)
+    })
+
+    test('buildUpdates, update subscriptions fee', () => {
+        const config = new Config(rawConfig)
+        const newConfig = new Config(rawConfig)
+        newConfig.contracts.get(subcriptions).baseFee = 9999999
+        const updates = buildUpdates(1, config, newConfig)
+        expect(updates.size).toBe(1)
+        expect(updates.get(subcriptions)).toBeInstanceOf(SubscriptionsFeeUpdate)
+    })
+
+    test('buildUpdates, add dao contract', () => {
+        const config = new Config(rawConfig)
+        config.contracts.delete(dao)
+        const newConfig = new Config(rawConfig)
+        const updates = buildUpdates(1, config, newConfig)
+        expect(updates.size).toBe(1)
+        expect(updates.get(null)).toBeInstanceOf(ContractsUpdate)
+    })
+
+    test('buildUpdates, update dao deposits', () => {
+        const config = new Config(rawConfig)
+        const newConfig = new Config(rawConfig)
+        newConfig.contracts.get(dao).depositParams.forEach((value, key) => {
+            newConfig.contracts.get(dao).depositParams.set(key, value + 1)
+        })
+        const updates = buildUpdates(1, config, newConfig)
+        expect(updates.size).toBe(1)
+        expect(updates.get(dao)).toBeInstanceOf(DAODepositsUpdate)
+    })
+
+    test('buildUpdates, update wasm test (multiple)', () => {
+        try {
+            const config = new Config(rawConfig)
+            const newConfig = new Config({
+                ...rawConfig,
+                ...{
+                    wasmHash: {
+                        oracle: '551723e0178208dd25c950bf78ab5618d47257a594654bbcaaf6cec8dc8c241c',
+                        subcriptions: '551723e0178208dd25c950bf78ab5618d47257a594654bbcaaf6cec8dc8c241c'
+                    }
+                }
+            })
+            expect(() => buildUpdates(1, config, newConfig)).toThrow(ValidationError)
+        } catch (e) {
+            console.log(e)
+        }
+    })
+
+    test('buildUpdates, update wasm test (remove)', () => {
+        const config = new Config(rawConfig)
+        const newConfig = new Config(rawConfig)
+        newConfig.wasmHash = new Map()
         expect(() => buildUpdates(1, config, newConfig)).toThrow(ValidationError)
-    } catch (e) {
-        console.log(e)
-    }
-})
-
-test('buildUpdates, update wasm test (remove)', () => {
-    const config = new Config(rawConfig)
-    const newConfig = new Config(rawConfig)
-    newConfig.wasmHash = new Map()
-    expect(() => buildUpdates(1, config, newConfig)).toThrow(ValidationError)
-})
-
-test('buildUpdates, two fee updates', () => {
-    const config = new Config(rawConfig)
-    const newConfig = new Config(rawConfig)
-    newConfig.contracts.get(oracleToUpdate).fee = 9999999
-    newConfig.contracts.get(oracleToUpdate2).fee = 9999999
-    const updates = buildUpdates(1, config, newConfig)
-    expect(updates.size).toBe(2)
-    expect(updates.get(oracleToUpdate)).toBe(null)
-    expect(updates.get(oracleToUpdate2)).toBe(null)
-})
-
-test('buildUpdates, one fee and one asset updates', () => {
-    const config = new Config(rawConfig)
-    const newConfig = new Config(rawConfig)
-    newConfig.contracts.get(oracleToUpdate).fee = 9999999
-    newConfig.contracts.get(oracleToUpdate).assets.push({
-        "code": "TEST",
-        "type": 2
     })
-    //expect error
-    const updates = buildUpdates(1, config, newConfig)
-    expect(updates.size).toBe(1)
-})
 
-test('buildUpdates, two asset updates throws error', () => {
-    const config = new Config(rawConfig)
-    const newConfig = new Config(rawConfig)
-    newConfig.contracts.get(oracleToUpdate).fee = 9999999
-    newConfig.contracts.get(oracleToUpdate2).assets.push({
-        "code": "TEST",
-        "type": 2
+    test('buildUpdates, two fee updates', () => {
+        const config = new Config(rawConfig)
+        const newConfig = new Config(rawConfig)
+        newConfig.contracts.get(oracleToUpdate).fee = 9999999
+        newConfig.contracts.get(oracleToUpdate2).fee = 9999999
+        const updates = buildUpdates(1, config, newConfig)
+        expect(updates.size).toBe(2)
+        expect(updates.get(oracleToUpdate)).toBe(null)
+        expect(updates.get(oracleToUpdate2)).toBe(null)
     })
-    expect(() => buildUpdates(1, config, newConfig)).toThrow(ValidationError)
-})
 
-test('buildUpdates, change sys account', () => {
-    const config = new Config(rawConfig)
-    const newConfig = new Config(rawConfig)
-    newConfig.systemAccount = Keypair.random().publicKey()
-    const update = buildUpdates(1, config, newConfig)
-    expect(update.size).toBe(1)
-})
+    test('buildUpdates, one fee and one asset updates', () => {
+        const config = new Config(rawConfig)
+        const newConfig = new Config(rawConfig)
+        newConfig.contracts.get(oracleToUpdate).fee = 9999999
+        newConfig.contracts.get(oracleToUpdate).assets.push({
+            "code": "TEST",
+            "type": 2
+        })
+        //expect error
+        const updates = buildUpdates(1, config, newConfig)
+        expect(updates.size).toBe(1)
+    })
 
-test('buildUpdates, change cache size', () => {
-    const config = new Config(rawConfig)
-    const newConfig = new Config(rawConfig)
-    newConfig.contracts.get(oracleToUpdate).cacheSize = 9999999
-    const update = buildUpdates(1, config, newConfig)
-    expect(update.size).toBe(1)
-    expect(update.get(oracleToUpdate)).toBeInstanceOf(OracleCacheSizeUpdate)
-})
+    test('buildUpdates, two asset updates throws error', () => {
+        const config = new Config(rawConfig)
+        const newConfig = new Config(rawConfig)
+        newConfig.contracts.get(oracleToUpdate).fee = 9999999
+        newConfig.contracts.get(oracleToUpdate2).assets.push({
+            "code": "TEST",
+            "type": 2
+        })
+        expect(() => buildUpdates(1, config, newConfig)).toThrow(ValidationError)
+    })
 
-test('buildUpdates, change retention config', () => {
-    const config = new Config(rawConfig)
-    const newConfig = new Config(rawConfig)
-    newConfig.contracts.get(oracleToUpdate).retentionConfig = {
-        token: 'GDU4KKD63RYJ36OEV4IPVBQ5NEQOC5L3SQSS7GX2JRG3SQHAMFTQTF2G',
-        fee: 10000000n
-    }
-    const update = buildUpdates(1, config, newConfig)
-    expect(update.size).toBe(1)
-    expect(update.get(oracleToUpdate)).toBeInstanceOf(OracleRetentionUpdate)
+    test('buildUpdates, change sys account', () => {
+        const config = new Config(rawConfig)
+        const newConfig = new Config(rawConfig)
+        newConfig.systemAccount = Keypair.random().publicKey()
+        const update = buildUpdates(1, config, newConfig)
+        expect(update.size).toBe(1)
+    })
+
+    test('buildUpdates, change cache size', () => {
+        const config = new Config(rawConfig)
+        const newConfig = new Config(rawConfig)
+        newConfig.contracts.get(oracleToUpdate).cacheSize = 9999999
+        const update = buildUpdates(1, config, newConfig)
+        expect(update.size).toBe(1)
+        expect(update.get(oracleToUpdate)).toBeInstanceOf(OracleCacheSizeUpdate)
+    })
+
+    test('buildUpdates, change retention config', () => {
+        const config = new Config(rawConfig)
+        const newConfig = new Config(rawConfig)
+        newConfig.contracts.get(oracleToUpdate).retentionConfig = {
+            token: 'GDU4KKD63RYJ36OEV4IPVBQ5NEQOC5L3SQSS7GX2JRG3SQHAMFTQTF2G',
+            fee: 10000000n
+        }
+        const update = buildUpdates(1, config, newConfig)
+        expect(update.size).toBe(1)
+        expect(update.get(oracleToUpdate)).toBeInstanceOf(OracleRetentionUpdate)
+    })
 })

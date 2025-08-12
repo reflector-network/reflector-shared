@@ -226,50 +226,182 @@ account.incrementSequenceNumber = () => {
 
 const defaultDecimals = 14
 
-test('buildOracleInitTransaction', async () => {
-    const currentConfig = new Config(rawConfig)
-    const config = currentConfig.contracts.get(oracleContract)
-    const transaction = await buildOracleInitTransaction({
-        config,
-        network: 'testnet',
-        sorobanRpc,
-        account,
-        maxTime: new Date(normalizeTimestamp(Date.now(), 1000) + 10000),
-        decimals: defaultDecimals,
-        fee: 1000000
-    })
-    expect(transaction).toBeDefined()
-    account.incrementSequenceNumber()
-}, 10000)
+describe('transaction helper', () => {
 
-test('buildOracleUpdateTransaction', async () => {
-    const currentConfig = new Config(rawConfig)
-    const updateConfigs = []
-    {//update period
+    test('buildOracleInitTransaction', async () => {
+        const currentConfig = new Config(rawConfig)
+        const config = currentConfig.contracts.get(oracleContract)
+        const transaction = await buildOracleInitTransaction({
+            config,
+            network: 'testnet',
+            sorobanRpc,
+            account,
+            maxTime: new Date(normalizeTimestamp(Date.now(), 1000) + 10000),
+            decimals: defaultDecimals,
+            fee: 1000000
+        })
+        expect(transaction).toBeDefined()
+        account.incrementSequenceNumber()
+    }, 10000)
+
+    test('buildOracleUpdateTransaction', async () => {
+        const currentConfig = new Config(rawConfig)
+        const updateConfigs = []
+        {//update period
+            const newConfig = new Config(rawConfig)
+            newConfig.contracts.get(oracleContract).period = 9999999
+            updateConfigs.push(newConfig)
+        }
+        {//add asset
+            const newConfig = new Config(rawConfig)
+            newConfig.contracts.get(oracleContract).assets.push(new Asset(2, 'TEST'))
+            updateConfigs.push(newConfig)
+        }
+        {//add node
+            const newConfig = new Config(rawConfig)
+            newConfig.nodes.set('GBP5VTXZF5C43SNXBUEVIXWKX4K6KJ6PAEKGRJWEY55EK3LGJI3PQSVV', new Node({
+                "pubkey": "GBP5VTXZF5C43SNXBUEVIXWKX4K6KJ6PAEKGRJWEY55EK3LGJI3PQSVV",
+                "url": "ws://some.node.com",
+                "domain": "node2.com"
+            }))
+            updateConfigs.push(newConfig)
+        }
+        {//remove node
+            const newConfig = new Config(rawConfig)
+            newConfig.nodes.delete('GCR6ZOFMKDWX5OMUDQZHQWD2FEE4WCWQJOBMRZRQM5BVTPKJ7LL35TBF')
+            updateConfigs.push(newConfig)
+        }
+        {//update cache size
+            const newConfig = new Config(rawConfig)
+            newConfig.contracts.get(oracleContract).cacheSize = 1000
+            updateConfigs.push(newConfig)
+        }
+        {//update history retention config
+            const newConfig = new Config(rawConfig)
+            newConfig.contracts.get(oracleContract).retentionConfig = {
+                token: 'CDBBDS5FN46XAVGD5IRKJIK4I7KGGSFI7R2KLXG32QQQELHPTIZS26BW',
+                fee: BigInt(1000000)
+            }
+            updateConfigs.push(newConfig)
+        }
+        for (const newConfig of updateConfigs) {
+            const transaction = await buildUpdateTransaction({
+                currentConfig,
+                newConfig,
+                timestamp: 1,
+                network: 'testnet',
+                sorobanRpc,
+                account,
+                maxTime: new Date(normalizeTimestamp(Date.now(), 1000) + 10000),
+                fee: 1000000
+            })
+            expect(transaction).toBeDefined()
+            expect(transaction).not.toBeNull()
+        }
+        account.incrementSequenceNumber()
+    }, 10000)
+
+    test('buildOraclePriceUpdateTransaction', async () => {
+        const currentConfig = new Config(rawConfig)
+        const contract = currentConfig.contracts.get(oracleContract)
+        const transaction = await buildOraclePriceUpdateTransaction({
+            contractId: oracleContract,
+            network: 'testnet',
+            sorobanRpc,
+            account,
+            admin: contract.admin,
+            timestamp: 100000,
+            prices: [1n, 2n, 3n],
+            fee: contract.fee,
+            maxTime: new Date(normalizeTimestamp(Date.now(), 1000) + 10000)
+        })
+        expect(transaction).toBeDefined()
+        account.incrementSequenceNumber()
+    }, 10000)
+
+
+    test('buildSubscriptionsInitTransaction', async () => {
+        const currentConfig = new Config(rawConfig)
+        const config = currentConfig.contracts.get(subscriptoionsContract)
+        const transaction = await buildSubscriptionsInitTransaction({
+            contractId: subscriptoionsContract,
+            config,
+            network: 'testnet',
+            sorobanRpc,
+            account,
+            maxTime: new Date(normalizeTimestamp(Date.now(), 1000) + 10000),
+            fee: 1000000
+        })
+        expect(transaction).toBeDefined()
+        account.incrementSequenceNumber()
+    }, 10000)
+
+    test('buildSubscriptionsUpdateTransaction', async () => {
+        const currentConfig = new Config(rawConfig)
+        const updateConfigs = []
+        {//update fee
+            const newConfig = new Config(rawConfig)
+            newConfig.contracts.get(subscriptoionsContract).baseFee = 200
+            updateConfigs.push(newConfig)
+        }
+        for (const newConfig of updateConfigs) {
+            const transaction = await buildUpdateTransaction({
+                currentConfig,
+                newConfig,
+                timestamp: 1,
+                network: 'testnet',
+                sorobanRpc,
+                account,
+                maxTime: new Date(normalizeTimestamp(Date.now(), 1000) + 10000),
+                fee: 1000000
+            })
+            expect(transaction).toBeDefined()
+            expect(transaction).not.toBeNull()
+        }
+        account.incrementSequenceNumber()
+    }, 10000)
+
+    test('buildSubscriptionsTriggerTransaction', async () => {
+        const currentConfig = new Config(rawConfig)
+        const contract = currentConfig.contracts.get(subscriptoionsContract)
+        const transaction = await buildSubscriptionTriggerTransaction({
+            contractId: oracleContract,
+            network: 'testnet',
+            sorobanRpc,
+            account,
+            admin: contract.admin,
+            timestamp: 100000,
+            triggerHash: crypto.randomBytes(32),
+            fee: contract.fee,
+            maxTime: new Date(normalizeTimestamp(Date.now(), 1000) + 10000)
+        })
+        expect(transaction).toBeDefined()
+        account.incrementSequenceNumber()
+    }, 10000)
+
+    test('buildSubscriptionsChargeTransaction', async () => {
+        const currentConfig = new Config(rawConfig)
+        const contract = currentConfig.contracts.get(subscriptoionsContract)
+        const transaction = await buildSubscriptionChargeTransaction({
+            contractId: oracleContract,
+            network: 'testnet',
+            sorobanRpc,
+            account,
+            admin: contract.admin,
+            timestamp: 100000,
+            ids: [1n],
+            fee: contract.fee,
+            maxTime: new Date(normalizeTimestamp(Date.now(), 1000) + 10000)
+        })
+        expect(transaction).toBeDefined()
+        account.incrementSequenceNumber()
+    }, 10000)
+
+
+    test('buildGlobalConfigUpdateTransaction', async () => {
+        const currentConfig = new Config(rawConfig)
         const newConfig = new Config(rawConfig)
-        newConfig.contracts.get(oracleContract).period = 9999999
-        updateConfigs.push(newConfig)
-    }
-    {//add asset
-        const newConfig = new Config(rawConfig)
-        newConfig.contracts.get(oracleContract).assets.push(new Asset(2, 'TEST'))
-        updateConfigs.push(newConfig)
-    }
-    {//add node
-        const newConfig = new Config(rawConfig)
-        newConfig.nodes.set('GBP5VTXZF5C43SNXBUEVIXWKX4K6KJ6PAEKGRJWEY55EK3LGJI3PQSVV', new Node({
-            "pubkey": "GBP5VTXZF5C43SNXBUEVIXWKX4K6KJ6PAEKGRJWEY55EK3LGJI3PQSVV",
-            "url": "ws://some.node.com",
-            "domain": "node2.com"
-        }))
-        updateConfigs.push(newConfig)
-    }
-    {//remove node
-        const newConfig = new Config(rawConfig)
-        newConfig.nodes.delete('GCR6ZOFMKDWX5OMUDQZHQWD2FEE4WCWQJOBMRZRQM5BVTPKJ7LL35TBF')
-        updateConfigs.push(newConfig)
-    }
-    for (const newConfig of updateConfigs) {
+        newConfig.systemAccount = Keypair.random().publicKey()
         const transaction = await buildUpdateTransaction({
             currentConfig,
             newConfig,
@@ -280,147 +412,32 @@ test('buildOracleUpdateTransaction', async () => {
             maxTime: new Date(normalizeTimestamp(Date.now(), 1000) + 10000),
             fee: 1000000
         })
-        expect(transaction).toBeDefined()
-        expect(transaction).not.toBeNull()
-    }
-    account.incrementSequenceNumber()
-}, 10000)
-
-test('buildOraclePriceUpdateTransaction', async () => {
-    const currentConfig = new Config(rawConfig)
-    const contract = currentConfig.contracts.get(oracleContract)
-    const transaction = await buildOraclePriceUpdateTransaction({
-        contractId: oracleContract,
-        network: 'testnet',
-        sorobanRpc,
-        account,
-        admin: contract.admin,
-        timestamp: 100000,
-        prices: [1n, 2n, 3n],
-        fee: contract.fee,
-        maxTime: new Date(normalizeTimestamp(Date.now(), 1000) + 10000)
-    })
-    expect(transaction).toBeDefined()
-    account.incrementSequenceNumber()
-}, 10000)
+        expect(transaction).toBeNull()
+        account.incrementSequenceNumber()
+    }, 10000)
 
 
-test('buildSubscriptionsInitTransaction', async () => {
-    const currentConfig = new Config(rawConfig)
-    const config = currentConfig.contracts.get(subscriptoionsContract)
-    const transaction = await buildSubscriptionsInitTransaction({
-        contractId: subscriptoionsContract,
-        config,
-        network: 'testnet',
-        sorobanRpc,
-        account,
-        maxTime: new Date(normalizeTimestamp(Date.now(), 1000) + 10000),
-        fee: 1000000
-    })
-    expect(transaction).toBeDefined()
-    account.incrementSequenceNumber()
-}, 10000)
-
-test('buildSubscriptionsUpdateTransaction', async () => {
-    const currentConfig = new Config(rawConfig)
-    const updateConfigs = []
-    {//update fee
-        const newConfig = new Config(rawConfig)
-        newConfig.contracts.get(subscriptoionsContract).baseFee = 200
-        updateConfigs.push(newConfig)
-    }
-    for (const newConfig of updateConfigs) {
-        const transaction = await buildUpdateTransaction({
-            currentConfig,
-            newConfig,
-            timestamp: 1,
+    test('buildDAOInitTransaction', async () => {
+        const currentConfig = new Config(rawConfig)
+        const contract = currentConfig.contracts.get(daoContract)
+        const transaction = await buildDAOInitTransaction({
+            contractId: daoContract,
             network: 'testnet',
+            config: contract,
             sorobanRpc,
             account,
-            maxTime: new Date(normalizeTimestamp(Date.now(), 1000) + 10000),
-            fee: 1000000
+            admin: contract.admin,
+            timestamp: 100000,
+            fee: contract.fee,
+            maxTime: new Date(normalizeTimestamp(Date.now(), 1000) + 10000)
         })
         expect(transaction).toBeDefined()
-        expect(transaction).not.toBeNull()
-    }
-    account.incrementSequenceNumber()
-}, 10000)
+        account.incrementSequenceNumber()
+    }, 10000)
 
-test('buildSubscriptionsTriggerTransaction', async () => {
-    const currentConfig = new Config(rawConfig)
-    const contract = currentConfig.contracts.get(subscriptoionsContract)
-    const transaction = await buildSubscriptionTriggerTransaction({
-        contractId: oracleContract,
-        network: 'testnet',
-        sorobanRpc,
-        account,
-        admin: contract.admin,
-        timestamp: 100000,
-        triggerHash: crypto.randomBytes(32),
-        fee: contract.fee,
-        maxTime: new Date(normalizeTimestamp(Date.now(), 1000) + 10000)
-    })
-    expect(transaction).toBeDefined()
-    account.incrementSequenceNumber()
-}, 10000)
-
-test('buildSubscriptionsChargeTransaction', async () => {
-    const currentConfig = new Config(rawConfig)
-    const contract = currentConfig.contracts.get(subscriptoionsContract)
-    const transaction = await buildSubscriptionChargeTransaction({
-        contractId: oracleContract,
-        network: 'testnet',
-        sorobanRpc,
-        account,
-        admin: contract.admin,
-        timestamp: 100000,
-        ids: [1n],
-        fee: contract.fee,
-        maxTime: new Date(normalizeTimestamp(Date.now(), 1000) + 10000)
-    })
-    expect(transaction).toBeDefined()
-    account.incrementSequenceNumber()
-}, 10000)
-
-
-test('buildGlobalConfigUpdateTransaction', async () => {
-    const currentConfig = new Config(rawConfig)
-    const newConfig = new Config(rawConfig)
-    newConfig.systemAccount = Keypair.random().publicKey()
-    const transaction = await buildUpdateTransaction({
-        currentConfig,
-        newConfig,
-        timestamp: 1,
-        network: 'testnet',
-        sorobanRpc,
-        account,
-        maxTime: new Date(normalizeTimestamp(Date.now(), 1000) + 10000),
-        fee: 1000000
-    })
-    expect(transaction).toBeNull()
-    account.incrementSequenceNumber()
-}, 10000)
-
-
-test('buildDAOInitTransaction', async () => {
-    const currentConfig = new Config(rawConfig)
-    const contract = currentConfig.contracts.get(daoContract)
-    const transaction = await buildDAOInitTransaction({
-        contractId: daoContract,
-        network: 'testnet',
-        config: contract,
-        sorobanRpc,
-        account,
-        admin: contract.admin,
-        timestamp: 100000,
-        fee: contract.fee,
-        maxTime: new Date(normalizeTimestamp(Date.now(), 1000) + 10000)
-    })
-    expect(transaction).toBeDefined()
-    account.incrementSequenceNumber()
-}, 10000)
-
-test('account sequence', () => {
+    test('account sequence', () => {
     //there is total 6 updates, so the sequence should be 6
-    expect(account.sequence).toBe(11)
+        expect(account.sequence).toBe(11)
+    })
+
 })

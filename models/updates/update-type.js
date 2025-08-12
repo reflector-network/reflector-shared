@@ -10,7 +10,7 @@ const UpdateType = {
     CONFIG: 'config',
 
     ORACLE_ASSETS: 'oracle_assets',
-    ORACLE_PERIOD: 'oracle_period',
+    ORACLE_HISTORY_PERIOD: 'oracle_history_period',
     ORACLE_CACHE_SIZE: 'oracle_cache_size',
     ORACLE_RETENTION: 'oracle_retention',
 
