@@ -1,4 +1,4 @@
-const {xdr, rpc, scValToBigInt, scValToNative, Address, XdrLargeInt} = require('@stellar/stellar-sdk')
+const {xdr, rpc, scValToNative, Address, XdrLargeInt} = require('@stellar/stellar-sdk')
 
 async function makeRequest(requestFn, sorobanRpc) {
     for (const serverRpc of sorobanRpc) {
@@ -9,10 +9,6 @@ async function makeRequest(requestFn, sorobanRpc) {
             console.error(`Failed to make request to ${serverRpc}: ${e}`)
         }
     }
-}
-
-function encodePriceRecordKey(timestamp, assetIndex) {
-    return (BigInt(timestamp) << 64n) | BigInt(assetIndex)
 }
 
 /**
@@ -33,23 +29,23 @@ async function getContractInstance(contractId, sorobanRpc) {
 /**
  * Returns native storage
  * @param {xdr.ScMapEntry[]} values - values
- * @param {string[]} [keys] - keys to extract from storage (optional)
+ * @param {string[]} keys - props to extract
  * @returns {object}
  */
-function getNativeStorage(values, keys = []) {
+function getNativeStorage(values, keys) {
     const storage = {}
-    if (values)
+    if (values && keys.length > 0)
         for (const value of values) {
             const key = scValToNative(value.key())
-            if (keys.length > 0 && !keys.includes(key))
+            const keyIndex = keys.indexOf(key)
+            if (keyIndex < 0)
                 continue
             const val = scValToNative(value.val())
             storage[key] = val
-            if (keys.includes(key)) {
-                keys.splice(keys.indexOf(key), 1) //remove key from array to speed up search
-                if (keys.length === 0)
-                    break
-            }
+            //remove found key
+            keys.splice(keyIndex, 1)
+            if (keys.length < 1)
+                break //all keys found
         }
     return storage
 }
@@ -58,7 +54,7 @@ function getNativeStorage(values, keys = []) {
  * Returns hash of the data
  * @param {string} contractId - contract id
  * @param {string[]} sorobanRpc - soroban rpc urls
- * @returns {{hash: string, admin: string, lastTimestamp: BigInt, isInitialized: boolean, assetTtls: BigInt[]}}
+ * @returns {{hash: string, admin: string, lastTimestamp: BigInt, prices: BigInt[], isInitialized: boolean, assetTtls: BigInt[]}}
  */
 async function getOracleContractState(contractId, sorobanRpc) {
     const contractState = {
@@ -66,7 +62,8 @@ async function getOracleContractState(contractId, sorobanRpc) {
         lastTimestamp: 0n,
         isInitialized: false,
         admin: null,
-        assetTtls: []
+        assetTtls: [],
+        protocol: null
     }
 
     const instance = await getContractInstance(contractId, sorobanRpc)
@@ -74,13 +71,14 @@ async function getOracleContractState(contractId, sorobanRpc) {
         return contractState
 
     const hash = instance.executable().wasmHash().toString('hex')
-    const {admin, last_timestamp: lastTimestamp, asset_ttls: assetTtls} = getNativeStorage(instance.storage(), ['admin', 'last_timestamp', 'asset_ttls'])
+    const {admin, last_timestamp: lastTimestamp, asset_ttls: assetTtls, protocol} = getNativeStorage(instance.storage(), ['admin', 'last_timestamp', 'asset_ttls', 'protocol'])
 
     contractState.admin = admin
     contractState.lastTimestamp = lastTimestamp || 0n
     contractState.hash = hash
     contractState.isInitialized = !!admin
     contractState.assetTtls = assetTtls || []
+    contractState.protocol = protocol || null
 
     return contractState
 }
@@ -128,7 +126,6 @@ async function getContractState(contractId, sorobanRpc) {
     const instance = await getContractInstance(contractId, sorobanRpc)
     if (!instance)
         return contractState
-
 
     const hash = instance.executable().wasmHash().toString('hex')
     const {
