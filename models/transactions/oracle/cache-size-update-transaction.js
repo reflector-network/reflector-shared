@@ -1,10 +1,6 @@
 const PendingTransactionBase = require('../pending-transaction-base')
 const PendingTransactionType = require('../pending-transaction-type')
 
-/**
- * @typedef {import('../../assets/asset')} Asset
- */
-
 module.exports = class OracleCacheSizeUpdateTransaction extends PendingTransactionBase {
     /**
      * @param {Transaction} transaction - transaction hash

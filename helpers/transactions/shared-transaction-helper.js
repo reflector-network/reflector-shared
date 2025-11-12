@@ -7,7 +7,13 @@ const WasmPendingTransaction = require('../../models/transactions/wasm-pending-t
 const NodesPendingTransaction = require('../../models/transactions/nodes-pending-transaction')
 const {getContractState} = require('../entries-helper')
 const ContractTypes = require('../../models/configs/contract-type')
-const {buildOracleAssetsUpdateTransaction, buildOracleHistoryPeriodUpdateTransaction, buildOracleCacheSizeUpdateTransaction, buildOracleRetentionUpdateTransaction} = require('./oracle-transaction-helper')
+const {
+    buildOracleAssetsUpdateTransaction,
+    buildOracleHistoryPeriodUpdateTransaction,
+    buildOracleCacheSizeUpdateTransaction,
+    buildOracleFeeConfigUpdateTransaction,
+    buildOracleInvocationCostsUpdateTransaction
+} = require('./oracle-transaction-helper')
 const {buildSubscriptionFeeUpdateTransaction} = require('./subscriptions-transaction-helper')
 const {buildDAODepositsUpdateTransaction} = require('./dao-transaction-helper')
 
@@ -37,7 +43,13 @@ const {buildDAODepositsUpdateTransaction} = require('./dao-transaction-helper')
 
 /**
  * @param {UpdateOptions} updateOptions - transaction options
- * @returns {Promise<OracleAssetsUpdateTransaction|NodesPendingTransaction|OracleHistoryPeriodUpdateTransaction|WasmPendingTransaction|SubscriptionsFeeUpdateTransaction|DAODepositsUpdateTransaction>}
+ * @returns {Promise<
+ * OracleAssetsUpdateTransaction|
+ * NodesPendingTransaction|
+ * OracleHistoryPeriodUpdateTransaction|
+ * WasmPendingTransaction|
+ * SubscriptionsFeeUpdateTransaction|
+ * DAODepositsUpdateTransaction>}
  */
 async function buildUpdateTransaction(updateOptions) {
     const {network, maxTime, fee, timestamp, currentConfig, sorobanRpc, newConfig, account} = updateOptions
@@ -114,11 +126,14 @@ async function buildUpdateTransaction(updateOptions) {
         case UpdateType.DAO_DEPOSITS:
             tx = await buildDAODepositsUpdateTransaction(sorobanRpc, account, txOptions, update)
             break
-        case UpdateType.ORACLE_RETENTION:
-            tx = await buildOracleRetentionUpdateTransaction(sorobanRpc, account, txOptions, update)
+        case UpdateType.ORACLE_FEE_CONFIG:
+            tx = await buildOracleFeeConfigUpdateTransaction(sorobanRpc, account, txOptions, update)
             break
         case UpdateType.ORACLE_CACHE_SIZE:
             tx = await buildOracleCacheSizeUpdateTransaction(sorobanRpc, account, txOptions, update)
+            break
+        case UpdateType.ORACLE_INVOCATION_COSTS:
+            tx = await buildOracleInvocationCostsUpdateTransaction(sorobanRpc, account, txOptions, update)
             break
         default:
             break //no updates that must be applied on blockchain

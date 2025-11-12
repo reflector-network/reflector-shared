@@ -1,6 +1,7 @@
 const Asset = require('../assets/asset')
 const {sortObjectKeys} = require('../../utils/serialization-helper')
 const IssuesContainer = require('../issues-container')
+const {areArraysEqual} = require('../../utils/comparison-helper')
 const ContractConfigBase = require('./contract-config-base')
 
 module.exports = class OracleConfig extends ContractConfigBase {
@@ -21,7 +22,9 @@ module.exports = class OracleConfig extends ContractConfigBase {
 
         this.__assignCacheSize(raw.cacheSize)
 
-        this.__assignRetentionConfig(raw.retentionConfig)
+        this.__assignFeeConfig(raw.feeConfig)
+
+        this.__assignInvocationCosts(raw.invocationCost)
     }
 
     __assignBaseAsset(asset) {
@@ -88,18 +91,31 @@ module.exports = class OracleConfig extends ContractConfigBase {
         }
     }
 
-    __assignRetentionConfig(retentionConfig) {
+    __assignFeeConfig(feeConfig) {
         try {
-            if (!retentionConfig)
+            if (!feeConfig)
                 return
-            if (!retentionConfig.fee || typeof retentionConfig.fee !== 'string' || !BigInt(retentionConfig.fee))
-                throw new Error('retentionConfig.fee must be a BigInt string')
-            if (!retentionConfig.token || typeof retentionConfig.token !== 'string')
-                throw new Error('retentionConfig.token must be a string')
-            this.retentionConfig = {...retentionConfig, fee: BigInt(retentionConfig.fee)}
-            this.__retentionConfigSet = true
+            if (!feeConfig.fee || typeof feeConfig.fee !== 'string' || !BigInt(feeConfig.fee))
+                throw new Error('feeConfig.fee must be a BigInt string')
+            if (!feeConfig.token || typeof feeConfig.token !== 'string')
+                throw new Error('feeConfig.token must be a string')
+            this.feeConfig = {...feeConfig, fee: BigInt(feeConfig.fee)}
+            this.__feeConfigSet = true
         } catch (err) {
-            this.__addIssue(`retentionConfig: ${err.message}`)
+            this.__addIssue(`feeConfig: ${err.message}`)
+        }
+    }
+
+    __assignInvocationCosts(invocationCosts) {
+        try {
+            if (!invocationCosts)
+                return
+            if (!Array.isArray(invocationCosts) || invocationCosts.some(c => typeof c !== 'string' || !BigInt(c)) || invocationCosts.length !== 5)
+                throw new Error('invocationCosts must be an array of 5 BigInt strings')
+            this.invocationCosts = invocationCosts.map(c => BigInt(c))
+            this.__invocationCostsSet = true
+        } catch (err) {
+            this.__addIssue(`invocationCosts: ${err.message}`)
         }
     }
 
@@ -134,6 +150,16 @@ module.exports = class OracleConfig extends ContractConfigBase {
      */
     dataSource
 
+    /**
+     * @type {{token: string, fee: BigInt}}
+     */
+    feeConfig
+
+    /**
+     * @type {BigInt[]}
+     */
+    invocationCosts
+
     toPlainObject(asLegacy = true) {
         return sortObjectKeys({
             ...super.toPlainObject(asLegacy),
@@ -145,10 +171,11 @@ module.exports = class OracleConfig extends ContractConfigBase {
                 period: this.period,
                 dataSource: this.dataSource,
                 cacheSize: this.__cacheSizeSet ? this.cacheSize : undefined,
-                retentionConfig: this.__retentionConfigSet ? {
-                    token: this.retentionConfig.token,
-                    fee: this.retentionConfig.fee.toString()
-                } : undefined
+                feeConfig: this.__feeConfigSet ? {
+                    token: this.feeConfig.token,
+                    fee: this.feeConfig.fee.toString()
+                } : undefined,
+                invocationCosts: this.__invocationCostsSet ? this.invocationCosts.map(c => c.toString()) : undefined
             }
         })
     }
@@ -163,7 +190,8 @@ module.exports = class OracleConfig extends ContractConfigBase {
             && this.period === other.period
             && this.dataSource === other.dataSource
             && this.cacheSize === other.cacheSize
-            && this.retentionConfig?.token === other.retentionConfig?.token
-            && this.retentionConfig?.fee === other.retentionConfig?.fee
+            && this.feeConfig?.token === other.feeConfig?.token
+            && this.feeConfig?.fee === other.feeConfig?.fee
+            && areArraysEqual(this.invocationCosts, other.invocationCosts)
     }
 }

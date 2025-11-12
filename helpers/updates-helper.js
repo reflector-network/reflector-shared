@@ -10,8 +10,10 @@ const ContractTypes = require('../models/configs/contract-type')
 const SubscriptionsFeeUpdate = require('../models/updates/subscriptions/base-fee-update')
 const DAODepositsUpdate = require('../models/updates/dao/deposits-update')
 const {isAllowedValidatorsUpdate} = require('../utils/majority-helper')
-const OracleRetentionConfigUpdate = require('../models/updates/oracle/retention-update')
+const OracleFeeConfigUpdate = require('../models/updates/oracle/fee-config-update')
 const OracleCacheSizeUpdate = require('../models/updates/oracle/cache-size-update')
+const OracleInvocationCostsUpdate = require('../models/updates/oracle/invocation-costs-update')
+const {areArraysEqual} = require('../utils/comparison-helper')
 
 /**
  * Builds updates from current config and new config
@@ -148,14 +150,19 @@ function __tryGetContractsUpdate(timestamp, currentConfigs, newConfigs) {
                     new OracleHistoryPeriodUpdate(timestamp, newConfig.contractId, newConfig.admin, newConfig.period)
                 )
 
-            if (newConfig.retentionConfig?.token !== currentConfig.retentionConfig?.token ||
-                newConfig.retentionConfig?.fee !== currentConfig.retentionConfig?.fee)
+            if (newConfig.feeConfig?.token !== currentConfig.feeConfig?.token ||
+                newConfig.feeConfig?.fee !== currentConfig.feeConfig?.fee)
                 setContractUpdate(
-                    new OracleRetentionConfigUpdate(timestamp, newConfig.contractId, newConfig.admin, newConfig.retentionConfig)
+                    new OracleFeeConfigUpdate(timestamp, newConfig.contractId, newConfig.admin, newConfig.feeConfig)
                 )
 
             if (newConfig.cacheSize !== currentConfig.cacheSize)
                 setContractUpdate(new OracleCacheSizeUpdate(timestamp, newConfig.contractId, newConfig.admin, newConfig.cacheSize))
+
+            if (!areArraysEqual(newConfig.invocationCosts, currentConfig.invocationCosts))
+                setContractUpdate(
+                    new OracleInvocationCostsUpdate(timestamp, newConfig.contractId, newConfig.admin, newConfig.invocationCosts)
+                )
 
         } else if (newConfig.type === ContractTypes.SUBSCRIPTIONS) {
             if (newConfig.token !== currentConfig.token)

@@ -4,7 +4,7 @@ const OracleAssetsUpdate = require('./models/updates/oracle/assets-update')
 const NodesUpdate = require('./models/updates/nodes-update')
 const OracleHistoryPeriodUpdate = require('./models/updates/oracle/history-period-update')
 const OracleCacheSizeUpdate = require('./models/updates/oracle/cache-size-update')
-const OracleRetentionConfigUpdate = require('./models/updates/oracle/retention-update')
+const OracleRetentionConfigUpdate = require('./models/updates/oracle/fee-config-update')
 const WasmUpdate = require('./models/updates/wasm-update')
 const ValidationError = require('./models/validation-error')
 const AssetType = require('./models/assets/asset-type')
@@ -26,7 +26,8 @@ const WasmPendingTransaction = require('./models/transactions/wasm-pending-trans
 const NodesPendingTransaction = require('./models/transactions/nodes-pending-transaction')
 const OracleHistoryRetentionTransaction = require('./models/transactions/oracle/history-period-update-transaction')
 const OracleCacheSizeUpdateTransaction = require('./models/transactions/oracle/cache-size-update-transaction')
-const OracleRetentionUpdateTransaction = require('./models/transactions/oracle/retention-update-transaction')
+const OracleFeeConfigUpdateTransaction = require('./models/transactions/oracle/fee-config-update-transaction')
+const OracleInvocationCostsUpdateTransaction = require('./models/transactions/oracle/invocation-costs-update-transaction')
 const PriceUpdatePendingTransaction = require('./models/transactions/oracle/price-update-transaction')
 const ContractTypes = require('./models/configs/contract-type')
 
@@ -101,12 +102,13 @@ module.exports.BallotCategories = BallotCategories
 
 module.exports.OracleAssetsUpdateTransaction = OracleAssetsUpdateTransaction
 module.exports.OracleInitTransaction = OracleInitTransaction
-module.exports.OracleRetentionUpdateTransaction = OracleRetentionUpdateTransaction
+module.exports.OracleFeeConfigUpdateTransaction = OracleFeeConfigUpdateTransaction
 module.exports.OracleCacheSizeUpdateTransaction = OracleCacheSizeUpdateTransaction
 module.exports.WasmPendingTransaction = WasmPendingTransaction
 module.exports.NodesPendingTransaction = NodesPendingTransaction
 module.exports.OracleHistoryRetentionTransaction = OracleHistoryRetentionTransaction
 module.exports.PriceUpdatePendingTransaction = PriceUpdatePendingTransaction
+module.exports.OracleInvocationCostsUpdateTransaction = OracleInvocationCostsUpdateTransaction
 
 module.exports.isValidContractId = isValidContractId
 module.exports.encodeAssetContractId = encodeAssetContractId

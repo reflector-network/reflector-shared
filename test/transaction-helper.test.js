@@ -228,7 +228,7 @@ const defaultDecimals = 14
 
 describe('transaction helper', () => {
 
-    test('buildOracleInitTransaction', async () => {
+    test('buildOracleInitTransaction (v1)', async () => {
         const currentConfig = new Config(rawConfig)
         const config = currentConfig.contracts.get(oracleContract)
         const transaction = await buildOracleInitTransaction({
@@ -241,7 +241,22 @@ describe('transaction helper', () => {
             fee: 1000000
         })
         expect(transaction).toBeDefined()
-        account.incrementSequenceNumber()
+    }, 10000)
+
+    test('buildOracleInitTransaction (v2)', async () => {
+        const currentConfig = new Config(rawConfig)
+        const config = currentConfig.contracts.get(oracleContract)
+        const transaction = await buildOracleInitTransaction({
+            config,
+            network: 'testnet',
+            sorobanRpc,
+            account,
+            maxTime: new Date(normalizeTimestamp(Date.now(), 1000) + 10000),
+            decimals: defaultDecimals,
+            fee: 1000000,
+            protocol: 2
+        })
+        expect(transaction).toBeDefined()
     }, 10000)
 
     test('buildOracleUpdateTransaction', async () => {
@@ -276,12 +291,23 @@ describe('transaction helper', () => {
             newConfig.contracts.get(oracleContract).cacheSize = 1000
             updateConfigs.push(newConfig)
         }
-        {//update history retention config
+        {//update fee config
             const newConfig = new Config(rawConfig)
-            newConfig.contracts.get(oracleContract).retentionConfig = {
+            newConfig.contracts.get(oracleContract).feeConfig = {
                 token: 'CDBBDS5FN46XAVGD5IRKJIK4I7KGGSFI7R2KLXG32QQQELHPTIZS26BW',
                 fee: BigInt(1000000)
             }
+            updateConfigs.push(newConfig)
+        }
+        {//update invocation config
+            const newConfig = new Config(rawConfig)
+            newConfig.contracts.get(oracleContract).invocationCosts = [
+                100000n,
+                200000n,
+                300000n,
+                400000n,
+                500000n
+            ]
             updateConfigs.push(newConfig)
         }
         for (const newConfig of updateConfigs) {
@@ -298,7 +324,6 @@ describe('transaction helper', () => {
             expect(transaction).toBeDefined()
             expect(transaction).not.toBeNull()
         }
-        account.incrementSequenceNumber()
     }, 10000)
 
     test('buildOraclePriceUpdateTransaction', async () => {
@@ -316,7 +341,6 @@ describe('transaction helper', () => {
             maxTime: new Date(normalizeTimestamp(Date.now(), 1000) + 10000)
         })
         expect(transaction).toBeDefined()
-        account.incrementSequenceNumber()
     }, 10000)
 
 
@@ -333,7 +357,6 @@ describe('transaction helper', () => {
             fee: 1000000
         })
         expect(transaction).toBeDefined()
-        account.incrementSequenceNumber()
     }, 10000)
 
     test('buildSubscriptionsUpdateTransaction', async () => {
@@ -358,7 +381,6 @@ describe('transaction helper', () => {
             expect(transaction).toBeDefined()
             expect(transaction).not.toBeNull()
         }
-        account.incrementSequenceNumber()
     }, 10000)
 
     test('buildSubscriptionsTriggerTransaction', async () => {
@@ -376,7 +398,6 @@ describe('transaction helper', () => {
             maxTime: new Date(normalizeTimestamp(Date.now(), 1000) + 10000)
         })
         expect(transaction).toBeDefined()
-        account.incrementSequenceNumber()
     }, 10000)
 
     test('buildSubscriptionsChargeTransaction', async () => {
@@ -394,7 +415,6 @@ describe('transaction helper', () => {
             maxTime: new Date(normalizeTimestamp(Date.now(), 1000) + 10000)
         })
         expect(transaction).toBeDefined()
-        account.incrementSequenceNumber()
     }, 10000)
 
 
@@ -413,7 +433,6 @@ describe('transaction helper', () => {
             fee: 1000000
         })
         expect(transaction).toBeNull()
-        account.incrementSequenceNumber()
     }, 10000)
 
 
@@ -432,12 +451,5 @@ describe('transaction helper', () => {
             maxTime: new Date(normalizeTimestamp(Date.now(), 1000) + 10000)
         })
         expect(transaction).toBeDefined()
-        account.incrementSequenceNumber()
     }, 10000)
-
-    test('account sequence', () => {
-    //there is total 6 updates, so the sequence should be 6
-        expect(account.sequence).toBe(11)
-    })
-
 })

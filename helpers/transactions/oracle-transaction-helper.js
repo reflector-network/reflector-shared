@@ -4,12 +4,14 @@ const PriceUpdatePendingTransaction = require('../../models/transactions/oracle/
 const OracleHistoryPeriodUpdateTransaction = require('../../models/transactions/oracle/history-period-update-transaction')
 const OracleAssetsUpdateTransaction = require('../../models/transactions/oracle/assets-update-transaction')
 const OracleCacheSizeUpdateTransaction = require('../../models/transactions/oracle/cache-size-update-transaction')
-const OracleRetentionUpdateTransaction = require('../../models/transactions/oracle/retention-update-transaction')
+const OracleFeeConfigUpdateTransaction = require('../../models/transactions/oracle/fee-config-update-transaction')
+const OracleInvocationCostsUpdateTransaction = require('../../models/transactions/oracle/invocation-costs-update-transaction')
 
 /**
  * @typedef {import('../../models/updates/oracle/assets-update')} OracleAssetsUpdate
  * @typedef {import('../../models/updates/oracle/history-period-update')} OraclePeriodUpdate
  * @typedef {import('../../models/updates/oracle/cache-size-update')} OracleCacheSizeUpdate
+ * @typedef {import('../../models/updates/oracle/invocation-costs-update')} OracleInvocationCostsUpdate
  * @typedef {import('../../models/configs/oracle-config')} OracleConfig
  * @typedef {import('@stellar/stellar-sdk').Account} Account
  */
@@ -23,6 +25,7 @@ const OracleRetentionUpdateTransaction = require('../../models/transactions/orac
  * @property {Date} maxTime - tx max time
  * @property {number} fee - fee
  * @property {number} [decimals] - decimals, used for legacy support
+ * @property {number} [protocol] - protocol version
  */
 
 /**
@@ -36,6 +39,15 @@ const OracleRetentionUpdateTransaction = require('../../models/transactions/orac
  * @property {BigInt[]} prices - prices
  * @property {number} timestamp - timestamp
  * @property {Date} maxTime - tx max time
+ * @property {number} [protocol] - protocol version
+ */
+
+/**
+ * @typedef {Object} OracleFeeConfigUpdate
+ * @param {string[]} sorobanRpc - soroban rpc urls
+ * @param {Account} account - account
+ * @param {any} txOptions - transaction options
+ * @param {{fee: BigInt, token: string}} update - fee config update
  */
 
 /**
@@ -43,21 +55,26 @@ const OracleRetentionUpdateTransaction = require('../../models/transactions/orac
  * @returns {Promise<OracleInitTransaction>}
  */
 async function buildOracleInitTransaction(initOptions) {
-    const {account, config, sorobanRpc, network, maxTime, fee} = initOptions
-    const {admin, assets, baseAsset, decimals, contractId, period, timeframe, retentionConfig} = config
+    const {account, config, sorobanRpc, network, maxTime, fee, protocol} = initOptions
+    const {admin, assets, baseAsset, decimals, contractId, period, timeframe, feeConfig, cacheSize} = config
     const oracleClient = new OracleClient(network, sorobanRpc, contractId)
-    const tx = await oracleClient.config(
+    const configObject = {
+        admin,
+        assets: assets.map(a => a.toOracleContractAsset(network)),
+        baseAsset: baseAsset.toOracleContractAsset(network),
+        decimals: decimals || initOptions.decimals, //legacy support. config.decimals will be removed in the future
+        historyRetentionPeriod: period,
+        resolution: timeframe
+    }
+    let fn = "config_v1"
+    if (protocol > 1) {
+        fn = "config"
+        configObject.cacheSize = cacheSize
+        configObject.feeConfig = feeConfig
+    }
+    const tx = await oracleClient[fn](
         account,
-        {
-            admin,
-            assets: assets.map(a => a.toOracleContractAsset(network)),
-            historyRetentionPeriod: period,
-            baseAsset: baseAsset.toOracleContractAsset(network),
-            decimals: decimals || initOptions.decimals, //legacy support. config.decimals will be removed in the future
-            resolution: timeframe,
-            retentionConfig,
-            cacheSize: config.cacheSize
-        },
+        configObject,
         {fee, networkPassphrase: network, timebounds: {minTime: 0, maxTime}}
     )
     return new OracleInitTransaction(tx, 1, config)
@@ -68,9 +85,10 @@ async function buildOracleInitTransaction(initOptions) {
  * @returns {Promise<PriceUpdatePendingTransaction>}
  */
 async function buildOraclePriceUpdateTransaction(priceUpdateOptions) {
-    const {network, sorobanRpc, contractId, admin, prices, timestamp, fee, account, maxTime} = priceUpdateOptions
+    const {network, sorobanRpc, contractId, admin, prices, timestamp, fee, account, maxTime, protocol} = priceUpdateOptions
     const oracleClient = new OracleClient(network, sorobanRpc, contractId)
-    const tx = await oracleClient.setPrice(
+    const fn = protocol > 1 ? "setPrices" : "setPrices_v1"
+    const tx = await oracleClient[fn](
         account,
         {
             admin,
@@ -136,17 +154,42 @@ async function buildOracleCacheSizeUpdateTransaction(sorobanRpc, account, txOpti
     return new OracleCacheSizeUpdateTransaction(tx, update.timestamp, update.cacheSize)
 }
 
-async function buildOracleRetentionUpdateTransaction(sorobanRpc, account, txOptions, update) {
+
+/**
+ * @param {string[]} sorobanRpc - soroban rpc urls
+ * @param {Account} account - account
+ * @param {any} txOptions - transaction options
+ * @param {OracleInvocationCostsUpdate} update - pending update
+ * @return {Promise<OracleInvocationCostsUpdateTransaction>}
+ */
+async function buildOracleInvocationCostsUpdateTransaction(sorobanRpc, account, txOptions, update) {
     const oracleClient = new OracleClient(txOptions.networkPassphrase, sorobanRpc, update.contractId)
-    const tx = await oracleClient.setRetentionConfig(
+    const tx = await oracleClient.setInvocationCosts(
+        account,
+        {admin: update.admin, invocationCosts: update.invocationCosts},
+        txOptions
+    )
+    return new OracleInvocationCostsUpdateTransaction(tx, update.timestamp, update.invocationCosts)
+}
+
+/**
+ * @param {string[]} sorobanRpc - soroban rpc urls
+ * @param {Account} account - account
+ * @param {any} txOptions - transaction options
+ * @param {OracleFeeConfigUpdate} update - pending update
+ * @returns {Promise<OracleFeeConfigUpdateTransaction>}
+ */
+async function buildOracleFeeConfigUpdateTransaction(sorobanRpc, account, txOptions, update) {
+    const oracleClient = new OracleClient(txOptions.networkPassphrase, sorobanRpc, update.contractId)
+    const tx = await oracleClient.setFeeConfig(
         account,
         {
             admin: update.admin,
-            retentionConfig: update.retentionConfig
+            feeConfig: update.feeConfig
         },
         txOptions
     )
-    return new OracleRetentionUpdateTransaction(tx, update.timestamp, update.retentionConfig)
+    return new OracleFeeConfigUpdateTransaction(tx, update.timestamp, update.feeConfig)
 }
 
 module.exports = {
@@ -155,5 +198,6 @@ module.exports = {
     buildOracleAssetsUpdateTransaction,
     buildOraclePriceUpdateTransaction,
     buildOracleCacheSizeUpdateTransaction,
-    buildOracleRetentionUpdateTransaction
+    buildOracleFeeConfigUpdateTransaction,
+    buildOracleInvocationCostsUpdateTransaction
 }

@@ -11,7 +11,8 @@ const ValidationError = require('../models/validation-error')
 const DAODepositsUpdate = require('../models/updates/dao/deposits-update')
 const SubscriptionsFeeUpdate = require('../models/updates/subscriptions/base-fee-update')
 const OracleCacheSizeUpdate = require('../models/updates/oracle/cache-size-update')
-const OracleRetentionUpdate = require('../models/updates/oracle/retention-update')
+const OracleFeeConfigUpdate = require('../models/updates/oracle/fee-config-update')
+const OracleInvocationCostsUpdate = require('../models/updates/oracle/invocation-costs-update')
 
 const rawConfig = {
     "contracts": {
@@ -377,15 +378,24 @@ describe('updates helper', () => {
         expect(update.get(oracleToUpdate)).toBeInstanceOf(OracleCacheSizeUpdate)
     })
 
-    test('buildUpdates, change retention config', () => {
+    test('buildUpdates, change fee config', () => {
         const config = new Config(rawConfig)
         const newConfig = new Config(rawConfig)
-        newConfig.contracts.get(oracleToUpdate).retentionConfig = {
+        newConfig.contracts.get(oracleToUpdate).feeConfig = {
             token: 'GDU4KKD63RYJ36OEV4IPVBQ5NEQOC5L3SQSS7GX2JRG3SQHAMFTQTF2G',
             fee: 10000000n
         }
         const update = buildUpdates(1, config, newConfig)
         expect(update.size).toBe(1)
-        expect(update.get(oracleToUpdate)).toBeInstanceOf(OracleRetentionUpdate)
+        expect(update.get(oracleToUpdate)).toBeInstanceOf(OracleFeeConfigUpdate)
+    })
+
+    test('buildUpdates, change invocation costs', () => {
+        const config = new Config(rawConfig)
+        const newConfig = new Config(rawConfig)
+        newConfig.contracts.get(oracleToUpdate).invocationCosts = [1000n, 2000n, 3000n, 4000n, 5000n]
+        const update = buildUpdates(1, config, newConfig)
+        expect(update.size).toBe(1)
+        expect(update.get(oracleToUpdate)).toBeInstanceOf(OracleInvocationCostsUpdate)
     })
 })

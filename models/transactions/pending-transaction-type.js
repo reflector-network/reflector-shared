@@ -11,7 +11,8 @@ const PendingTransactionType = {
     ORACLE_ASSETS_UPDATE: 'oracle_assets_update',
     ORACLE_HISTORY_PERIOD_UPDATE: 'oracle_history_period_update',
     ORACLE_PRICE_UPDATE: 'price_update',
-    ORACLE_RETENTION_UPDATE: 'oracle_retention_update',
+    ORACLE_FEE_CONFIG_UPDATE: 'oracle_retention_update',
+    ORACLE_INVOCATION_COSTS_UPDATE: 'oracle_invocation_costs_update',
     ORACLE_CACHE_SIZE_UPDATE: 'oracle_cache_size_update',
 
     SUBSCRIPTIONS_INIT: 'subscriptions_init',
