@@ -1,3 +1,4 @@
+const {OracleClient} = require('@reflector/oracle-client')
 const {xdr, rpc, scValToNative, Address, XdrLargeInt} = require('@stellar/stellar-sdk')
 
 async function makeRequest(requestFn, sorobanRpc) {
@@ -51,19 +52,29 @@ function getNativeStorage(values, keys) {
 }
 
 /**
- * Returns hash of the data
+ * Returns oracle contract state and wasm version
  * @param {string} contractId - contract id
  * @param {string[]} sorobanRpc - soroban rpc urls
- * @returns {{hash: string, admin: string, lastTimestamp: BigInt, prices: BigInt[], isInitialized: boolean, assetTtls: BigInt[]}}
+ * @param {Account} account - account to build transaction
+ * @param {{fee: number, networkPassphrase: string}} txOptions - transaction options
+ * @returns {{hash: string, admin: string, lastTimestamp: BigInt, isInitialized: boolean, assetTtls: BigInt[], protocol: number}}
  */
-async function getOracleContractState(contractId, sorobanRpc) {
+async function getOracleContractState(contractId, sorobanRpc, account, txOptions) {
     const contractState = {
         hash: null,
         lastTimestamp: 0n,
         isInitialized: false,
         admin: null,
         assetTtls: [],
-        protocol: null
+        protocol: null,
+        version: null
+    }
+
+    if (account) {
+        const oracleClient = new OracleClient(txOptions.networkPassphrase, sorobanRpc, contractId)
+        contractState.version = await oracleClient
+            .version(account, {...txOptions, simulationOnly: true})
+            .then(response => response.result.retval.value())
     }
 
     const instance = await getContractInstance(contractId, sorobanRpc)
