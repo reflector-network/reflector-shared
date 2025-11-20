@@ -134,7 +134,7 @@ function __tryGetContractsUpdate(timestamp, currentConfigs, newConfigs) {
             throw new ValidationError(`Contract ${currentConfig.admin}. Admin can not be modified`)
         if (newConfig.type !== currentConfig.type)
             throw new ValidationError(`Contract ${currentConfig.type}. Type can not be modified`)
-        if (newConfig.type === ContractTypes.ORACLE) {
+        if (newConfig.type === ContractTypes.ORACLE || newConfig.type === ContractTypes.ORACLE_BEAM) {
             if (!newConfig.baseAsset.equals(currentConfig.baseAsset))
                 throw new ValidationError(`Contract ${currentConfig.contractId}. Base asset can not be modified`)
             if (newConfig.timeframe !== currentConfig.timeframe)

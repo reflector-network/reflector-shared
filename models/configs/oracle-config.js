@@ -1,7 +1,6 @@
 const Asset = require('../assets/asset')
 const {sortObjectKeys} = require('../../utils/serialization-helper')
 const IssuesContainer = require('../issues-container')
-const {areArraysEqual} = require('../../utils/comparison-helper')
 const ContractConfigBase = require('./contract-config-base')
 
 module.exports = class OracleConfig extends ContractConfigBase {
@@ -23,8 +22,6 @@ module.exports = class OracleConfig extends ContractConfigBase {
         this.__assignCacheSize(raw.cacheSize)
 
         this.__assignFeeConfig(raw.feeConfig)
-
-        this.__assignInvocationCosts(raw.invocationCost)
     }
 
     __assignBaseAsset(asset) {
@@ -106,19 +103,6 @@ module.exports = class OracleConfig extends ContractConfigBase {
         }
     }
 
-    __assignInvocationCosts(invocationCosts) {
-        try {
-            if (!invocationCosts)
-                return
-            if (!Array.isArray(invocationCosts) || invocationCosts.some(c => typeof c !== 'string' || !BigInt(c)) || invocationCosts.length !== 5)
-                throw new Error('invocationCosts must be an array of 5 BigInt strings')
-            this.invocationCosts = invocationCosts.map(c => BigInt(c))
-            this.__invocationCostsSet = true
-        } catch (err) {
-            this.__addIssue(`invocationCosts: ${err.message}`)
-        }
-    }
-
     /**
      * @type {Asset}
      */
@@ -155,11 +139,6 @@ module.exports = class OracleConfig extends ContractConfigBase {
      */
     feeConfig
 
-    /**
-     * @type {BigInt[]}
-     */
-    invocationCosts
-
     toPlainObject(asLegacy = true) {
         return sortObjectKeys({
             ...super.toPlainObject(asLegacy),
@@ -174,8 +153,7 @@ module.exports = class OracleConfig extends ContractConfigBase {
                 feeConfig: this.__feeConfigSet ? {
                     token: this.feeConfig.token,
                     fee: this.feeConfig.fee.toString()
-                } : undefined,
-                invocationCosts: this.__invocationCostsSet ? this.invocationCosts.map(c => c.toString()) : undefined
+                } : undefined
             }
         })
     }
@@ -192,6 +170,5 @@ module.exports = class OracleConfig extends ContractConfigBase {
             && this.cacheSize === other.cacheSize
             && this.feeConfig?.token === other.feeConfig?.token
             && this.feeConfig?.fee === other.feeConfig?.fee
-            && areArraysEqual(this.invocationCosts, other.invocationCosts)
     }
 }

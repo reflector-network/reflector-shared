@@ -119,6 +119,81 @@ const rawConfig = {
             "period": 86400000,
             "timeframe": 300000
         },
+        "CADGRYMISAODBSKAG7JQVSNLAN6U724UKFKQPIAOBADYJFG24QI6SGAW": {
+            "admin": "GA4VO6D6M4FI7PRYLQJR7BQXNWIRC3VFAUQ7S4XTWZ5L2QTCJ3Z3GWLF",
+            "assets": [
+                {
+                    "code": "BTC",
+                    "type": 2
+                },
+                {
+                    "code": "ETH",
+                    "type": 2
+                },
+                {
+                    "code": "USDT",
+                    "type": 2
+                },
+                {
+                    "code": "XRP",
+                    "type": 2
+                },
+                {
+                    "code": "SOL",
+                    "type": 2
+                },
+                {
+                    "code": "USDC",
+                    "type": 2
+                },
+                {
+                    "code": "ADA",
+                    "type": 2
+                },
+                {
+                    "code": "AVAX",
+                    "type": 2
+                },
+                {
+                    "code": "DOT",
+                    "type": 2
+                },
+                {
+                    "code": "MATIC",
+                    "type": 2
+                },
+                {
+                    "code": "LINK",
+                    "type": 2
+                },
+                {
+                    "code": "DAI",
+                    "type": 2
+                },
+                {
+                    "code": "ATOM",
+                    "type": 2
+                },
+                {
+                    "code": "XLM",
+                    "type": 2
+                },
+                {
+                    "code": "UNI",
+                    "type": 2
+                }
+            ],
+            "baseAsset": {
+                "code": "USD",
+                "type": 2
+            },
+            "dataSource": "coinmarketcap",
+            "fee": 10000000,
+            "contractId": "CADGRYMISAODBSKAG7JQVSNLAN6U724UKFKQPIAOBADYJFG24QI6SGAW",
+            "period": 86400000,
+            "timeframe": 300000,
+            "type": "oracle_beam"
+        },
         "CBMZO5MRIBFL457FBK5FEWZ4QJTYL3XWID7QW7SWDSDOQI5H4JN7XPZU": {
             type: ContractTypes.ORACLE,
             "admin": "GD6CN3XGN3ZGND3RSPMAOB3YCO4HXF2TD6W4OMOUL4YOPC7XGBHXPF5K",
@@ -208,6 +283,7 @@ const rawConfig = {
 }
 
 const oracleContract = 'CAA2NN3TSWQFI6TZVLYM7B46RXBINZFRXZFP44BM2H6OHOPRXD5OASUW'
+const oracleBeamContract = 'CADGRYMISAODBSKAG7JQVSNLAN6U724UKFKQPIAOBADYJFG24QI6SGAW'
 const subscriptoionsContract = 'CBFZZVW5SKMVTXKHHQKGOLLHYTOVNSYA774GCROOBMYAKEYCP4THNEXQ'
 const daoContract = 'CDB7K2IT4NXDV66BGOESQSSTGVJXZWDGA3DM6P3U2W435IBY6U7GVUII'
 
@@ -301,7 +377,7 @@ describe('transaction helper', () => {
         }
         {//update invocation config
             const newConfig = new Config(rawConfig)
-            newConfig.contracts.get(oracleContract).invocationCosts = [
+            newConfig.contracts.get(oracleBeamContract).invocationCosts = [
                 100000n,
                 200000n,
                 300000n,
@@ -342,7 +418,6 @@ describe('transaction helper', () => {
         })
         expect(transaction).toBeDefined()
     }, 10000)
-
 
     test('buildSubscriptionsInitTransaction', async () => {
         const currentConfig = new Config(rawConfig)
