@@ -75,4 +75,16 @@ describe('configs tests', () => {
         const configHash = new Config(config)
         expect(configHash.issues).toBe(undefined)
     })
+
+    test('different raw config fields order', () => {
+        const configA = new Config(legacyConfig)
+        const rawConfigB = {...legacyConfig}
+        const firstNode = rawConfigB.nodes[Object.keys(rawConfigB.nodes)[0]]
+        delete rawConfigB.nodes[firstNode.pubkey]
+        rawConfigB.nodes[firstNode.pubkey] = firstNode
+        const configB = new Config(rawConfigB)
+        for (let i = 0; i < configA.nodes.size; i++) {
+            expect([...configA.nodes.keys()][i] === [...configB.nodes.keys()][i]).toBe(true)
+        }
+    })
 })

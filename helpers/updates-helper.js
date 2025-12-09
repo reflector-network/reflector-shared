@@ -4,8 +4,6 @@ const NodesUpdate = require('../models/updates/nodes-update')
 const OracleHistoryPeriodUpdate = require('../models/updates/oracle/history-period-update')
 const WasmUpdate = require('../models/updates/wasm-update')
 const Config = require('../models/configs/config')
-const ContractsUpdate = require('../models/updates/contracts-update')
-const ConfigUpdate = require('../models/updates/config-update')
 const ContractTypes = require('../models/configs/contract-type')
 const SubscriptionsFeeUpdate = require('../models/updates/subscriptions/base-fee-update')
 const DAODepositsUpdate = require('../models/updates/dao/deposits-update')
@@ -20,7 +18,7 @@ const {areArraysEqual} = require('../utils/comparison-helper')
  * @param {BigInt} timestamp - timestamp of the update
  * @param {Config} currentConfig - current config
  * @param {Config} newConfig - new config
- * @returns {Map<string, NodesUpdate|WasmUpdate|ContractsUpdate|OracleAssetsUpdate|OraclePeriodUpdate|SubscriptionsFeeUpdate|null>} updates grouped by contract id
+ * @returns {Map<string, NodesUpdate|WasmUpdate|OracleAssetsUpdate|OraclePeriodUpdate|SubscriptionsFeeUpdate|null>} updates grouped by contract id
  */
 function buildUpdates(timestamp, currentConfig, newConfig) {
     if (!(currentConfig instanceof Config))
@@ -39,26 +37,19 @@ function buildUpdates(timestamp, currentConfig, newConfig) {
 
     const globalUpdate = __tryGetGlobalUpdate(timestamp, currentConfig, newConfig)
     const contractsUpdate = __tryGetContractsUpdate(timestamp, currentConfig.contracts, newConfig.contracts)
-    if (globalUpdate && contractsUpdate)
-        throw new ValidationError('Global update can not be combined with contracts update')
-    else if (!globalUpdate && !contractsUpdate) //if no updates found, but the configs are different, return config update
-        return new Map([[null, new ConfigUpdate(timestamp, newConfig, currentConfig)]])
+    if (!globalUpdate && contractsUpdate.size < 1) //if no updates found, but the configs are different, return null update
+        return new Map([[null, null]])
 
+    let updates = new Map()
     if (globalUpdate) {
-        const updates = new Map()
         updates.set(null, globalUpdate)
-        return updates
     }
 
-    const updates = [...contractsUpdate.values()]
-    const blockchainUpdates = updates.filter(u => u)
-    if (blockchainUpdates.length > 1) //if multiple updates, and some require blockchain update, throw error
+    updates = new Map([...updates, ...contractsUpdate])
+    if (updates.size > 1) //if multiple updates throw error
         throw new ValidationError('Multiple blockchain updates are not supported')
-    else if (blockchainUpdates.length > 0 && updates.length > 1) //if multiple updates, and some require blockchain update, throw error
-        throw new ValidationError('Combined multiple updates are not supported')
 
-    if (contractsUpdate)
-        return contractsUpdate
+    return updates
 }
 
 /**
@@ -81,10 +72,6 @@ function __tryGetGlobalUpdate(timestamp, currentConfig, newConfig) {
 
     setGlobalUpdate(__tryGetWasmUpdate(timestamp, currentConfig.wasmHash, newConfig.wasmHash))
 
-    const contractChanges = __getChanges(newConfig.contracts, currentConfig.contracts)
-    if (contractChanges.added.length > 0 || contractChanges.removed.length > 0)
-        setGlobalUpdate(new ContractsUpdate(timestamp, newConfig.contracts, currentConfig.contracts))
-
     return globalUpdate
 }
 
@@ -101,7 +88,7 @@ function __tryGetNodesUpdate(timestamp, currentNodes, newNodes) {
     const changes = __getChanges(newNodes, currentNodes)
     if (changes.added.length === 0 && changes.removed.length === 0 && changes.modified.length === 0)
         return null
-    const modified = changes.added.concat(changes.modified).concat(changes.removed)
+    const modified = changes.added.concat(changes.removed) //ignore modified nodes. Any change in node details is not required blockchain update
     if (modified.length === 0)
         return null
     return new NodesUpdate(timestamp, newNodes, currentNodes)
@@ -115,14 +102,16 @@ function __tryGetNodesUpdate(timestamp, currentNodes, newNodes) {
  * @returns {Map<string, UpdateBase>}
  */
 function __tryGetContractsUpdate(timestamp, currentConfigs, newConfigs) {
+    const updates = new Map()
     const changes = __getChanges(newConfigs, currentConfigs)
     if (changes.modified.length === 0)
-        return null
+        return updates
 
-    const updates = new Map()
     changes.modified.forEach(({newItem: newConfig, currentItem: currentConfig}) => {
         let contractUpdate = null
         function setContractUpdate(update) {
+            if (!update)
+                return
             if (contractUpdate)
                 throw new ValidationError(`Contract ${currentConfig.contractId}. Only one update can be applied at a time`)
             contractUpdate = update
@@ -186,7 +175,6 @@ function __tryGetContractsUpdate(timestamp, currentConfigs, newConfigs) {
                 )
             )
         }
-        updates.set(newConfig.contractId, contractUpdate)
     })
 
     return updates

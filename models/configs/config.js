@@ -59,6 +59,7 @@ module.exports = class Config extends IssuesContainer {
             this.__addIssue(`config: ${IssuesContainer.notDefined}`)
             return
         }
+        raw = sortObjectKeys(raw)
         this.__setContracts(raw.contracts)
         this.__setNodes(raw.nodes)
         this.__setWasm(raw.wasmHash)

@@ -4,7 +4,6 @@ const Config = require('../models/configs/config')
 const {buildUpdates} = require('../helpers/updates-helper')
 const OracleHistoryRetetionPeriodUpdate = require('../models/updates/oracle/history-period-update')
 const OracleAssetsUpdate = require('../models/updates/oracle/assets-update')
-const ContractsUpdate = require('../models/updates/contracts-update')
 const NodesUpdate = require('../models/updates/nodes-update')
 const WasmUpdate = require('../models/updates/wasm-update')
 const ValidationError = require('../models/validation-error')
@@ -289,11 +288,9 @@ describe('updates helper', () => {
         newConfig.contracts.delete(oracle)
         let updates = buildUpdates(1, config, newConfig)
         expect(updates.size).toBe(1)
-        expect(updates.get(null)).toBeInstanceOf(ContractsUpdate)
 
         updates = buildUpdates(1, newConfig, config)
         expect(updates.size).toBe(1)
-        expect(updates.get(null)).toBeInstanceOf(ContractsUpdate)
     })
 
     test('buildUpdates, node remove/add test', () => {
@@ -311,7 +308,7 @@ describe('updates helper', () => {
         expect(updates.get(null)).toBeInstanceOf(NodesUpdate)
     })
 
-    test('buildUpdates, update node test', () => {
+    test('buildUpdates, update two nodes test', () => {
 
         const config = new Config(rawConfig)
         const newConfig = new Config(rawConfig)
@@ -321,18 +318,7 @@ describe('updates helper', () => {
         newConfig.nodes.get(secondPubkey).domain = 'newdomain.com'
         const updates = buildUpdates(1, config, newConfig)
         expect(updates.size).toBe(1)
-        expect(updates.get(null)).toBeInstanceOf(NodesUpdate)
-    })
-
-    test('buildUpdates, update two nodes test', () => {
-
-        const config = new Config(rawConfig)
-        const newConfig = new Config(rawConfig)
-        const nodePubkey = 'GCR6ZOFMKDWX5OMUDQZHQWD2FEE4WCWQJOBMRZRQM5BVTPKJ7LL35TBF'
-        newConfig.nodes.get(nodePubkey).url = 'ws://localhost:3000'
-        const updates = buildUpdates(1, config, newConfig)
-        expect(updates.size).toBe(1)
-        expect(updates.get(null)).toBeInstanceOf(NodesUpdate)
+        expect(updates.get(null)).toBe(null)
     })
 
     test('buildUpdates, update oracle wasm test', () => {
@@ -429,7 +415,6 @@ describe('updates helper', () => {
         const newConfig = new Config(rawConfig)
         const updates = buildUpdates(1, config, newConfig)
         expect(updates.size).toBe(1)
-        expect(updates.get(null)).toBeInstanceOf(ContractsUpdate)
     })
 
     test('buildUpdates, update dao deposits', () => {
@@ -474,12 +459,12 @@ describe('updates helper', () => {
         newConfig.contracts.get(oracle).fee = 9999999
         newConfig.contracts.get(oracle2).fee = 9999999
         const updates = buildUpdates(1, config, newConfig)
-        expect(updates.size).toBe(2)
-        expect(updates.get(oracle)).toBe(null)
-        expect(updates.get(oracle2)).toBe(null)
+        expect(updates.size).toBe(1)
+        expect(updates.get(oracle)).toBe(undefined)
+        expect(updates.get(oracle2)).toBe(undefined)
     })
 
-    test('buildUpdates, one fee and one asset updates', () => {
+    test('buildUpdates, one oracle update, with multiple changes, only one blockchain', () => {
         const config = new Config(rawConfig)
         const newConfig = new Config(rawConfig)
         newConfig.contracts.get(oracle).fee = 9999999
@@ -492,7 +477,7 @@ describe('updates helper', () => {
         expect(updates.size).toBe(1)
     })
 
-    test('buildUpdates, two asset updates throws error', () => {
+    test('buildUpdates, two oracles updates, only one blockchain', () => {
         const config = new Config(rawConfig)
         const newConfig = new Config(rawConfig)
         newConfig.contracts.get(oracle).fee = 9999999
@@ -500,7 +485,45 @@ describe('updates helper', () => {
             "code": "TEST",
             "type": 2
         })
-        expect(() => buildUpdates(1, config, newConfig)).toThrow(ValidationError)
+        expect(buildUpdates(1, config, newConfig).size).toBe(1)
+    })
+
+    test('buildUpdates, one oracle update and one global update, only one blockchain', () => {
+        const config = new Config(rawConfig)
+        const newConfig = new Config(rawConfig)
+        const firstNode = [...newConfig.nodes.values()][0]
+        firstNode.domain = "newdomain.com"
+        firstNode.url = "ws://localhost:3000"
+        newConfig.contracts.get(oracle).assets.push({
+            "code": "TEST",
+            "type": 2
+        })
+        expect(buildUpdates(1, config, newConfig).size).toBe(1)
+    })
+
+    test('buildUpdates, two oracles updates, two blockchain', () => {
+        const config = new Config(rawConfig)
+        const newConfig = new Config(rawConfig)
+        newConfig.contracts.get(oracle).assets.push({
+            "code": "TEST",
+            "type": 2
+        })
+        newConfig.contracts.get(oracle2).assets.push({
+            "code": "TEST",
+            "type": 2
+        })
+        expect(() => buildUpdates(1, config, newConfig).size).toThrow(ValidationError)
+    })
+
+    test('buildUpdates, one oracles updates, two blockchain', () => {
+        const config = new Config(rawConfig)
+        const newConfig = new Config(rawConfig)
+        newConfig.contracts.get(oracle).period = 9999999
+        newConfig.contracts.get(oracle).assets.push({
+            "code": "TEST",
+            "type": 2
+        })
+        expect(() => buildUpdates(1, config, newConfig).size).toThrow(ValidationError)
     })
 
     test('buildUpdates, change sys account', () => {
