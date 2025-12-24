@@ -1,7 +1,7 @@
 /*eslint-disable no-undef */
 const nock = require('nock')
 const {xdr} = require('@stellar/stellar-sdk')
-const {getSubscriptions, getSubscriptionsContractState, getOracleContractState, getContractState} = require('../helpers/entries-helper')
+const {getSubscriptions, getSubscriptionsContractState, getOracleContractState, getContractState, getContractInstanceEntries, getContractEntries} = require('../helpers/entries-helper')
 
 const oracleInstanceResponse = {
     "jsonrpc": "2.0",
@@ -173,7 +173,7 @@ describe('entries helper', () => {
         expect(data.lastTimestamp).toBeGreaterThan(0n)
         expect(data.isInitialized).toBe(true)
         expect(data.hash).toBeDefined()
-        expect(data.assetTtls.length).toBeGreaterThan(0)
+        expect(data.expirations.length).toBeGreaterThan(0)
     }, 1000000)
 
     test('getContractData non existing data', async () => {
@@ -211,4 +211,39 @@ describe('entries helper', () => {
 
     }, 1000000)
 
+    test('getContractInstanceEntries', async () => {
+
+        const contractId = 'CB7YJYJCYH5IJVZEVF63FPFV2G3SRG72DWITTYOMT4MXMTC3AGPIPSIC'
+
+        const entries = await getContractInstanceEntries(
+            contractId,
+            ['http://good.rpc.com?reqData=oracle'],
+            ["admin", "last_timestamp"])
+        expect(entries).toBeDefined()
+        expect(Object.keys(entries).length).toBe(2)
+        expect(entries.admin).toBeDefined()
+        expect(entries.last_timestamp).toBeDefined()
+    }, 1000000)
+
+    test('getContractInstanceEntries non-existing contract', async () => {
+
+        const contractId = 'CAFJZQWSED6YAWZU3GWRTOCNPPCGBN32L7QV43XX5LZLFTK6JLN34DLN'
+        const entries = await getContractInstanceEntries(
+            contractId,
+            ['http://good.rpc.com?reqData=none'],
+            ["admin", "last_timestamp"])
+        expect(entries).toBeDefined()
+        expect(Object.keys(entries).length).toBe(0)
+    }, 1000000)
+
+    test('getContractEntries', async () => {
+        const contractId = 'CDAREEFGZQYIPPUXMP4SGRXMGGZJDGPHYYDZGGMK4A5XLUZYWKRWOTOA'
+        const entries = await getContractEntries(
+            contractId,
+            ['http://good.rpc.com?reqData=subs'],
+            [{key: 1n, type: 'u64', persistent: true}])
+        expect(entries).toBeDefined()
+        expect(Object.keys(entries).length).toBe(1)
+        expect(entries['1']).toBeDefined()
+    }, 1000000)
 })

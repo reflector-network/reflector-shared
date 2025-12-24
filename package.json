@@ -1,6 +1,6 @@
 {
   "name": "@reflector/reflector-shared",
-  "version": "7.0.0-rc10",
+  "version": "7.0.0-rc11",
   "description": "",
   "main": "index.js",
   "scripts": {

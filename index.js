@@ -69,10 +69,35 @@ const {
     buildUpdateTransaction
 } = require('./helpers/transactions/shared-transaction-helper')
 
-const {buildOracleInitTransaction, buildOraclePriceUpdateTransaction} = require('./helpers/transactions/oracle-transaction-helper')
-const {buildSubscriptionsInitTransaction, buildSubscriptionChargeTransaction, buildSubscriptionTriggerTransaction} = require('./helpers/transactions/subscriptions-transaction-helper')
-const {buildDAOInitTransaction, buildDAODepositsUpdateTransaction, buildDAOVoteTransaction, buildDAOUnlockTransaction} = require('./helpers/transactions/dao-transaction-helper')
-const {getContractState, getOracleContractState, getSubscriptionsContractState, getSubscriptions, getSubscriptionById} = require('./helpers/entries-helper')
+const {
+    buildOracleInitTransaction,
+    buildOraclePriceUpdateTransaction
+} = require('./helpers/transactions/oracle-transaction-helper')
+
+const {
+    buildSubscriptionsInitTransaction,
+    buildSubscriptionChargeTransaction,
+    buildSubscriptionTriggerTransaction
+} = require('./helpers/transactions/subscriptions-transaction-helper')
+
+const {
+    buildDAOInitTransaction,
+    buildDAODepositsUpdateTransaction,
+    buildDAOVoteTransaction,
+    buildDAOUnlockTransaction
+} = require('./helpers/transactions/dao-transaction-helper')
+
+const {
+    getContractState,
+    getOracleContractState,
+    getSubscriptionsContractState,
+    getSubscriptions,
+    getSubscriptionById,
+    getContractEntries,
+    getContractInstance,
+    getContractInstanceEntries,
+    getNativeStorage
+} = require('./helpers/entries-helper')
 
 const {buildUpdates} = require('./helpers/updates-helper')
 
@@ -152,3 +177,7 @@ module.exports.getContractState = getContractState
 module.exports.getSubscriptionsContractState = getSubscriptionsContractState
 module.exports.getSubscriptions = getSubscriptions
 module.exports.getSubscriptionById = getSubscriptionById
+module.exports.getContractEntries = getContractEntries
+module.exports.getContractInstance = getContractInstance
+module.exports.getContractInstanceEntries = getContractInstanceEntries
+module.exports.getNativeStorage = getNativeStorage
