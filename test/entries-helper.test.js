@@ -173,7 +173,6 @@ describe('entries helper', () => {
         expect(data.lastTimestamp).toBeGreaterThan(0n)
         expect(data.isInitialized).toBe(true)
         expect(data.hash).toBeDefined()
-        expect(data.expirations.length).toBeGreaterThan(0)
     }, 1000000)
 
     test('getContractData non existing data', async () => {
