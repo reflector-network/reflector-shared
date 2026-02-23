@@ -2,14 +2,16 @@
 const {Keypair} = require('@stellar/stellar-sdk')
 const Config = require('../models/configs/config')
 const {buildUpdates} = require('../helpers/updates-helper')
-const OraclePeriodUpdate = require('../models/updates/oracle/period-update')
+const OracleHistoryRetetionPeriodUpdate = require('../models/updates/oracle/history-period-update')
 const OracleAssetsUpdate = require('../models/updates/oracle/assets-update')
-const ContractsUpdate = require('../models/updates/contracts-update')
 const NodesUpdate = require('../models/updates/nodes-update')
 const WasmUpdate = require('../models/updates/wasm-update')
 const ValidationError = require('../models/validation-error')
 const DAODepositsUpdate = require('../models/updates/dao/deposits-update')
 const SubscriptionsFeeUpdate = require('../models/updates/subscriptions/base-fee-update')
+const OracleCacheSizeUpdate = require('../models/updates/oracle/cache-size-update')
+const OracleFeeConfigUpdate = require('../models/updates/oracle/fee-config-update')
+const OracleInvocationCostsUpdate = require('../models/updates/oracle/invocation-costs-update')
 
 const rawConfig = {
     "contracts": {
@@ -127,6 +129,81 @@ const rawConfig = {
             "period": 86400000,
             "timeframe": 300000
         },
+        "CADGRYMISAODBSKAG7JQVSNLAN6U724UKFKQPIAOBADYJFG24QI6SGAW": {
+            "admin": "GA4VO6D6M4FI7PRYLQJR7BQXNWIRC3VFAUQ7S4XTWZ5L2QTCJ3Z3GWLF",
+            "assets": [
+                {
+                    "code": "BTC",
+                    "type": 2
+                },
+                {
+                    "code": "ETH",
+                    "type": 2
+                },
+                {
+                    "code": "USDT",
+                    "type": 2
+                },
+                {
+                    "code": "XRP",
+                    "type": 2
+                },
+                {
+                    "code": "SOL",
+                    "type": 2
+                },
+                {
+                    "code": "USDC",
+                    "type": 2
+                },
+                {
+                    "code": "ADA",
+                    "type": 2
+                },
+                {
+                    "code": "AVAX",
+                    "type": 2
+                },
+                {
+                    "code": "DOT",
+                    "type": 2
+                },
+                {
+                    "code": "MATIC",
+                    "type": 2
+                },
+                {
+                    "code": "LINK",
+                    "type": 2
+                },
+                {
+                    "code": "DAI",
+                    "type": 2
+                },
+                {
+                    "code": "ATOM",
+                    "type": 2
+                },
+                {
+                    "code": "XLM",
+                    "type": 2
+                },
+                {
+                    "code": "UNI",
+                    "type": 2
+                }
+            ],
+            "baseAsset": {
+                "code": "USD",
+                "type": 2
+            },
+            "dataSource": "coinmarketcap",
+            "fee": 10000000,
+            "contractId": "CADGRYMISAODBSKAG7JQVSNLAN6U724UKFKQPIAOBADYJFG24QI6SGAW",
+            "period": 86400000,
+            "timeframe": 300000,
+            "type": "oracle_beam"
+        },
         "CBFZZVW5SKMVTXKHHQKGOLLHYTOVNSYA774GCROOBMYAKEYCP4THNEXQ": {
             "type": "subscriptions",
             "admin": "GC5GG65IUN7MLRGYXLT4GDQ4YY5TQJ5YIVVBIIKSUSFLSPTQFHRZZXHZ",
@@ -175,191 +252,315 @@ const rawConfig = {
     "wasmHash": "551723e0178208dd25c950bf78ab5618d47257a594654bbcaaf6cec8dc8c240c"
 }
 
-const oracleToUpdate = 'CAA2NN3TSWQFI6TZVLYM7B46RXBINZFRXZFP44BM2H6OHOPRXD5OASUW'
-const oracleToUpdate2 = 'CBMZO5MRIBFL457FBK5FEWZ4QJTYL3XWID7QW7SWDSDOQI5H4JN7XPZU'
-const subcriptions = 'CBFZZVW5SKMVTXKHHQKGOLLHYTOVNSYA774GCROOBMYAKEYCP4THNEXQ'
+const oracle = 'CAA2NN3TSWQFI6TZVLYM7B46RXBINZFRXZFP44BM2H6OHOPRXD5OASUW'
+const oracle2 = 'CBMZO5MRIBFL457FBK5FEWZ4QJTYL3XWID7QW7SWDSDOQI5H4JN7XPZU'
+const oracleBeam = 'CADGRYMISAODBSKAG7JQVSNLAN6U724UKFKQPIAOBADYJFG24QI6SGAW'
+const subscriptions = 'CBFZZVW5SKMVTXKHHQKGOLLHYTOVNSYA774GCROOBMYAKEYCP4THNEXQ'
 const dao = 'CDB7K2IT4NXDV66BGOESQSSTGVJXZWDGA3DM6P3U2W435IBY6U7GVUII'
 
-test('buildUpdates, period test', () => {
-    const config = new Config(rawConfig)
-    const newConfig = new Config(rawConfig)
-    newConfig.contracts.get(oracleToUpdate).period = 9999999
-    const updates = buildUpdates(1, config, newConfig)
-    expect(updates.size).toBe(1)
-    expect(updates.get(oracleToUpdate)).toBeInstanceOf(OraclePeriodUpdate)
-})
+describe('updates helper', () => {
 
-test('buildUpdates, new contract test', () => {
-    const config = new Config(rawConfig)
-    const newConfig = new Config(rawConfig)
-    newConfig.contracts.get(oracleToUpdate).assets.push({
-        "code": "TEST",
-        "type": 2
+    test('buildUpdates, period test', () => {
+        const config = new Config(rawConfig)
+        const newConfig = new Config(rawConfig)
+        newConfig.contracts.get(oracle).period = 9999999
+        const updates = buildUpdates(1, config, newConfig)
+        expect(updates.size).toBe(1)
+        expect(updates.get(oracle)).toBeInstanceOf(OracleHistoryRetetionPeriodUpdate)
     })
-    const updates = buildUpdates(1, config, newConfig)
-    expect(updates.size).toBe(1)
-    expect(updates.get(oracleToUpdate)).toBeInstanceOf(OracleAssetsUpdate)
-})
 
-test('buildUpdates, contract remove/add test', () => {
-
-    const config = new Config(rawConfig)
-    const newConfig = new Config(rawConfig)
-    newConfig.contracts.delete(oracleToUpdate)
-    let updates = buildUpdates(1, config, newConfig)
-    expect(updates.size).toBe(1)
-    expect(updates.get(null)).toBeInstanceOf(ContractsUpdate)
-
-    updates = buildUpdates(1, newConfig, config)
-    expect(updates.size).toBe(1)
-    expect(updates.get(null)).toBeInstanceOf(ContractsUpdate)
-})
-
-test('buildUpdates, node remove/add test', () => {
-
-    const config = new Config(rawConfig)
-    const newConfig = new Config(rawConfig)
-    const nodePubkey = 'GCR6ZOFMKDWX5OMUDQZHQWD2FEE4WCWQJOBMRZRQM5BVTPKJ7LL35TBF'
-    newConfig.nodes.delete(nodePubkey)
-    let updates = buildUpdates(1, config, newConfig)
-    expect(updates.size).toBe(1)
-    expect(updates.get(null)).toBeInstanceOf(NodesUpdate)
-
-    updates = buildUpdates(1, newConfig, config)
-    expect(updates.size).toBe(1)
-    expect(updates.get(null)).toBeInstanceOf(NodesUpdate)
-})
-
-test('buildUpdates, update node test', () => {
-
-    const config = new Config(rawConfig)
-    const newConfig = new Config(rawConfig)
-    const nodePubkey = 'GCR6ZOFMKDWX5OMUDQZHQWD2FEE4WCWQJOBMRZRQM5BVTPKJ7LL35TBF'
-    newConfig.nodes.get(nodePubkey).url = 'ws://localhost:3000'
-    const secondPubkey = 'GDQFOLVYRNYBTQ2WCXOANDAAM4BSZMLJUEI6CO2PMOCOVDS6SKM2AMRQ'
-    newConfig.nodes.get(secondPubkey).domain = 'newdomain.com'
-    const updates = buildUpdates(1, config, newConfig)
-    expect(updates.size).toBe(1)
-    expect(updates.get(null)).toBeInstanceOf(NodesUpdate)
-})
-
-test('buildUpdates, update two nodes test', () => {
-
-    const config = new Config(rawConfig)
-    const newConfig = new Config(rawConfig)
-    const nodePubkey = 'GCR6ZOFMKDWX5OMUDQZHQWD2FEE4WCWQJOBMRZRQM5BVTPKJ7LL35TBF'
-    newConfig.nodes.get(nodePubkey).url = 'ws://localhost:3000'
-    const updates = buildUpdates(1, config, newConfig)
-    expect(updates.size).toBe(1)
-    expect(updates.get(null)).toBeInstanceOf(NodesUpdate)
-})
-
-test('buildUpdates, update wasm test', () => {
-    const config = new Config(rawConfig)
-    const newConfig = new Config({
-        ...rawConfig,
-        ...{
-            wasmHash: '551723e0178208dd25c950bf78ab5618d47257a594654bbcaaf6cec8dc8c241c'
-        }
+    test('buildUpdates, new contract test', () => {
+        const config = new Config(rawConfig)
+        const newConfig = new Config(rawConfig)
+        newConfig.contracts.get(oracle).assets.push({
+            "code": "TEST",
+            "type": 2
+        })
+        const updates = buildUpdates(1, config, newConfig)
+        expect(updates.size).toBe(1)
+        expect(updates.get(oracle)).toBeInstanceOf(OracleAssetsUpdate)
     })
-    const updates = buildUpdates(1, config, newConfig)
-    expect(updates.size).toBe(1)
-    expect(updates.get(null)).toBeInstanceOf(WasmUpdate)
-})
 
-test('buildUpdates, update subscriptions fee', () => {
-    const config = new Config(rawConfig)
-    const newConfig = new Config(rawConfig)
-    newConfig.contracts.get(subcriptions).baseFee = 9999999
-    const updates = buildUpdates(1, config, newConfig)
-    expect(updates.size).toBe(1)
-    expect(updates.get(subcriptions)).toBeInstanceOf(SubscriptionsFeeUpdate)
-})
+    test('buildUpdates, contract remove/add test', () => {
 
-test('buildUpdates, add dao contract', () => {
-    const config = new Config(rawConfig)
-    config.contracts.delete(dao)
-    const newConfig = new Config(rawConfig)
-    const updates = buildUpdates(1, config, newConfig)
-    expect(updates.size).toBe(1)
-    expect(updates.get(null)).toBeInstanceOf(ContractsUpdate)
-})
+        const config = new Config(rawConfig)
+        const newConfig = new Config(rawConfig)
+        newConfig.contracts.delete(oracle)
+        let updates = buildUpdates(1, config, newConfig)
+        expect(updates.size).toBe(1)
 
-test('buildUpdates, update dao deposits', () => {
-    const config = new Config(rawConfig)
-    const newConfig = new Config(rawConfig)
-    newConfig.contracts.get(dao).depositParams.forEach((value, key) => {
-        newConfig.contracts.get(dao).depositParams.set(key, value + 1)
+        updates = buildUpdates(1, newConfig, config)
+        expect(updates.size).toBe(1)
     })
-    const updates = buildUpdates(1, config, newConfig)
-    expect(updates.size).toBe(1)
-    expect(updates.get(dao)).toBeInstanceOf(DAODepositsUpdate)
-})
 
-test('buildUpdates, update wasm test (multiple)', () => {
-    try {
+    test('buildUpdates, node remove/add test', () => {
+
+        const config = new Config(rawConfig)
+        const newConfig = new Config(rawConfig)
+        const nodePubkey = 'GCR6ZOFMKDWX5OMUDQZHQWD2FEE4WCWQJOBMRZRQM5BVTPKJ7LL35TBF'
+        newConfig.nodes.delete(nodePubkey)
+        let updates = buildUpdates(1, config, newConfig)
+        expect(updates.size).toBe(1)
+        expect(updates.get(null)).toBeInstanceOf(NodesUpdate)
+
+        updates = buildUpdates(1, newConfig, config)
+        expect(updates.size).toBe(1)
+        expect(updates.get(null)).toBeInstanceOf(NodesUpdate)
+    })
+
+    test('buildUpdates, update two nodes test', () => {
+
+        const config = new Config(rawConfig)
+        const newConfig = new Config(rawConfig)
+        const nodePubkey = 'GCR6ZOFMKDWX5OMUDQZHQWD2FEE4WCWQJOBMRZRQM5BVTPKJ7LL35TBF'
+        newConfig.nodes.get(nodePubkey).url = 'ws://localhost:3000'
+        const secondPubkey = 'GDQFOLVYRNYBTQ2WCXOANDAAM4BSZMLJUEI6CO2PMOCOVDS6SKM2AMRQ'
+        newConfig.nodes.get(secondPubkey).domain = 'newdomain.com'
+        const updates = buildUpdates(1, config, newConfig)
+        expect(updates.size).toBe(1)
+        expect(updates.get(null)).toBe(null)
+    })
+
+    test('buildUpdates, update oracle wasm test', () => {
+        const config = new Config(rawConfig)
+        const newConfig = new Config({
+            ...rawConfig,
+            ...{
+                wasmHash: '551723e0178208dd25c950bf78ab5618d47257a594654bbcaaf6cec8dc8c241c'
+            }
+        })
+        const updates = buildUpdates(1, config, newConfig)
+        expect(updates.size).toBe(1)
+        expect(updates.get(null)).toBeInstanceOf(WasmUpdate)
+    })
+
+    test('buildUpdates, update beam wasm test', () => {
         const config = new Config(rawConfig)
         const newConfig = new Config({
             ...rawConfig,
             ...{
                 wasmHash: {
-                    oracle: '551723e0178208dd25c950bf78ab5618d47257a594654bbcaaf6cec8dc8c241c',
-                    subcriptions: '551723e0178208dd25c950bf78ab5618d47257a594654bbcaaf6cec8dc8c241c'
+                    oracle: {
+                        type: "oracle",
+                        hash: rawConfig.wasmHash
+                    },
+                    oracle_beam: {
+                        type: "oracle_beam",
+                        hash: '551723e0178208dd25c950bf78ab5618d47257a594654bbcaaf6cec8dc8c241c'
+                    }
                 }
             }
         })
+        const updates = buildUpdates(1, config, newConfig)
+        expect(updates.size).toBe(1)
+        expect(updates.get(null)).toBeInstanceOf(WasmUpdate)
+    })
+
+    test('buildUpdates, update subscription wasm test', () => {
+        const config = new Config(rawConfig)
+        const newConfig = new Config({
+            ...rawConfig,
+            ...{
+                wasmHash: {
+                    oracle: {
+                        type: "oracle",
+                        hash: rawConfig.wasmHash
+                    },
+                    subscriptions: {
+                        type: "subscriptions",
+                        hash: '551723e0178208dd25c950bf78ab5618d47257a594654bbcaaf6cec8dc8c241c'
+                    }
+                }
+            }
+        })
+        const updates = buildUpdates(1, config, newConfig)
+        expect(updates.size).toBe(1)
+        expect(updates.get(null)).toBeInstanceOf(WasmUpdate)
+    })
+
+    test('buildUpdates, update dao wasm test', () => {
+        const config = new Config(rawConfig)
+        const newConfig = new Config({
+            ...rawConfig,
+            ...{
+                wasmHash: {
+                    oracle: {
+                        type: "oracle",
+                        hash: rawConfig.wasmHash
+                    },
+                    subscriptions: {
+                        type: "dao",
+                        hash: '551723e0178208dd25c950bf78ab5618d47257a594654bbcaaf6cec8dc8c241c'
+                    }
+                }
+            }
+        })
+        const updates = buildUpdates(1, config, newConfig)
+        expect(updates.size).toBe(1)
+        expect(updates.get(null)).toBeInstanceOf(WasmUpdate)
+    })
+
+    test('buildUpdates, update subscriptions fee', () => {
+        const config = new Config(rawConfig)
+        const newConfig = new Config(rawConfig)
+        newConfig.contracts.get(subscriptions).baseFee = 9999999
+        const updates = buildUpdates(1, config, newConfig)
+        expect(updates.size).toBe(1)
+        expect(updates.get(subscriptions)).toBeInstanceOf(SubscriptionsFeeUpdate)
+    })
+
+    test('buildUpdates, add dao contract', () => {
+        const config = new Config(rawConfig)
+        config.contracts.delete(dao)
+        const newConfig = new Config(rawConfig)
+        const updates = buildUpdates(1, config, newConfig)
+        expect(updates.size).toBe(1)
+    })
+
+    test('buildUpdates, update dao deposits', () => {
+        const config = new Config(rawConfig)
+        const newConfig = new Config(rawConfig)
+        newConfig.contracts.get(dao).depositParams.forEach((value, key) => {
+            newConfig.contracts.get(dao).depositParams.set(key, value + 1)
+        })
+        const updates = buildUpdates(1, config, newConfig)
+        expect(updates.size).toBe(1)
+        expect(updates.get(dao)).toBeInstanceOf(DAODepositsUpdate)
+    })
+
+    test('buildUpdates, update wasm test (multiple)', () => {
+        try {
+            const config = new Config(rawConfig)
+            const newConfig = new Config({
+                ...rawConfig,
+                ...{
+                    wasmHash: {
+                        oracle: '551723e0178208dd25c950bf78ab5618d47257a594654bbcaaf6cec8dc8c241c',
+                        subcriptions: '551723e0178208dd25c950bf78ab5618d47257a594654bbcaaf6cec8dc8c241c'
+                    }
+                }
+            })
+            expect(() => buildUpdates(1, config, newConfig)).toThrow(ValidationError)
+        } catch (e) {
+            console.log(e)
+        }
+    })
+
+    test('buildUpdates, update wasm test (remove)', () => {
+        const config = new Config(rawConfig)
+        const newConfig = new Config(rawConfig)
+        newConfig.wasmHash = new Map()
         expect(() => buildUpdates(1, config, newConfig)).toThrow(ValidationError)
-    } catch (e) {
-        console.log(e)
-    }
-})
-
-test('buildUpdates, update wasm test (remove)', () => {
-    const config = new Config(rawConfig)
-    const newConfig = new Config(rawConfig)
-    newConfig.wasmHash = new Map()
-    expect(() => buildUpdates(1, config, newConfig)).toThrow(ValidationError)
-})
-
-test('buildUpdates, two fee updates', () => {
-    const config = new Config(rawConfig)
-    const newConfig = new Config(rawConfig)
-    newConfig.contracts.get(oracleToUpdate).fee = 9999999
-    newConfig.contracts.get(oracleToUpdate2).fee = 9999999
-    const updates = buildUpdates(1, config, newConfig)
-    expect(updates.size).toBe(2)
-    expect(updates.get(oracleToUpdate)).toBe(null)
-    expect(updates.get(oracleToUpdate2)).toBe(null)
-})
-
-test('buildUpdates, one fee and one asset updates', () => {
-    const config = new Config(rawConfig)
-    const newConfig = new Config(rawConfig)
-    newConfig.contracts.get(oracleToUpdate).fee = 9999999
-    newConfig.contracts.get(oracleToUpdate).assets.push({
-        "code": "TEST",
-        "type": 2
     })
-    //expect error
-    const updates = buildUpdates(1, config, newConfig)
-    expect(updates.size).toBe(1)
-})
 
-test('buildUpdates, two asset updates throws error', () => {
-    const config = new Config(rawConfig)
-    const newConfig = new Config(rawConfig)
-    newConfig.contracts.get(oracleToUpdate).fee = 9999999
-    newConfig.contracts.get(oracleToUpdate2).assets.push({
-        "code": "TEST",
-        "type": 2
+    test('buildUpdates, two fee updates', () => {
+        const config = new Config(rawConfig)
+        const newConfig = new Config(rawConfig)
+        newConfig.contracts.get(oracle).fee = 9999999
+        newConfig.contracts.get(oracle2).fee = 9999999
+        const updates = buildUpdates(1, config, newConfig)
+        expect(updates.size).toBe(1)
+        expect(updates.get(oracle)).toBe(undefined)
+        expect(updates.get(oracle2)).toBe(undefined)
     })
-    expect(() => buildUpdates(1, config, newConfig)).toThrow(ValidationError)
-})
 
-test('buildUpdates, change sys account', () => {
-    const config = new Config(rawConfig)
-    const newConfig = new Config(rawConfig)
-    newConfig.systemAccount = Keypair.random().publicKey()
-    const update = buildUpdates(1, config, newConfig)
-    expect(update.size).toBe(1)
+    test('buildUpdates, one oracle update, with multiple changes, only one blockchain', () => {
+        const config = new Config(rawConfig)
+        const newConfig = new Config(rawConfig)
+        newConfig.contracts.get(oracle).fee = 9999999
+        newConfig.contracts.get(oracle).assets.push({
+            "code": "TEST",
+            "type": 2
+        })
+        //expect error
+        const updates = buildUpdates(1, config, newConfig)
+        expect(updates.size).toBe(1)
+    })
+
+    test('buildUpdates, two oracles updates, only one blockchain', () => {
+        const config = new Config(rawConfig)
+        const newConfig = new Config(rawConfig)
+        newConfig.contracts.get(oracle).fee = 9999999
+        newConfig.contracts.get(oracle2).assets.push({
+            "code": "TEST",
+            "type": 2
+        })
+        expect(buildUpdates(1, config, newConfig).size).toBe(1)
+    })
+
+    test('buildUpdates, one oracle update and one global update, only one blockchain', () => {
+        const config = new Config(rawConfig)
+        const newConfig = new Config(rawConfig)
+        const firstNode = [...newConfig.nodes.values()][0]
+        firstNode.domain = "newdomain.com"
+        firstNode.url = "ws://localhost:3000"
+        newConfig.contracts.get(oracle).assets.push({
+            "code": "TEST",
+            "type": 2
+        })
+        expect(buildUpdates(1, config, newConfig).size).toBe(1)
+    })
+
+    test('buildUpdates, two oracles updates, two blockchain', () => {
+        const config = new Config(rawConfig)
+        const newConfig = new Config(rawConfig)
+        newConfig.contracts.get(oracle).assets.push({
+            "code": "TEST",
+            "type": 2
+        })
+        newConfig.contracts.get(oracle2).assets.push({
+            "code": "TEST",
+            "type": 2
+        })
+        expect(() => buildUpdates(1, config, newConfig).size).toThrow(ValidationError)
+    })
+
+    test('buildUpdates, one oracles updates, two blockchain', () => {
+        const config = new Config(rawConfig)
+        const newConfig = new Config(rawConfig)
+        newConfig.contracts.get(oracle).period = 9999999
+        newConfig.contracts.get(oracle).assets.push({
+            "code": "TEST",
+            "type": 2
+        })
+        expect(() => buildUpdates(1, config, newConfig).size).toThrow(ValidationError)
+    })
+
+    test('buildUpdates, change sys account', () => {
+        const config = new Config(rawConfig)
+        const newConfig = new Config(rawConfig)
+        newConfig.systemAccount = Keypair.random().publicKey()
+        const update = buildUpdates(1, config, newConfig)
+        expect(update.size).toBe(1)
+    })
+
+    test('buildUpdates, change cache size', () => {
+        const config = new Config(rawConfig)
+        const newConfig = new Config(rawConfig)
+        newConfig.contracts.get(oracle).cacheSize = 9999999
+        const update = buildUpdates(1, config, newConfig)
+        expect(update.size).toBe(1)
+        expect(update.get(oracle)).toBeInstanceOf(OracleCacheSizeUpdate)
+    })
+
+    test('buildUpdates, change fee config', () => {
+        const config = new Config(rawConfig)
+        const newConfig = new Config(rawConfig)
+        newConfig.contracts.get(oracle).feeConfig = {
+            token: 'GDU4KKD63RYJ36OEV4IPVBQ5NEQOC5L3SQSS7GX2JRG3SQHAMFTQTF2G',
+            fee: 10000000n
+        }
+        const update = buildUpdates(1, config, newConfig)
+        expect(update.size).toBe(1)
+        expect(update.get(oracle)).toBeInstanceOf(OracleFeeConfigUpdate)
+    })
+
+    test('buildUpdates, change invocation costs', () => {
+        const config = new Config(rawConfig)
+        const newConfig = new Config(rawConfig)
+        newConfig.contracts.get(oracleBeam).invocationCosts = [1000n, 2000n, 3000n, 4000n, 5000n]
+        const update = buildUpdates(1, config, newConfig)
+        expect(update.size).toBe(1)
+        expect(update.get(oracleBeam)).toBeInstanceOf(OracleInvocationCostsUpdate)
+    })
 })

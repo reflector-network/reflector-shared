@@ -7,7 +7,13 @@ const WasmPendingTransaction = require('../../models/transactions/wasm-pending-t
 const NodesPendingTransaction = require('../../models/transactions/nodes-pending-transaction')
 const {getContractState} = require('../entries-helper')
 const ContractTypes = require('../../models/configs/contract-type')
-const {buildOracleAssetsUpdateTransaction, buildOraclePeriodUpdateTransaction} = require('./oracle-transaction-helper')
+const {
+    buildOracleAssetsUpdateTransaction,
+    buildOracleHistoryPeriodUpdateTransaction,
+    buildOracleCacheSizeUpdateTransaction,
+    buildOracleFeeConfigUpdateTransaction,
+    buildOracleInvocationCostsUpdateTransaction
+} = require('./oracle-transaction-helper')
 const {buildSubscriptionFeeUpdateTransaction} = require('./subscriptions-transaction-helper')
 const {buildDAODepositsUpdateTransaction} = require('./dao-transaction-helper')
 
@@ -16,7 +22,7 @@ const {buildDAODepositsUpdateTransaction} = require('./dao-transaction-helper')
  * @typedef {import('../../models/updates/wasm-update')} WasmUpdate
  * @typedef {import('../../models/configs/config')} Config
  * @typedef {import('@stellar/stellar-sdk').Account} Account
- * @typedef {import('../../models/transactions/oracle/period-update-transaction')} OraclePeriodUpdateTransaction
+ * @typedef {import('../../models/transactions/oracle/period-update-transaction')} OracleHistoryPeriodUpdateTransaction
  * @typedef {import('../../models/transactions/oracle/assets-update-transaction')} OracleAssetsUpdateTransaction
  * @typedef {import('../../models/transactions/subscriptions/fee-update-transaction')} SubscriptionsFeeUpdateTransaction
  * @typedef {import('../../models/transactions/dao/deposits-update-transaction')} DAODepositsUpdateTransaction
@@ -37,7 +43,13 @@ const {buildDAODepositsUpdateTransaction} = require('./dao-transaction-helper')
 
 /**
  * @param {UpdateOptions} updateOptions - transaction options
- * @returns {Promise<OracleAssetsUpdateTransaction|NodesPendingTransaction|OraclePeriodUpdateTransaction|WasmPendingTransaction|SubscriptionsFeeUpdateTransaction|DAODepositsUpdateTransaction>}
+ * @returns {Promise<
+ * OracleAssetsUpdateTransaction|
+ * NodesPendingTransaction|
+ * OracleHistoryPeriodUpdateTransaction|
+ * WasmPendingTransaction|
+ * SubscriptionsFeeUpdateTransaction|
+ * DAODepositsUpdateTransaction>}
  */
 async function buildUpdateTransaction(updateOptions) {
     const {network, maxTime, fee, timestamp, currentConfig, sorobanRpc, newConfig, account} = updateOptions
@@ -105,14 +117,23 @@ async function buildUpdateTransaction(updateOptions) {
         case UpdateType.ORACLE_ASSETS:
             tx = await buildOracleAssetsUpdateTransaction(sorobanRpc, account, txOptions, update)
             break
-        case UpdateType.ORACLE_PERIOD:
-            tx = await buildOraclePeriodUpdateTransaction(sorobanRpc, account, txOptions, update)
+        case UpdateType.ORACLE_HISTORY_PERIOD:
+            tx = await buildOracleHistoryPeriodUpdateTransaction(sorobanRpc, account, txOptions, update)
             break
         case UpdateType.SUBSCRIPTIONS_FEE:
             tx = await buildSubscriptionFeeUpdateTransaction(sorobanRpc, account, txOptions, update)
             break
         case UpdateType.DAO_DEPOSITS:
             tx = await buildDAODepositsUpdateTransaction(sorobanRpc, account, txOptions, update)
+            break
+        case UpdateType.ORACLE_FEE_CONFIG:
+            tx = await buildOracleFeeConfigUpdateTransaction(sorobanRpc, account, txOptions, update)
+            break
+        case UpdateType.ORACLE_CACHE_SIZE:
+            tx = await buildOracleCacheSizeUpdateTransaction(sorobanRpc, account, txOptions, update)
+            break
+        case UpdateType.ORACLE_INVOCATION_COSTS:
+            tx = await buildOracleInvocationCostsUpdateTransaction(sorobanRpc, account, txOptions, update)
             break
         default:
             break //no updates that must be applied on blockchain

@@ -1,6 +1,9 @@
-const {xdr, rpc, scValToBigInt, scValToNative, Address, XdrLargeInt} = require('@stellar/stellar-sdk')
+const {OracleClient} = require('@reflector/oracle-client')
+const {xdr, rpc, scValToNative, Address, XdrLargeInt, nativeToScVal, scValToBigInt} = require('@stellar/stellar-sdk')
 
 async function makeRequest(requestFn, sorobanRpc) {
+    if (!sorobanRpc || sorobanRpc.length < 1)
+        throw new Error('No soroban rpc urls provided')
     for (const serverRpc of sorobanRpc) {
         try {
             const server = new rpc.Server(serverRpc, {allowHttp: true})
@@ -9,10 +12,6 @@ async function makeRequest(requestFn, sorobanRpc) {
             console.error(`Failed to make request to ${serverRpc}: ${e}`)
         }
     }
-}
-
-function encodePriceRecordKey(timestamp, assetIndex) {
-    return (BigInt(timestamp) << 64n) | BigInt(assetIndex)
 }
 
 /**
@@ -33,33 +32,51 @@ async function getContractInstance(contractId, sorobanRpc) {
 /**
  * Returns native storage
  * @param {xdr.ScMapEntry[]} values - values
+ * @param {any[]} keys - props to extract
  * @returns {object}
  */
-function getNativeStorage(values) {
+function getNativeStorage(values, keys) {
     const storage = {}
-    if (values)
+    if (values && keys.length > 0)
         for (const value of values) {
             const key = scValToNative(value.key())
+            const keyIndex = keys.indexOf(key)
+            if (keyIndex < 0)
+                continue
             const val = scValToNative(value.val())
-            storage[key] = val
+            storage[key.toString()] = val
+            //remove found key
+            keys.splice(keyIndex, 1)
+            if (keys.length < 1)
+                break //all keys found
         }
     return storage
 }
 
 /**
- * Returns hash of the data
+ * Returns oracle contract state and wasm version
  * @param {string} contractId - contract id
  * @param {string[]} sorobanRpc - soroban rpc urls
- * @returns {{hash: string, admin: string, lastTimestamp: BigInt, prices: BigInt[], isInitialized: boolean, assetTtls: BigInt[]}}
+ * @param {Account} account - account to build transaction
+ * @param {{fee: number, networkPassphrase: string}} txOptions - transaction options
+ * @returns {{hash: string, admin: string, lastTimestamp: BigInt, isInitialized: boolean, assetTtls: BigInt[], protocol: number}}
  */
-async function getOracleContractState(contractId, sorobanRpc) {
+async function getOracleContractState(contractId, sorobanRpc, account, txOptions) {
     const contractState = {
         hash: null,
         lastTimestamp: 0n,
-        prices: [],
         isInitialized: false,
         admin: null,
-        assetTtls: []
+        expiration: [],
+        protocol: null,
+        version: null
+    }
+
+    if (account) {
+        const oracleClient = new OracleClient(txOptions.networkPassphrase, sorobanRpc, contractId)
+        contractState.version = await oracleClient
+            .version(account, {...txOptions, simulationOnly: true})
+            .then(response => response.result.retval.value())
     }
 
     const instance = await getContractInstance(contractId, sorobanRpc)
@@ -67,44 +84,14 @@ async function getOracleContractState(contractId, sorobanRpc) {
         return contractState
 
     const hash = instance.executable().wasmHash().toString('hex')
-    const {admin, last_timestamp: lastTimestamp, assets, asset_ttls: assetTtls} = getNativeStorage(instance.storage())
+    const {admin, last_timestamp: lastTimestamp, expiration, protocol} = getNativeStorage(instance.storage(), ['admin', 'last_timestamp', 'expiration', 'protocol'])
 
     contractState.admin = admin
     contractState.lastTimestamp = lastTimestamp || 0n
     contractState.hash = hash
     contractState.isInitialized = !!admin
-    contractState.assetTtls = assetTtls || []
-
-    if (!assets || assets.length < 1 || !lastTimestamp)
-        return contractState
-
-    const assetsEntriesKeys = []
-    const keys = []
-    for (let i = 0; i < assets.length; i++) {
-        const priceRecordKey = encodePriceRecordKey(lastTimestamp, i)
-        keys.push(priceRecordKey)
-        assetsEntriesKeys.push(xdr.LedgerKey.contractData(
-            new xdr.LedgerKeyContractData({
-                contract: Address.fromString(contractId).toScAddress(),
-                key: new XdrLargeInt('u128', priceRecordKey).toU128(),
-                durability: xdr.ContractDataDurability.temporary()
-            })
-        ))
-    }
-
-    const assetsEntriesRequestFn = async (server) => (await server.getLedgerEntries(...assetsEntriesKeys))
-    const assetsEntries = (await makeRequest(assetsEntriesRequestFn, sorobanRpc))?.entries || []
-
-    const prices = Array(assets.length).fill(0n)
-
-    for (const assetEntry of assetsEntries) {
-        const key = scValToBigInt(assetEntry.key.value().key())
-        const value = scValToBigInt(assetEntry.val.value().val())
-        const assetIndex = keys.indexOf(key)
-        if (assetIndex >= 0)
-            prices[assetIndex] = value
-    }
-    contractState.prices = prices
+    contractState.expiration = expiration || []
+    contractState.protocol = protocol || null
 
     return contractState
 }
@@ -128,7 +115,7 @@ async function getSubscriptionsContractState(contractId, sorobanRpc) {
         return contractState
 
     const hash = instance.executable().wasmHash().toString('hex')
-    const {admin, last: lastSubscriptionId} = getNativeStorage(instance.storage())
+    const {admin, last: lastSubscriptionId} = getNativeStorage(instance.storage(), ['admin', 'last'])
 
     contractState.admin = admin
     contractState.lastSubscriptionId = lastSubscriptionId
@@ -153,7 +140,6 @@ async function getContractState(contractId, sorobanRpc) {
     if (!instance)
         return contractState
 
-
     const hash = instance.executable().wasmHash().toString('hex')
     const {
         admin,
@@ -161,7 +147,7 @@ async function getContractState(contractId, sorobanRpc) {
         last: lastSubscriptionsId,
         last_ballot_id: lastBallotId,
         last_unlock: lastUnlock
-    } = getNativeStorage(instance.storage())
+    } = getNativeStorage(instance.storage(), ['admin', 'last_timestamp', 'last', 'last_ballot_id', 'last_unlock'])
 
     contractState.admin = admin
     contractState.hash = hash
@@ -255,10 +241,65 @@ function __getSubscriptionObject(subscriptionEntry) {
     return {id, ...data}
 }
 
+/**
+ * @param {string} contractId - contract id
+ * @param {string[]} sorobanRpc - soroban rpc urls
+ * @param {any[]} keys - storage keys to fetch
+ * @returns {Promise<object>}
+ */
+async function getContractInstanceEntries(contractId, sorobanRpc, keys) {
+    const instance = await getContractInstance(contractId, sorobanRpc)
+    if (!instance)
+        return {}
+    return getNativeStorage(instance.storage(), keys)
+}
+
+/**
+ * @param {string} contractId - contract id
+ * @param {string[]} sorobanRpc - soroban rpc urls
+ * @param {{key: any, type: string, persistent: boolean}[]} keys - storage keys to fetch
+ * @returns {Promise<object>}
+ */
+async function getContractEntries(contractId, sorobanRpc, keys) {
+    const entriesMap = new Map()
+    const entriesKeys = []
+    for (let i = 0; i < keys.length; i++) {
+        const entryKey = xdr.LedgerKey.contractData(
+            new xdr.LedgerKeyContractData({
+                contract: Address.fromString(contractId).toScAddress(),
+                key: nativeToScVal(keys[i].key, keys[i].type),
+                durability: keys[i].persistent ? xdr.ContractDataDurability.persistent() : xdr.ContractDataDurability.temporary()
+            })
+        )
+        entriesKeys.push(entryKey)
+        entriesMap.set(
+            entryKey.toXDR('base64'),
+            keys[i].key.toString()
+        )
+    }
+
+    const assetsEntriesRequestFn = async (server) => (await server.getLedgerEntries(...entriesKeys))
+    const entries = (await makeRequest(assetsEntriesRequestFn, sorobanRpc))?.entries || []
+
+    const result = {}
+    for (const entry of entries) {
+        const originalKey = entriesMap.get(entry.key.toXDR('base64'))
+        if (!originalKey)
+            continue
+        const value = scValToNative(entry.val.value().val())
+        result[originalKey.toString()] = value
+    }
+    return result
+}
+
 module.exports = {
     getSubscriptionsContractState,
     getOracleContractState,
     getContractState,
     getSubscriptions,
-    getSubscriptionById
+    getSubscriptionById,
+    getContractInstance,
+    getNativeStorage,
+    getContractInstanceEntries,
+    getContractEntries
 }

@@ -10,6 +10,7 @@ const OracleConfig = require('./oracle-config')
 const SubscriptionsConfig = require('./subscriptions-config')
 const WasmHash = require('./wasm-hash')
 const DAOConfig = require('./dao-config')
+const OracleBeamConfig = require('./oracle-beam-config')
 
 /**
  * @typedef {import('./contract-config-base')} ContractConfigBase
@@ -20,6 +21,8 @@ function getContract(raw) {
         case ContractTypes.ORACLE:
         case undefined:
             return new OracleConfig(raw)
+        case ContractTypes.ORACLE_BEAM:
+            return new OracleBeamConfig(raw)
         case ContractTypes.SUBSCRIPTIONS:
             return new SubscriptionsConfig(raw)
         case ContractTypes.DAO:
@@ -56,6 +59,7 @@ module.exports = class Config extends IssuesContainer {
             this.__addIssue(`config: ${IssuesContainer.notDefined}`)
             return
         }
+        raw = sortObjectKeys(raw)
         this.__setContracts(raw.contracts)
         this.__setNodes(raw.nodes)
         this.__setWasm(raw.wasmHash)

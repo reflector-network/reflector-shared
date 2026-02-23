@@ -2,24 +2,24 @@ const {sortObjectKeys} = require('../../../utils/serialization-helper')
 const UpdateType = require('../update-type')
 const ContractUpdateBase = require('../contract-update-base')
 
-module.exports = class OraclePeriodUpdate extends ContractUpdateBase {
+module.exports = class OracleCacheSizeUpdate extends ContractUpdateBase {
     /**
      * @param {number} timestamp - pending update timestamp
      * @param {string} contractId - oracle id
      * @param {string} admin - oracle admin
-     * @param {number} period - pending update period
+     * @param {number} cacheSize - pending update cache size
      */
-    constructor(timestamp, contractId, admin, period) {
-        super(UpdateType.ORACLE_PERIOD, timestamp, contractId, admin)
-        if (!period)
-            throw new Error('period is required')
-        this.period = period
+    constructor(timestamp, contractId, admin, cacheSize) {
+        super(UpdateType.ORACLE_CACHE_SIZE, timestamp, contractId, admin)
+        if (!cacheSize)
+            throw new Error('cacheSize is required')
+        this.cacheSize = cacheSize
     }
 
     toPlainObject() {
         return sortObjectKeys({
             ...super.toPlainObject(),
-            period: this.period
+            cacheSize: this.cacheSize
         })
     }
 }

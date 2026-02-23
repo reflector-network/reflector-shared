@@ -18,6 +18,10 @@ module.exports = class OracleConfig extends ContractConfigBase {
         this.__assignAssets(raw.assets)
 
         this.__assignDataSource(raw.dataSource)
+
+        this.__assignCacheSize(raw.cacheSize)
+
+        this.__assignFeeConfig(raw.feeConfig)
     }
 
     __assignBaseAsset(asset) {
@@ -58,7 +62,7 @@ module.exports = class OracleConfig extends ContractConfigBase {
 
     __assignDecimals(decimals) {
         try {
-            if (!decimals)
+            if (!decimals && decimals !== 0)
                 return
             if (decimals < 0 || isNaN(decimals))
                 throw new Error('Decimals should be a positive number')
@@ -66,6 +70,36 @@ module.exports = class OracleConfig extends ContractConfigBase {
             this.__decimalsSet = true
         } catch (err) {
             this.__addIssue(`decimals: ${err.message}`)
+        }
+    }
+
+    __assignCacheSize(cacheSize) {
+        try {
+            if (!cacheSize && cacheSize !== 0) {
+                this.cacheSize = 0
+                return
+            }
+            if (cacheSize < 0 || isNaN(cacheSize))
+                throw new Error('Cache size should be a positive number')
+            this.cacheSize = cacheSize
+            this.__cacheSizeSet = true
+        } catch (err) {
+            this.__addIssue(`cacheSize: ${err.message}`)
+        }
+    }
+
+    __assignFeeConfig(feeConfig) {
+        try {
+            if (!feeConfig)
+                return
+            if (!feeConfig.fee || typeof feeConfig.fee !== 'string' || !BigInt(feeConfig.fee))
+                throw new Error('feeConfig.fee must be a BigInt string')
+            if (!feeConfig.token || typeof feeConfig.token !== 'string')
+                throw new Error('feeConfig.token must be a string')
+            this.feeConfig = {...feeConfig, fee: BigInt(feeConfig.fee)}
+            this.__feeConfigSet = true
+        } catch (err) {
+            this.__addIssue(`feeConfig: ${err.message}`)
         }
     }
 
@@ -100,6 +134,11 @@ module.exports = class OracleConfig extends ContractConfigBase {
      */
     dataSource
 
+    /**
+     * @type {{token: string, fee: BigInt}}
+     */
+    feeConfig
+
     toPlainObject(asLegacy = true) {
         return sortObjectKeys({
             ...super.toPlainObject(asLegacy),
@@ -109,7 +148,12 @@ module.exports = class OracleConfig extends ContractConfigBase {
                 assets: this.assets.map(a => a.toPlainObject()),
                 timeframe: this.timeframe,
                 period: this.period,
-                dataSource: this.dataSource
+                dataSource: this.dataSource,
+                cacheSize: this.__cacheSizeSet ? this.cacheSize : undefined,
+                feeConfig: this.__feeConfigSet ? {
+                    token: this.feeConfig.token,
+                    fee: this.feeConfig.fee.toString()
+                } : undefined
             }
         })
     }
@@ -123,5 +167,8 @@ module.exports = class OracleConfig extends ContractConfigBase {
             && this.timeframe === other.timeframe
             && this.period === other.period
             && this.dataSource === other.dataSource
+            && this.cacheSize === other.cacheSize
+            && this.feeConfig?.token === other.feeConfig?.token
+            && this.feeConfig?.fee === other.feeConfig?.fee
     }
 }
