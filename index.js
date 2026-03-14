@@ -33,7 +33,6 @@ const PriceUpdatePendingTransaction = require('./models/transactions/oracle/pric
 const ContractTypes = require('./models/configs/contract-type')
 
 const {
-    isValidContractId,
     encodeAssetContractId,
     getNetworkIdHash
 } = require('./utils/contractId-helper')
@@ -137,7 +136,6 @@ module.exports.OracleHistoryRetentionTransaction = OracleHistoryRetentionTransac
 module.exports.PriceUpdatePendingTransaction = PriceUpdatePendingTransaction
 module.exports.OracleInvocationCostsUpdateTransaction = OracleInvocationCostsUpdateTransaction
 
-module.exports.isValidContractId = isValidContractId
 module.exports.encodeAssetContractId = encodeAssetContractId
 module.exports.getNetworkIdHash = getNetworkIdHash
 module.exports.getMajority = getMajority

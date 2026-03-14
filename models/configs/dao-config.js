@@ -1,5 +1,4 @@
 const {StrKey} = require('@stellar/stellar-sdk')
-const {isValidContractId} = require('../../utils/contractId-helper')
 const {mapToPlainObject, areMapsEqual} = require('../../utils/map-helper')
 const {sortObjectKeys} = require('../../utils/serialization-helper')
 const IssuesContainer = require('../issues-container')
@@ -12,7 +11,7 @@ module.exports = class DAOConfig extends ContractConfigBase {
         super(raw)
         this.initAmount = !(raw.initAmount && !isNaN(raw.initAmount) && raw.initAmount > 0) ? this.__addIssue(`initAmount: ${IssuesContainer.invalidOrNotDefined}`) : raw.initAmount
         this.startDate = !(raw.startDate && !isNaN(raw.startDate) && raw.startDate > 0) ? this.__addIssue(`startDate: ${IssuesContainer.invalidOrNotDefined}`) : raw.startDate
-        this.token = !(raw.token && isValidContractId(raw.token)) ? this.__addIssue(`token: ${IssuesContainer.invalidOrNotDefined}`) : raw.token
+        this.token = !(raw.token && StrKey.isValidContract(raw.token)) ? this.__addIssue(`token: ${IssuesContainer.invalidOrNotDefined}`) : raw.token
         this.developer = !(raw.developer && StrKey.isValidEd25519PublicKey(raw.developer)) ? this.__addIssue(`developer: ${IssuesContainer.invalidOrNotDefined}`) : raw.developer
 
         this.__setDepositParams(raw.depositParams)

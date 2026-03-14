@@ -1,5 +1,4 @@
 const {StrKey} = require('@stellar/stellar-sdk')
-const {isValidContractId} = require('../../utils/contractId-helper')
 const {sortObjectKeys} = require('../../utils/serialization-helper')
 const IssuesContainer = require('../issues-container')
 const ContractTypes = require('./contract-type')
@@ -31,7 +30,7 @@ module.exports = class ContractConfigBase extends IssuesContainer {
             this.isLegacy = true
         }
         this.admin = !(raw.admin && StrKey.isValidEd25519PublicKey(raw.admin)) ? this.__addIssue(`admin: ${IssuesContainer.invalidOrNotDefined}`) : raw.admin
-        this.contractId = !(raw.contractId && isValidContractId(raw.contractId)) ? this.__addIssue(`contractId: ${IssuesContainer.invalidOrNotDefined}`) : raw.contractId
+        this.contractId = !(raw.contractId && StrKey.isValidContract(raw.contractId)) ? this.__addIssue(`contractId: ${IssuesContainer.invalidOrNotDefined}`) : raw.contractId
         this.fee = !(raw.fee && raw.fee > 0 && !isNaN(raw.fee)) ? this.__addIssue(`fee: ${IssuesContainer.invalidOrNotDefined}`) : raw.fee
         this.type = !(raw.type && ContractTypes.isValidType(raw.type)) ? this.__addIssue(`type: ${IssuesContainer.invalidOrNotDefined}`) : raw.type
     }
