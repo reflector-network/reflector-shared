@@ -55,7 +55,7 @@ const OracleInvocationCostsUpdateTransaction = require('../../models/transaction
  * @returns {Promise<OracleInitTransaction>}
  */
 async function buildOracleInitTransaction(initOptions) {
-    const {account, config, sorobanRpc, network, maxTime, fee, protocol} = initOptions
+    const {account, config, sorobanRpc, network, maxTime, fee} = initOptions
     const {admin, assets, baseAsset, decimals, contractId, period, timeframe, feeConfig, cacheSize} = config
     const oracleClient = new OracleClient(network, sorobanRpc, contractId)
     const configObject = {
@@ -64,15 +64,11 @@ async function buildOracleInitTransaction(initOptions) {
         baseAsset: baseAsset.toOracleContractAsset(network),
         decimals: decimals || initOptions.decimals, //legacy support. config.decimals will be removed in the future
         historyRetentionPeriod: period,
-        resolution: timeframe
+        resolution: timeframe,
+        cacheSize,
+        feeConfig
     }
-    let fn = "config_v1"
-    if (protocol > 1) {
-        fn = "config"
-        configObject.cacheSize = cacheSize
-        configObject.feeConfig = feeConfig
-    }
-    const tx = await oracleClient[fn](
+    const tx = await oracleClient.config(
         account,
         configObject,
         {fee, networkPassphrase: network, timebounds: {minTime: 0, maxTime}}
@@ -87,8 +83,7 @@ async function buildOracleInitTransaction(initOptions) {
 async function buildOraclePriceUpdateTransaction(priceUpdateOptions) {
     const {network, sorobanRpc, contractId, admin, prices, timestamp, fee, account, maxTime, protocol} = priceUpdateOptions
     const oracleClient = new OracleClient(network, sorobanRpc, contractId)
-    const fn = protocol > 1 ? "setPrices" : "setPrices_v1"
-    const tx = await oracleClient[fn](
+    const tx = await oracleClient.setPrices(
         account,
         {
             admin,
