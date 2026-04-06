@@ -68,6 +68,7 @@ module.exports = class Config extends IssuesContainer {
         this.__setNetwork(raw.network)
         this.__setDecimals(raw.decimals)
         this.__setBaseAssets(raw.baseAssets)
+        this.__setPriceHeartbeat(raw.priceHeartbeat)
         this.clusterSecret = raw.clusterSecret
     }
 
@@ -250,6 +251,18 @@ module.exports = class Config extends IssuesContainer {
         }
     }
 
+    __setPriceHeartbeat(priceHeartbeat) {
+        try {
+            if (!priceHeartbeat)
+                return
+            if (priceHeartbeat < 0 || isNaN(priceHeartbeat))
+                throw new Error('Price heartbeat should be a number')
+            this.priceHeartbeat = priceHeartbeat
+        } catch (err) {
+            this.__addIssue(`priceHeartbeat: ${err.message}`)
+        }
+    }
+
     getHash() {
         const rawConfig = this.toPlainObject()
         const hash = getDataHash(rawConfig)
@@ -278,7 +291,8 @@ module.exports = class Config extends IssuesContainer {
             network: this.network,
             decimals: this.decimals,
             baseAssets: this.baseAssets ? mapToPlainObject(this.baseAssets) : undefined,
-            clusterSecret: this.clusterSecret
+            clusterSecret: this.clusterSecret,
+            priceHeartbeat: this.priceHeartbeat
         })
     }
 
@@ -294,5 +308,6 @@ module.exports = class Config extends IssuesContainer {
             && this.decimals === other.decimals
             && (this.baseAssets === other.baseAssets || areMapsEqual(this.baseAssets, other.baseAssets)) //baseAssets is optional
             && this.clusterSecret === other.clusterSecret
+            && this.priceHeartbeat === other.priceHeartbeat
     }
 }

@@ -563,4 +563,39 @@ describe('updates helper', () => {
         expect(update.size).toBe(1)
         expect(update.get(oracleBeam)).toBeInstanceOf(OracleInvocationCostsUpdate)
     })
+
+    test('buildUpdates, update multiple assets thresholds', () => {
+        const config = new Config(rawConfig)
+        expect(config.issues).toBe(undefined)
+        const updateRawConfig = config.toPlainObject()
+        for (const contract of Object.values(updateRawConfig.contracts)) {
+            if (!contract.assets)
+                continue
+            for (const asset of contract.assets) {
+                asset.threshold = 11
+            }
+        }
+        const newConfig = new Config(updateRawConfig)
+        expect(newConfig.issues).toBe(undefined)
+
+        const update = buildUpdates(1, config, newConfig)
+        expect(update.size).toBe(1)
+    })
+
+    test.failing('buildUpdates, try update asset code', () => {
+        const config = new Config(rawConfig)
+        expect(config.issues).toBe(undefined)
+        const updateRawConfig = config.toPlainObject()
+        for (const contract of Object.values(updateRawConfig.contracts)) {
+            if (!contract.assets)
+                continue
+            contract.assets[0].code += '1'
+            break
+        }
+        const newConfig = new Config(updateRawConfig)
+        expect(newConfig.issues).toBe(undefined)
+
+        const update = buildUpdates(1, config, newConfig)
+        expect(update.size).toBe(1)
+    })
 })

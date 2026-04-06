@@ -2,6 +2,7 @@
 const nock = require('nock')
 const {xdr} = require('@stellar/stellar-sdk')
 const {getSubscriptions, getSubscriptionsContractState, getOracleContractState, getContractState, getContractInstanceEntries, getContractEntries} = require('../helpers/entries-helper')
+const {normalizeTimestamp} = require('../utils/timestamp-helper')
 
 const oracleInstanceResponse = {
     "jsonrpc": "2.0",
@@ -244,5 +245,41 @@ describe('entries helper', () => {
         expect(entries).toBeDefined()
         expect(Object.keys(entries).length).toBe(1)
         expect(entries['1']).toBeDefined()
+    }, 1000000)
+
+    test.skip('getContractEntries', async () => {
+        const ts = normalizeTimestamp(Date.now(), 300000) - 300000
+        const contractId = 'CALI2BYU2JE6WVRUFYTS6MSBNEHGJ35P4AVCZYF3B6QOE3QKOB2PLE6M'
+        const entries = await getContractEntries(
+            contractId,
+            ['http://localhost:8003'],
+            [{key: ts, type: 'u64', persistent: false}])
+        expect(entries).toBeDefined()
+        expect(Object.keys(entries).length).toBe(1)
+        expect(entries[ts.toString()]).toBeDefined()
+
+        function parseUpdateRecordMask(mask, length = 256) {
+            //Initialize an array with 0s based on the expected number of assets
+            const updates = new Array(length).fill(0)
+
+            for (let assetIndex = 0; assetIndex < length; assetIndex++) {
+                const byteIndex = Math.floor(assetIndex / 8)
+                const bitmask = 1 << (assetIndex % 8)
+
+                //Safety check to ensure we don't read past the buffer length
+                if (byteIndex < mask.length) {
+                    //Check if the specific bit is set (non-zero)
+                    const isPresent = (mask[byteIndex] & bitmask) !== 0
+                    updates[assetIndex] = isPresent ? 1 : 0
+                }
+            }
+
+            return updates
+        }
+
+        const prices = parseUpdateRecordMask(Buffer.from(entries[ts.toString()].mask), 49)
+
+        console.log(prices)
+
     }, 1000000)
 })

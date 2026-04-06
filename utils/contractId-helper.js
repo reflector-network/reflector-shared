@@ -34,24 +34,7 @@ function encodeAssetContractId(asset, networkPassphrase) {
     return StrKey.encodeContract(hash(preimage.toXDR()))
 }
 
-/**
- * Check if a contract id is valid
- * @param {string} contractId - The contract id to check
- * @returns {boolean} - True if the contract id is valid, false otherwise
- */
-function isValidContractId(contractId) {
-    try {
-        if (!contractId)
-            return false
-        StrKey.decodeContract(contractId)
-        return true
-    } catch (e) {
-        return false
-    }
-}
-
 module.exports = {
     getNetworkIdHash,
-    encodeAssetContractId,
-    isValidContractId
+    encodeAssetContractId
 }

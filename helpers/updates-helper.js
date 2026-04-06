@@ -207,16 +207,19 @@ function __tryGetDepositsUpdate(timestamp, contractId, admin, currentDeposits, n
  */
 function __tryGetAssetsUpdate(timestamp, contractId, admin, currentAssets, newAssets) {
     const assetsChanges = __getArrayChanges(newAssets, currentAssets, 'code', `${contractId}:assets`)
-    if (assetsChanges.removed.length > 0 || assetsChanges.modified.length > 0)
-        throw new ValidationError(`Contract ${contractId}. Assets can not be modified or removed`)
+    if (assetsChanges.removed.length > 0)
+        throw new ValidationError(`Contract ${contractId}. Assets can not be removed`)
 
-    if (assetsChanges.added.length === 0)
-        return null
     //check that all current assets are in new assets
     for (let i = 0; i < currentAssets.length; i++) {
-        if (!currentAssets[i].equals(newAssets[i]))
-            throw new ValidationError(`Contract ${contractId}. Assets can not be modified or removed`)
+        const currentAsset = currentAssets[i]
+        const newAsset = newAssets[i]
+        if (currentAsset.code !== newAsset.code || currentAsset.type !== newAsset.type)
+            throw new ValidationError(`Contract ${contractId}. Asset type or code can not be modified`)
     }
+    //if no added assets there are no changes that require transaction, so we don't need to create an update object
+    if (assetsChanges.added.length === 0)
+        return null
     return new OracleAssetsUpdate(timestamp, contractId, admin, assetsChanges.added)
 }
 

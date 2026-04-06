@@ -1,4 +1,4 @@
-const {isValidContractId} = require('../../utils/contractId-helper')
+const {StrKey} = require('@stellar/stellar-sdk')
 const {sortObjectKeys} = require('../../utils/serialization-helper')
 const IssuesContainer = require('../issues-container')
 const ContractConfigBase = require('./contract-config-base')
@@ -7,7 +7,7 @@ module.exports = class SubscriptionsConfig extends ContractConfigBase {
     constructor(raw) {
         super(raw)
         this.baseFee = !(raw.baseFee && !isNaN(raw.baseFee) && raw.baseFee > 0) ? this.__addIssue(`baseFee: ${IssuesContainer.invalidOrNotDefined}`) : raw.baseFee
-        this.token = !(raw.token && isValidContractId(raw.token)) ? this.__addIssue(`token: ${IssuesContainer.invalidOrNotDefined}`) : raw.token
+        this.token = !(raw.token && StrKey.isValidContract(raw.token)) ? this.__addIssue(`token: ${IssuesContainer.invalidOrNotDefined}`) : raw.token
     }
 
     /**

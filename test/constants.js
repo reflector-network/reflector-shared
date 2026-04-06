@@ -135,7 +135,8 @@ const mixedLegacyConfig = {
                 },
                 {
                     "code": "ATOM",
-                    "type": 2
+                    "type": 2,
+                    "threshold": 60
                 },
                 {
                     "code": "XLM",

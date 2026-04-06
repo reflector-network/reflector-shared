@@ -304,22 +304,7 @@ const defaultDecimals = 14
 
 describe('transaction helper', () => {
 
-    test('buildOracleInitTransaction (v1)', async () => {
-        const currentConfig = new Config(rawConfig)
-        const config = currentConfig.contracts.get(oracleContract)
-        const transaction = await buildOracleInitTransaction({
-            config,
-            network: 'testnet',
-            sorobanRpc,
-            account,
-            maxTime: new Date(normalizeTimestamp(Date.now(), 1000) + 10000),
-            decimals: defaultDecimals,
-            fee: 1000000
-        })
-        expect(transaction).toBeDefined()
-    }, 10000)
-
-    test('buildOracleInitTransaction (v2)', async () => {
+    test('buildOracleInitTransaction', async () => {
         const currentConfig = new Config(rawConfig)
         const config = currentConfig.contracts.get(oracleContract)
         const transaction = await buildOracleInitTransaction({

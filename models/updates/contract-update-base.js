@@ -1,6 +1,5 @@
 const {StrKey} = require('@stellar/stellar-sdk')
 const {sortObjectKeys} = require('../../utils/serialization-helper')
-const {isValidContractId} = require('../../utils/contractId-helper')
 const UpdateBase = require('./update-base')
 
 module.exports = class ContractUpdateBase extends UpdateBase {
@@ -13,7 +12,7 @@ module.exports = class ContractUpdateBase extends UpdateBase {
      */
     constructor(type, timestamp, contractId, admin, fee) {
         super(type, timestamp)
-        if (!isValidContractId(contractId))
+        if (!StrKey.isValidContract(contractId))
             throw new Error('contractId is not valid or undefined')
         if (!StrKey.isValidEd25519PublicKey(admin))
             throw new Error('admin is not valid or undefined')

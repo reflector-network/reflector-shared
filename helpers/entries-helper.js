@@ -278,8 +278,8 @@ async function getContractEntries(contractId, sorobanRpc, keys) {
         )
     }
 
-    const assetsEntriesRequestFn = async (server) => (await server.getLedgerEntries(...entriesKeys))
-    const entries = (await makeRequest(assetsEntriesRequestFn, sorobanRpc))?.entries || []
+    const entriesRequestFn = async (server) => (await server.getLedgerEntries(...entriesKeys))
+    const entries = (await makeRequest(entriesRequestFn, sorobanRpc))?.entries || []
 
     const result = {}
     for (const entry of entries) {

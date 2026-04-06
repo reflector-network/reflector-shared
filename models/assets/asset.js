@@ -1,5 +1,5 @@
 const {Asset: StellarAsset, StrKey} = require('@stellar/stellar-sdk')
-const {isValidContractId, encodeAssetContractId} = require('../../utils/contractId-helper')
+const {encodeAssetContractId} = require('../../utils/contractId-helper')
 const {sortObjectKeys} = require('../../utils/serialization-helper')
 const AssetType = require('./asset-type')
 
@@ -8,8 +8,9 @@ class Asset {
     /**
      * @param {number} type - asset type (stellar or generic)
      * @param {string} code - asset code contract id or generic code
+     * @param {number} threshold - asset threshold for price updates in permilles (optional)
      */
-    constructor(type, code) {
+    constructor(type, code, threshold) {
         if (!type || !code)
             throw new Error('Asset type and code must be defined')
 
@@ -24,26 +25,27 @@ class Asset {
                     if (!assetCode || !issuer)
                         throw new Error('Asset code and issuer must be defined')
                     if (!StrKey.isValidEd25519PublicKey(issuer))
-                        new Error('Asset issuer must be a valid ed25519 public key')
+                        throw new Error('Asset issuer must be a valid ed25519 public key')
                     this.__stellarAsset = new StellarAsset(assetCode, issuer)
                 } else if (code === 'XLM') {
                     this.__stellarAsset = StellarAsset.native()
                 } else {
-                    this.isContractId = isValidContractId(code)
-                    if (!this.isContractId)
-                        new Error(`Asset code ${code} is invalid`)
+                    if (!StrKey.isValidContract(code))
+                        throw new Error(`Asset code ${code} is invalid`)
+                    this.isContractId = true
                 }
             }
                 break
             case AssetType.OTHER:
                 if (code.length > 32)
-                    new Error('Asset code must be 32 characters or less')
+                    throw new Error('Asset code must be 32 characters or less')
                 break
             default:
                 throw new Error(`Asset type ${type} is not supported`)
         }
         this.code = code
         this.type = type
+        this.threshold = threshold
     }
 
     /**
@@ -56,8 +58,13 @@ class Asset {
      */
     code
 
+    /**
+     * @type {number} - asset threshold for price updates in permilles
+     */
+    threshold
+
     toString() {
-        return `${this.type}:${this.code}`
+        return `${this.type}:${this.code}${this.threshold ? ` (threshold: ${this.threshold}‰)` : ''}`
     }
 
     toOracleContractAsset(network) {
@@ -79,24 +86,20 @@ class Asset {
     toPlainObject() {
         return sortObjectKeys({
             type: this.type,
-            code: this.code
+            code: this.code,
+            threshold: this.threshold
         })
     }
 
     /**
      * @param {Asset} other - asset to compare
-     * @param {string} network - network passphrase for full asset comparison for stellar assets
      * @returns {boolean}
      */
-    equals(other, network) {
+    equals(other) {
         if (!(other instanceof Asset))
             return false
-        if (this.type === other.type && this.code === other.code)
+        if (this.type === other.type && this.code === other.code && this.threshold === other.threshold)
             return true
-        if (!network)
-            return false
-        if (this.type === AssetType.STELLAR && other.type === AssetType.STELLAR)
-            return this.toOracleContractAsset(network).code === other.toOracleContractAsset(network).code
         return false
     }
 }
