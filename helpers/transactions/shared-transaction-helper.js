@@ -98,7 +98,7 @@ async function buildUpdateTransaction(updateOptions) {
             if (contractsToUpdate.length === 0)
                 break //no updates that must be applied on blockchain
             update.assignContractsToUpdate(contractsToUpdate)
-            tx = await buildContractUpdate(sorobanRpc, account, txOptions, update)
+            tx = await buildContractUpdate(update.contractType, sorobanRpc, account, txOptions, update)
         }
             break
         case UpdateType.NODES: {
@@ -142,15 +142,16 @@ async function buildUpdateTransaction(updateOptions) {
 }
 
 /**
+ * @param {string} contractType - contract type
  * @param {string[]} sorobanRpc - soroban rpc urls
  * @param {Account} account - account
  * @param {any} txOptions - transaction options
  * @param {WasmUpdate} update - contract update
  * @returns {Promise<WasmPendingTransaction>}
  */
-async function buildContractUpdate(sorobanRpc, account, txOptions, update) {
+async function buildContractUpdate(contractType, sorobanRpc, account, txOptions, update) {
     const contractToUpdate = update.contractsToUpdate[0]
-    const client = getClientByType(ContractTypes.ORACLE, txOptions.networkPassphrase, sorobanRpc, contractToUpdate.contract)
+    const client = getClientByType(contractType, txOptions.networkPassphrase, sorobanRpc, contractToUpdate.contract)
     const tx = await client.updateContract(
         account,
         {admin: contractToUpdate.admin, wasmHash: update.wasmHash},
@@ -162,6 +163,7 @@ async function buildContractUpdate(sorobanRpc, account, txOptions, update) {
 function getClientByType(contractType, network, sorobanRpc, contractId) {
     switch (contractType) {
         case ContractTypes.ORACLE:
+        case ContractTypes.ORACLE_BEAM:
             return new OracleClient(network, sorobanRpc, contractId)
         case ContractTypes.SUBSCRIPTIONS:
             return new SubscriptionsClient(network, sorobanRpc, contractId)

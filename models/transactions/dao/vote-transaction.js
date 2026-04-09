@@ -13,7 +13,7 @@ module.exports = class DAOVoteTransaction extends PendingTransactionBase {
      * @param {boolean} accepted - Ballot accepted
      */
     constructor(transaction, timestamp, ballotId, accepted) {
-        super(transaction, timestamp, PendingTransactionType.DAO_INIT)
+        super(transaction, timestamp, PendingTransactionType.DAO_VOTE)
         this.ballotId = ballotId
         this.accepted = accepted
     }

@@ -2,12 +2,12 @@
 const crypto = require('crypto')
 const nock = require('nock')
 const {Keypair} = require('@stellar/stellar-sdk')
-const Config = require('../models/configs/config')
-const {buildOracleInitTransaction, buildUpdateTransaction, buildOraclePriceUpdateTransaction, buildSubscriptionsInitTransaction, buildSubscriptionTriggerTransaction, buildSubscriptionChargeTransaction, buildDAOInitTransaction} = require('../index')
-const Asset = require('../models/assets/asset')
-const Node = require('../models/node')
-const {normalizeTimestamp} = require('../utils/timestamp-helper')
-const ContractTypes = require('../models/configs/contract-type')
+const Config = require('../../models/configs/config')
+const {buildOracleInitTransaction, buildUpdateTransaction, buildOraclePriceUpdateTransaction, buildSubscriptionsInitTransaction, buildSubscriptionTriggerTransaction, buildSubscriptionChargeTransaction, buildDAOInitTransaction} = require('../../index')
+const Asset = require('../../models/assets/asset')
+const Node = require('../../models/node')
+const {normalizeTimestamp} = require('../../utils/timestamp-helper')
+const ContractTypes = require('../../models/configs/contract-type')
 
 //Configure Mock Server to return 503 for all requests
 beforeEach(() => {

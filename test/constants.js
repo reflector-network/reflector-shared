@@ -178,7 +178,57 @@ const mixedLegacyConfig = {
     "wasmHash": "551723e0178208dd25c950bf78ab5618d47257a594654bbcaaf6cec8dc8c240c"
 }
 
+const oracleBeamContractRaw = {
+    "type": ContractTypes.ORACLE_BEAM,
+    "admin": "GDCOZYKHZXOJANHK3ASICJYEFGYUBSEP3YQKEXXLAGV3BBPLOFLGBAZX",
+    "contractId": "CAA2NN3TSWQFI6TZVLYM7B46RXBINZFRXZFP44BM2H6OHOPRXD5OASUW",
+    "fee": 10000000,
+    "baseAsset": {"code": "USD", "type": 2},
+    "assets": [{"code": "BTC", "type": 2}, {"code": "ETH", "type": 2}],
+    "dataSource": "exchanges",
+    "timeframe": 300000,
+    "period": 86400000,
+    "invocationCosts": ["100", "200", "300", "400", "500"]
+}
+
+const oracleContractRaw = {
+    "type": ContractTypes.ORACLE,
+    "admin": "GDCOZYKHZXOJANHK3ASICJYEFGYUBSEP3YQKEXXLAGV3BBPLOFLGBAZX",
+    "contractId": "CAA2NN3TSWQFI6TZVLYM7B46RXBINZFRXZFP44BM2H6OHOPRXD5OASUW",
+    "fee": 10000000,
+    "baseAsset": {"code": "USD", "type": 2},
+    "assets": [{"code": "BTC", "type": 2}, {"code": "ETH", "type": 2}],
+    "dataSource": "exchanges",
+    "timeframe": 300000,
+    "period": 86400000
+}
+
+const subscriptionsContractRaw = {
+    "type": ContractTypes.SUBSCRIPTIONS,
+    "admin": "GC5GG65IUN7MLRGYXLT4GDQ4YY5TQJ5YIVVBIIKSUSFLSPTQFHRZZXHZ",
+    "contractId": "CBFZZVW5SKMVTXKHHQKGOLLHYTOVNSYA774GCROOBMYAKEYCP4THNEXQ",
+    "fee": 10000000,
+    "baseFee": 100,
+    "token": "CDBBDS5FN46XAVGD5IRKJIK4I7KGGSFI7R2KLXG32QQQELHPTIZS26BW"
+}
+
+const daoContractRaw = {
+    "type": ContractTypes.DAO,
+    "admin": "GDCOZYKHZXOJANHK3ASICJYEFGYUBSEP3YQKEXXLAGV3BBPLOFLGBAZX",
+    "contractId": "CAA2NN3TSWQFI6TZVLYM7B46RXBINZFRXZFP44BM2H6OHOPRXD5OASUW",
+    "fee": 10000000,
+    "initAmount": 1000,
+    "startDate": 1700000000,
+    "token": "CDBBDS5FN46XAVGD5IRKJIK4I7KGGSFI7R2KLXG32QQQELHPTIZS26BW",
+    "developer": "GDCOZYKHZXOJANHK3ASICJYEFGYUBSEP3YQKEXXLAGV3BBPLOFLGBAZX",
+    "depositParams": {"0": 100, "1": 200, "2": 300, "3": 400}
+}
+
 module.exports = {
     legacyConfig,
-    mixedLegacyConfig
+    mixedLegacyConfig,
+    oracleBeamContractRaw,
+    oracleContractRaw,
+    subscriptionsContractRaw,
+    daoContractRaw
 }

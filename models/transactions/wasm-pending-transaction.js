@@ -28,6 +28,6 @@ module.exports = class WasmPendingTransaction extends PendingTransactionBase {
     hasMoreTxns
 
     getDebugInfo() {
-        return `Contract update: ${this.period}, timestamp: ${this.timestamp}, type: ${this.type}, hash: ${this.wasmHash}, hasMoreTxns: ${this.hasMoreTxns}`
+        return `Contract update: timestamp: ${this.timestamp}, type: ${this.type}, hash: ${this.wasmHash}, hasMoreTxns: ${this.hasMoreTxns}`
     }
 }

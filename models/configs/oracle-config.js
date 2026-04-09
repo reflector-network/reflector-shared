@@ -7,7 +7,7 @@ module.exports = class OracleConfig extends ContractConfigBase {
     constructor(raw) {
         super(raw)
         this.timeframe = !(raw.timeframe && raw.timeframe > 0 && !isNaN(raw.timeframe)) ? this.__addIssue(`timeframe: ${IssuesContainer.invalidOrNotDefined}`) : raw.timeframe
-        if (this.timeframe % 1000 * 60 !== 0)
+        if (this.timeframe % (1000 * 60) !== 0)
             this.__addIssue('timeframe: Timeframe should be minutes in milliseconds')
         this.period = !(raw.period && !isNaN(raw.period) && raw.period > raw.timeframe) ? this.__addIssue(`period: ${IssuesContainer.invalidOrNotDefined}`) : raw.period
 
