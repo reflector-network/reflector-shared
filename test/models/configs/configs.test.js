@@ -140,7 +140,7 @@ describe('config round-trip tests', () => {
 
     test('full Config round-trip with all contract types', () => {
         const rawConfig = JSON.parse(JSON.stringify(legacyConfig))
-        rawConfig.contracts['CAA2NN3TSWQFI6TZVLYM7B46RXBINZFRXZFP44BM2H6OHOPRXD5OASUW'] = oracleBeamContractRaw
+        rawConfig.contracts.CAA2NN3TSWQFI6TZVLYM7B46RXBINZFRXZFP44BM2H6OHOPRXD5OASUW = oracleBeamContractRaw
 
         const original = new Config(rawConfig)
         expect(original.issues).toBe(undefined)

@@ -81,7 +81,7 @@ async function buildOracleInitTransaction(initOptions) {
  * @returns {Promise<PriceUpdatePendingTransaction>}
  */
 async function buildOraclePriceUpdateTransaction(priceUpdateOptions) {
-    const {network, sorobanRpc, contractId, admin, prices, timestamp, fee, account, maxTime, protocol} = priceUpdateOptions
+    const {network, sorobanRpc, contractId, admin, prices, timestamp, fee, account, maxTime} = priceUpdateOptions
     const oracleClient = new OracleClient(network, sorobanRpc, contractId)
     const tx = await oracleClient.setPrices(
         account,
