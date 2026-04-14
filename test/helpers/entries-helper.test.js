@@ -1,8 +1,8 @@
 /*eslint-disable no-undef */
 const nock = require('nock')
 const {xdr} = require('@stellar/stellar-sdk')
-const {getSubscriptions, getSubscriptionsContractState, getOracleContractState, getContractState, getContractInstanceEntries, getContractEntries} = require('../helpers/entries-helper')
-const {normalizeTimestamp} = require('../utils/timestamp-helper')
+const {getSubscriptions, getSubscriptionsContractState, getOracleContractState, getContractState, getContractInstanceEntries, getContractEntries} = require('../../helpers/entries-helper')
+const {normalizeTimestamp} = require('../../utils/timestamp-helper')
 
 const oracleInstanceResponse = {
     "jsonrpc": "2.0",
@@ -209,6 +209,19 @@ describe('entries helper', () => {
         expect(lastBallotId).toBeGreaterThan(0n)
         expect(lastUnlock).toBeGreaterThan(0n)
 
+    }, 1000000)
+
+    test('getContractInstanceEntries does not mutate input keys array', async () => {
+
+        const contractId = 'CB7YJYJCYH5IJVZEVF63FPFV2G3SRG72DWITTYOMT4MXMTC3AGPIPSIC'
+
+        const keys = ["admin", "last_timestamp"]
+        const keysCopy = [...keys]
+        await getContractInstanceEntries(
+            contractId,
+            ['http://good.rpc.com?reqData=oracle'],
+            keys)
+        expect(keys).toEqual(keysCopy)
     }, 1000000)
 
     test('getContractInstanceEntries', async () => {

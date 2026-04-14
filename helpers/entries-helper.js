@@ -37,6 +37,7 @@ async function getContractInstance(contractId, sorobanRpc) {
  */
 function getNativeStorage(values, keys) {
     const storage = {}
+    keys = [...keys] //avoid keys mutation
     if (values && keys.length > 0)
         for (const value of values) {
             const key = scValToNative(value.key())

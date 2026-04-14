@@ -1,8 +1,12 @@
 /*eslint-disable no-undef */
-const {getDataHash} = require('../helpers/signatures-helper')
-const Config = require('../models/configs/config')
-const {sortObjectKeys} = require('../utils/serialization-helper')
-const {legacyConfig, mixedLegacyConfig} = require('./constants')
+const {getDataHash} = require('../../../helpers/signatures-helper')
+const Config = require('../../../models/configs/config')
+const OracleConfig = require('../../../models/configs/oracle-config')
+const OracleBeamConfig = require('../../../models/configs/oracle-beam-config')
+const SubscriptionsConfig = require('../../../models/configs/subscriptions-config')
+const DAOConfig = require('../../../models/configs/dao-config')
+const {sortObjectKeys} = require('../../../utils/serialization-helper')
+const {legacyConfig, mixedLegacyConfig, oracleBeamContractRaw, oracleContractRaw, subscriptionsContractRaw, daoContractRaw} = require('../../constants')
 
 describe('configs tests', () => {
 
@@ -111,5 +115,44 @@ describe('configs tests', () => {
         for (let i = 0; i < configA.nodes.size; i++) {
             expect([...configA.nodes.keys()][i] === [...configB.nodes.keys()][i]).toBe(true)
         }
+    })
+})
+
+describe('config round-trip tests', () => {
+
+    const contractRoundTripCases = [
+        ['OracleConfig', OracleConfig, oracleContractRaw],
+        ['OracleConfig with optional fields', OracleConfig, {...oracleContractRaw, decimals: 14, cacheSize: 5, feeConfig: {token: 'native', fee: '1000000'}}],
+        ['OracleBeamConfig', OracleBeamConfig, oracleBeamContractRaw],
+        ['SubscriptionsConfig', SubscriptionsConfig, subscriptionsContractRaw],
+        ['DAOConfig', DAOConfig, daoContractRaw]
+    ]
+
+    test.each(contractRoundTripCases)('%s round-trip', (_, ConfigClass, raw) => {
+        const original = new ConfigClass(raw)
+        expect(original.issues).toBe(undefined)
+
+        const serialized = original.toPlainObject(false)
+        const restored = new ConfigClass(serialized)
+        expect(restored.issues).toBe(undefined)
+        expect(restored.equals(original)).toBe(true)
+    })
+
+    test('full Config round-trip with all contract types', () => {
+        const rawConfig = JSON.parse(JSON.stringify(legacyConfig))
+        rawConfig.contracts.CAA2NN3TSWQFI6TZVLYM7B46RXBINZFRXZFP44BM2H6OHOPRXD5OASUW = oracleBeamContractRaw
+
+        const original = new Config(rawConfig)
+        expect(original.issues).toBe(undefined)
+
+        const serialized = original.toPlainObject(false)
+        const restored = new Config(serialized)
+        expect(restored.issues).toBe(undefined)
+        expect(restored.equals(original)).toBe(true)
+    })
+
+    test('OracleConfig rejects non-minute timeframe', () => {
+        const config = new OracleConfig({...oracleContractRaw, timeframe: 300001})
+        expect(config.issues).toContainEqual(expect.stringContaining('Timeframe should be minutes in milliseconds'))
     })
 })

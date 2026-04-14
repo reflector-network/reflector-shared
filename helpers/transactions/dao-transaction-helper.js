@@ -9,6 +9,7 @@ const {sortObjectKeys} = require('../../utils/serialization-helper')
 /**
  * @typedef {import('../../models/configs/dao-config')} DAOConfig
  * @typedef {import('@stellar/stellar-sdk').Account} Account
+ * @typedef {import('../../models/updates/dao/deposits-update')} DAODepositsUpdate
  */
 
 
@@ -20,19 +21,6 @@ const {sortObjectKeys} = require('../../utils/serialization-helper')
  * @property {Account} account - account
  * @property {Date} maxTime - tx max time
  * @property {number} fee - fee
- */
-
-/**
- * @typedef {Object} DepositUpdateOptions
- * @property {Account} account - account
- * @property {string} network - network
- * @property {number} fee - fee
- * @property {string[]} sorobanRpc - soroban rpc urls
- * @property {string} contractId - contract id
- * @property {string} admin - contract admin
- * @property {Map<number, string>} depositParams - deposit parameters
- * @property {number} timestamp - timestamp
- * @property {Date} maxTime - tx max time
  */
 
 /**
@@ -84,18 +72,20 @@ async function buildDAOInitTransaction(initOptions) {
 }
 
 /**
- * @param {DepositUpdateOptions} depositUpdateOptions - deposit update options
+ * @param {string[]} sorobanRpc - soroban rpc urls
+ * @param {Account} account - account
+ * @param {any} txOptions - transaction options
+ * @param {DAODepositsUpdate} update - deposit update options
  * @returns {Promise<DAODepositsUpdateTransaction>}
  */
-async function buildDAODepositsUpdateTransaction(depositUpdateOptions) {
-    const {account, sorobanRpc, network, maxTime, fee, contractId, depositParams, timestamp, admin} = depositUpdateOptions
-    const daoClient = new DAOClient(network, sorobanRpc, contractId)
+async function buildDAODepositsUpdateTransaction(sorobanRpc, account, txOptions, update) {
+    const daoClient = new DAOClient(txOptions.networkPassphrase, sorobanRpc, update.contractId)
     const tx = await daoClient.setDeposit(
         account,
-        {admin, depositParams: sortObjectKeys(mapToPlainObject(depositParams, false))},
-        {fee, networkPassphrase: network, timebounds: {minTime: 0, maxTime}}
+        {admin: update.admin, depositParams: sortObjectKeys(mapToPlainObject(update.deposits, false))},
+        txOptions
     )
-    return new DAODepositsUpdateTransaction(tx, timestamp, depositParams)
+    return new DAODepositsUpdateTransaction(tx, update.timestamp, update.deposits)
 }
 
 /**

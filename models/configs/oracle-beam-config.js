@@ -5,7 +5,7 @@ const OracleConfig = require('./oracle-config')
 module.exports = class OracleBeamConfig extends OracleConfig {
     constructor(raw) {
         super(raw)
-        this.__assignInvocationCosts(raw.invocationCost)
+        this.__assignInvocationCosts(raw.invocationCosts)
     }
 
     __assignInvocationCosts(invocationCosts) {

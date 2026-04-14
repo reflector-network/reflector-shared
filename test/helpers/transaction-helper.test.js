@@ -2,12 +2,13 @@
 const crypto = require('crypto')
 const nock = require('nock')
 const {Keypair} = require('@stellar/stellar-sdk')
-const Config = require('../models/configs/config')
-const {buildOracleInitTransaction, buildUpdateTransaction, buildOraclePriceUpdateTransaction, buildSubscriptionsInitTransaction, buildSubscriptionTriggerTransaction, buildSubscriptionChargeTransaction, buildDAOInitTransaction} = require('../index')
-const Asset = require('../models/assets/asset')
-const Node = require('../models/node')
-const {normalizeTimestamp} = require('../utils/timestamp-helper')
-const ContractTypes = require('../models/configs/contract-type')
+const Config = require('../../models/configs/config')
+const {buildOracleInitTransaction, buildUpdateTransaction, buildOraclePriceUpdateTransaction, buildSubscriptionsInitTransaction, buildSubscriptionTriggerTransaction, buildSubscriptionChargeTransaction, buildDAOInitTransaction, buildDAODepositsUpdateTransaction} = require('../../index')
+const DAODepositsUpdate = require('../../models/updates/dao/deposits-update')
+const Asset = require('../../models/assets/asset')
+const Node = require('../../models/node')
+const {normalizeTimestamp} = require('../../utils/timestamp-helper')
+const ContractTypes = require('../../models/configs/contract-type')
 
 //Configure Mock Server to return 503 for all requests
 beforeEach(() => {
@@ -511,5 +512,26 @@ describe('transaction helper', () => {
             maxTime: new Date(normalizeTimestamp(Date.now(), 1000) + 10000)
         })
         expect(transaction).toBeDefined()
+    }, 10000)
+
+    test('buildDAODepositsUpdateTransaction', async () => {
+        const currentConfig = new Config(rawConfig)
+        const contract = currentConfig.contracts.get(daoContract)
+        const deposits = new Map(contract.depositParams)
+        deposits.forEach((value, key) => deposits.set(key, value + 1))
+        const update = new DAODepositsUpdate(
+            normalizeTimestamp(Date.now(), 300000),
+            daoContract,
+            contract.admin,
+            deposits
+        )
+        const txOptions = {
+            fee: contract.fee,
+            networkPassphrase: 'testnet',
+            timebounds: {minTime: 0, maxTime: new Date(normalizeTimestamp(Date.now(), 1000) + 10000)}
+        }
+        const transaction = await buildDAODepositsUpdateTransaction(sorobanRpc, account, txOptions, update)
+        expect(transaction).toBeDefined()
+        expect(transaction.depositParams).toEqual(deposits)
     }, 10000)
 })
