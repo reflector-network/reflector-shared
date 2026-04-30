@@ -4,13 +4,25 @@ const {xdr, rpc, scValToNative, Address, XdrLargeInt, nativeToScVal, scValToBigI
 async function makeRequest(requestFn, sorobanRpc) {
     if (!sorobanRpc || sorobanRpc.length < 1)
         throw new Error('No soroban rpc urls provided')
-    for (const serverRpc of sorobanRpc) {
+    for (let i = 0; i < 3; i++) { //max 3 attempts
+        const errAggr = []
         try {
-            const server = new rpc.Server(serverRpc, {allowHttp: true})
-            return await requestFn(server)
+            for (const serverRpc of sorobanRpc) {
+                try {
+                    const server = new rpc.Server(serverRpc, {allowHttp: true})
+                    return await requestFn(server)
+                } catch (e) {
+                    errAggr.push({url: serverRpc, err: e})
+                }
+            }
+            throw new Error('Failed to invoke RPC method on all provided URLs', {cause: {errAggr}})
         } catch (e) {
-            console.error(`Failed to make request to ${serverRpc}: ${e}`)
+            if (i === 2) {
+                throw e
+            }
+            console.warn({msg: 'RPC call failed, retrying', attempt: i + 1, err: e?.cause?.errAggr || e.message})
         }
+        await new Promise(resolve => setTimeout(resolve, 300))
     }
 }
 
@@ -21,12 +33,21 @@ async function makeRequest(requestFn, sorobanRpc) {
  * @returns {xdr.ScContractInstance|null}
  */
 async function getContractInstance(contractId, sorobanRpc) {
-    const key = xdr.ScVal.scvLedgerKeyContractInstance()
-    const contractDataRequestFn = async (server) => await server.getContractData(contractId, key, rpc.Durability.Persistent)
-    const contractData = await makeRequest(contractDataRequestFn, sorobanRpc)
-    if (!contractData)
+    const key = xdr.LedgerKey.contractData(
+        new xdr.LedgerKeyContractData({
+            contract: Address.fromString(contractId).toScAddress(),
+            key: xdr.ScVal.scvLedgerKeyContractInstance(),
+            durability: xdr.ContractDataDurability.persistent()
+        })
+    )
+    //getLedgerEntries returns {entries: []} for a missing contract instead of throwing,
+    //so "contract not deployed" stays distinguishable from "RPC outage" upstream
+    const contractInstanceRequestFn = async (server) => await server.getLedgerEntries(key)
+    const result = await makeRequest(contractInstanceRequestFn, sorobanRpc)
+    const entries = result?.entries || []
+    if (entries.length < 1)
         return null
-    return contractData.val.contractData().val().instance()
+    return entries[0].val.contractData().val().instance()
 }
 
 /**

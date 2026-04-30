@@ -295,4 +295,13 @@ describe('entries helper', () => {
         console.log(prices)
 
     }, 1000000)
+
+    test('rejects when all RPC URLs fail', async () => {
+        await expect(
+            getOracleContractState(
+                'CB7YJYJCYH5IJVZEVF63FPFV2G3SRG72DWITTYOMT4MXMTC3AGPIPSIC',
+                ['http://bad.rpc.com']
+            )
+        ).rejects.toThrow('Failed to invoke RPC method on all provided URLs')
+    }, 1000000)
 })
