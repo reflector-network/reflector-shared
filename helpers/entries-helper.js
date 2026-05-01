@@ -1,5 +1,5 @@
 const {OracleClient} = require('@reflector/oracle-client')
-const {xdr, rpc, scValToNative, Address, XdrLargeInt, nativeToScVal, scValToBigInt} = require('@stellar/stellar-sdk')
+const {xdr, rpc, scValToNative, Address, XdrLargeInt, nativeToScVal} = require('@stellar/stellar-sdk')
 
 async function makeRequest(requestFn, sorobanRpc) {
     if (!sorobanRpc || sorobanRpc.length < 1)
