@@ -27,7 +27,7 @@ module.exports = class PendingTransactionBase {
             throw new Error('type is required')
         this.timestamp = timestamp
         this.transaction = transaction
-        this.hash = transaction.hash()
+        this.hash = Buffer.from(transaction.hash())
         this.hashHex = this.hash.toString('hex')
         this.type = type
         this.signatures = []

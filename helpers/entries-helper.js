@@ -37,7 +37,7 @@ async function getContractInstance(contractId, sorobanRpc) {
         new xdr.LedgerKeyContractData({
             contract: Address.fromString(contractId).toScAddress(),
             key: xdr.ScVal.scvLedgerKeyContractInstance(),
-            durability: xdr.ContractDataDurability.persistent()
+            durability: xdr.ContractDataDurability.persistent
         })
     )
     //getLedgerEntries returns {entries: []} for a missing contract instead of throwing,
@@ -47,7 +47,7 @@ async function getContractInstance(contractId, sorobanRpc) {
     const entries = result?.entries || []
     if (entries.length < 1)
         return null
-    return entries[0].val.contractData().val().instance()
+    return entries[0].val.contractData.val.instance
 }
 
 /**
@@ -61,11 +61,11 @@ function getNativeStorage(values, keys) {
     keys = [...keys] //avoid keys mutation
     if (values && keys.length > 0)
         for (const value of values) {
-            const key = scValToNative(value.key())
+            const key = scValToNative(value.key)
             const keyIndex = keys.indexOf(key)
             if (keyIndex < 0)
                 continue
-            const val = scValToNative(value.val())
+            const val = scValToNative(value.val)
             storage[key.toString()] = val
             //remove found key
             keys.splice(keyIndex, 1)
@@ -98,15 +98,15 @@ async function getOracleContractState(contractId, sorobanRpc, account, txOptions
         const oracleClient = new OracleClient(txOptions.networkPassphrase, sorobanRpc, contractId)
         contractState.version = await oracleClient
             .version(account, {...txOptions, simulationOnly: true})
-            .then(response => response.result.retval.value())
+            .then(response => response.result.retval.value)
     }
 
     const instance = await getContractInstance(contractId, sorobanRpc)
     if (!instance)
         return contractState
 
-    const hash = instance.executable().wasmHash().toString('hex')
-    const {admin, last_timestamp: lastTimestamp, expiration, protocol} = getNativeStorage(instance.storage(), ['admin', 'last_timestamp', 'expiration', 'protocol'])
+    const hash = instance.executable.wasmHash.toString()
+    const {admin, last_timestamp: lastTimestamp, expiration, protocol} = getNativeStorage(instance.storage, ['admin', 'last_timestamp', 'expiration', 'protocol'])
 
     contractState.admin = admin
     contractState.lastTimestamp = lastTimestamp || 0n
@@ -136,8 +136,8 @@ async function getSubscriptionsContractState(contractId, sorobanRpc) {
     if (!instance)
         return contractState
 
-    const hash = instance.executable().wasmHash().toString('hex')
-    const {admin, last: lastSubscriptionId} = getNativeStorage(instance.storage(), ['admin', 'last'])
+    const hash = instance.executable.wasmHash.toString()
+    const {admin, last: lastSubscriptionId} = getNativeStorage(instance.storage, ['admin', 'last'])
 
     contractState.admin = admin
     contractState.lastSubscriptionId = lastSubscriptionId
@@ -162,14 +162,14 @@ async function getContractState(contractId, sorobanRpc) {
     if (!instance)
         return contractState
 
-    const hash = instance.executable().wasmHash().toString('hex')
+    const hash = instance.executable.wasmHash.toString()
     const {
         admin,
         last_timestamp: lastTimestamp,
         last: lastSubscriptionsId,
         last_ballot_id: lastBallotId,
         last_unlock: lastUnlock
-    } = getNativeStorage(instance.storage(), ['admin', 'last_timestamp', 'last', 'last_ballot_id', 'last_unlock'])
+    } = getNativeStorage(instance.storage, ['admin', 'last_timestamp', 'last', 'last_ballot_id', 'last_unlock'])
 
     contractState.admin = admin
     contractState.hash = hash
@@ -209,7 +209,7 @@ async function getSubscriptions(contractId, sorobanRpc, max, batchSize = 50) {
         for (const subscriptionKey of subscriptionsKeys) {
             const subscriptionIndex = subscriptionsEntries.findIndex(entry => {
                 if (!entry.strKey)
-                    entry.strKey = entry.key.toXDR('base64') //cache xdr for filtering
+                    entry.strKey = entry.key.toXdr('base64') //cache xdr for filtering
                 return entry.strKey === subscriptionKey.strKey
             })
             if (subscriptionIndex < 0) { //not found
@@ -248,18 +248,18 @@ function __getSubscriptionKey(contractId, id) {
         new xdr.LedgerKeyContractData({
             contract: Address.fromString(contractId).toScAddress(),
             key: new XdrLargeInt('u64', id.toString()).toU64(),
-            durability: xdr.ContractDataDurability.persistent()
+            durability: xdr.ContractDataDurability.persistent
         })
     )
-    contractData.strKey = contractData.toXDR('base64') //cache xdr for filtering
+    contractData.strKey = contractData.toXdr('base64') //cache xdr for filtering
     return contractData
 }
 
 function __getSubscriptionObject(subscriptionEntry) {
     if (!subscriptionEntry)
         return null
-    const id = scValToNative(subscriptionEntry.val.value().key())
-    const data = scValToNative(subscriptionEntry.val.value().val())
+    const id = scValToNative(subscriptionEntry.val.value.key)
+    const data = scValToNative(subscriptionEntry.val.value.val)
     return {id, ...data}
 }
 
@@ -273,7 +273,7 @@ async function getContractInstanceEntries(contractId, sorobanRpc, keys) {
     const instance = await getContractInstance(contractId, sorobanRpc)
     if (!instance)
         return {}
-    return getNativeStorage(instance.storage(), keys)
+    return getNativeStorage(instance.storage, keys)
 }
 
 /**
@@ -290,12 +290,12 @@ async function getContractEntries(contractId, sorobanRpc, keys) {
             new xdr.LedgerKeyContractData({
                 contract: Address.fromString(contractId).toScAddress(),
                 key: nativeToScVal(keys[i].key, keys[i].type),
-                durability: keys[i].persistent ? xdr.ContractDataDurability.persistent() : xdr.ContractDataDurability.temporary()
+                durability: keys[i].persistent ? xdr.ContractDataDurability.persistent : xdr.ContractDataDurability.temporary
             })
         )
         entriesKeys.push(entryKey)
         entriesMap.set(
-            entryKey.toXDR('base64'),
+            entryKey.toXdr('base64'),
             keys[i].key.toString()
         )
     }
@@ -305,10 +305,10 @@ async function getContractEntries(contractId, sorobanRpc, keys) {
 
     const result = {}
     for (const entry of entries) {
-        const originalKey = entriesMap.get(entry.key.toXDR('base64'))
+        const originalKey = entriesMap.get(entry.key.toXdr('base64'))
         if (!originalKey)
             continue
-        const value = scValToNative(entry.val.value().val())
+        const value = scValToNative(entry.val.value.val)
         result[originalKey.toString()] = value
     }
     return result

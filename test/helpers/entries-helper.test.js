@@ -121,7 +121,7 @@ const daoInstanceResponse = {
 }
 
 function isContractInstanceRequest(rawData) {
-    return !xdr.LedgerKey.fromXDR(rawData, 'base64').contractData().key().value()
+    return !xdr.LedgerKey.fromXdr(rawData, 'base64').contractData.key.value
 }
 
 

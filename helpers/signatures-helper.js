@@ -5,8 +5,7 @@ const {sortObjectKeys} = require('../utils/serialization-helper')
 
 function getDecoratedSignature(signature) {
     try {
-        const signatureBuffer = Buffer.from(signature, 'hex')
-        const decoratedSignature = xdr.DecoratedSignature.fromXDR(signatureBuffer, 'hex')
+        const decoratedSignature = xdr.DecoratedSignature.fromXdr(signature, 'hex')
         return decoratedSignature
     } catch (err) {
         console.error(err)

@@ -9,7 +9,7 @@ const passphraseMapping = {}
 /**
  * Resolve network id hash from a passphrase (with pre-caching)
  * @param {String} networkPassphrase - network passphrase
- * @return {Buffer}
+ * @return {Uint8Array}
  */
 function getNetworkIdHash(networkPassphrase) {
     let networkId = passphraseMapping[networkPassphrase]
@@ -28,10 +28,10 @@ function getNetworkIdHash(networkPassphrase) {
 function encodeAssetContractId(asset, networkPassphrase) {
     const assetContractId = new xdr.HashIdPreimageContractId({
         networkId: getNetworkIdHash(networkPassphrase),
-        contractIdPreimage: xdr.ContractIdPreimage.contractIdPreimageFromAsset(asset.toXDRObject())
+        contractIdPreimage: xdr.ContractIdPreimage.contractIdPreimageFromAsset(asset.toXdrObject())
     })
     const preimage = xdr.HashIdPreimage.envelopeTypeContractId(assetContractId)
-    return StrKey.encodeContract(hash(preimage.toXDR()))
+    return StrKey.encodeContract(hash(preimage.toXdr()))
 }
 
 module.exports = {
