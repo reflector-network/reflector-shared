@@ -47,7 +47,7 @@ module.exports = class WasmUpdate extends UpdateBase {
         return sortObjectKeys({
             ...super.toPlainObject(),
             wasmHash: this.wasmHash,
-            contractsToUpdate: this.contractsToUpdate
+            contractsToUpdate: this.contractsToUpdate?.map(({admin, contract}) => ({admin, contract}))
         })
     }
 }

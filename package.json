@@ -1,8 +1,11 @@
 {
   "name": "@reflector/reflector-shared",
-  "version": "7.1.4",
+  "version": "7.2.0-rc1",
   "description": "",
   "main": "index.js",
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "scripts": {
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js -i"
   },
