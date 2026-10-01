@@ -41,7 +41,7 @@ module.exports = class OracleConfig extends ContractConfigBase {
                 throw new Error(IssuesContainer.invalidOrNotDefined)
             for (const rawAsset of assets) {
                 const asset = new Asset(rawAsset.type, rawAsset.code, rawAsset.threshold)
-                if (this.assets.findIndex(a => a.equals(asset)) >= 0)
+                if (this.assets.findIndex(a => a.type === asset.type && a.code === asset.code) >= 0)
                     throw new Error('Duplicate asset found in assets')
                 this.assets.push(asset)
             }

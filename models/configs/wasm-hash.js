@@ -1,5 +1,8 @@
 const {sortObjectKeys} = require('../../utils/serialization-helper')
+const ValidationError = require('../validation-error')
 const ContractTypes = require('./contract-type')
+
+const hashPattern = /^[0-9a-f]{64}$/
 
 module.exports = class WasmHash {
     constructor(raw) {
@@ -12,8 +15,8 @@ module.exports = class WasmHash {
             this.isLegacy = true
         }
 
-        if (!raw.hash || typeof raw.hash !== 'string' || raw.hash.length !== 64)
-            throw new Error(`Wasm hash is not valid: ${raw.hash}`)
+        if (typeof raw.hash !== 'string' || !hashPattern.test(raw.hash))
+            throw new ValidationError(`Wasm hash is not valid: ${raw.hash}`)
 
         this.hash = raw.hash
 
@@ -38,6 +41,22 @@ module.exports = class WasmHash {
      * @type {boolean}
      */
     isLegacy = false
+
+    /**
+     * Accepted wasm hash format: 64 lowercase hex characters, the form the chain reports
+     * @type {RegExp}
+     */
+    static pattern = hashPattern
+
+    /**
+     * Compares two wasm hashes case-insensitively, so a stray uppercase value never loops an update forever
+     * @param {string} hash - first hash
+     * @param {string} other - second hash
+     * @returns {boolean}
+     */
+    static isSameHash(hash, other) {
+        return typeof hash === 'string' && typeof other === 'string' && hash.toLowerCase() === other.toLowerCase()
+    }
 
     toPlainObject(asLegacy = true) {
         if (this.isLegacy && asLegacy) {

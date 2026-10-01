@@ -5,6 +5,7 @@ const {buildUpdates} = require('../updates-helper')
 const UpdateType = require('../../models/updates/update-type')
 const WasmPendingTransaction = require('../../models/transactions/wasm-pending-transaction')
 const NodesPendingTransaction = require('../../models/transactions/nodes-pending-transaction')
+const WasmHash = require('../../models/configs/wasm-hash')
 const {getContractState} = require('../entries-helper')
 const ContractTypes = require('../../models/configs/contract-type')
 const {
@@ -94,7 +95,7 @@ async function buildUpdateTransaction(updateOptions) {
             if (contractsData.some(c => c.error))
                 throw new Error(`Failed to get contract state. ${contractsData.find(c => c.error).error?.message}`)
 
-            const contractsToUpdate = contractsData.filter(c => c.contractState.hash !== update.wasmHash)
+            const contractsToUpdate = contractsData.filter(c => !WasmHash.isSameHash(c.contractState.hash, update.wasmHash))
             if (contractsToUpdate.length === 0)
                 break //no updates that must be applied on blockchain
             update.assignContractsToUpdate(contractsToUpdate)

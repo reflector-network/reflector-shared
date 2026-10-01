@@ -51,3 +51,16 @@ describe('pending transaction types', () => {
         expect(create().type).toBe(expectedType)
     })
 })
+
+describe('wasm hash typing', () => {
+    test('WasmPendingTransaction rejects an uppercase hash', () => {
+        expect(() => new WasmPendingTransaction(mockTx(), 1, 'A'.repeat(64), false)).toThrow('wasmHash is not valid')
+    })
+
+    test('WasmUpdate rejects an uppercase hash and keeps a lowercase one', () => {
+        const WasmUpdate = require('../../../models/updates/wasm-update')
+        const ContractTypes = require('../../../models/configs/contract-type')
+        expect(() => new WasmUpdate(1, 'A'.repeat(64), ContractTypes.ORACLE)).toThrow('wasmHash is not valid')
+        expect(new WasmUpdate(1, 'a'.repeat(64), ContractTypes.ORACLE).wasmHash).toBe('a'.repeat(64))
+    })
+})

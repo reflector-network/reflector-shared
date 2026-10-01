@@ -12,6 +12,15 @@ const WasmHash = require('./wasm-hash')
 const DAOConfig = require('./dao-config')
 const OracleBeamConfig = require('./oracle-beam-config')
 
+//a node falls back to two hours when the config sets no heartbeat (reflector-node SettingsManager.getPriceHeartbeat)
+const defaultPriceHeartbeat = 2 * 60 * 60 * 1000
+//every cache bound a node derives from the heartbeat switches off for a huge one, and a majority-signed config could
+//otherwise carry 1e300
+const maxPriceHeartbeat = 7 * 24 * 60 * 60 * 1000
+//a node trims trades older than the heartbeat window, so a read reaching minute T - heartbeat sees a minute some nodes
+//have trimmed and others have not; two minutes of margin keep every read inside the window
+const heartbeatTimeframeMargin = 2 * 60 * 1000
+
 /**
  * @typedef {import('./contract-config-base')} ContractConfigBase
  */
@@ -69,6 +78,7 @@ module.exports = class Config extends IssuesContainer {
         this.__setDecimals(raw.decimals)
         this.__setBaseAssets(raw.baseAssets)
         this.__setPriceHeartbeat(raw.priceHeartbeat)
+        this.__validateTimeframes()
         this.clusterSecret = raw.clusterSecret
     }
 
@@ -255,11 +265,31 @@ module.exports = class Config extends IssuesContainer {
         try {
             if (!priceHeartbeat)
                 return
-            if (priceHeartbeat < 0 || isNaN(priceHeartbeat))
-                throw new Error('Price heartbeat should be a number')
+            const value = Number(priceHeartbeat)
+            //Number.isFinite refuses Infinity and NaN; JSON 1e400 parses to Infinity
+            if (!Number.isFinite(value))
+                throw new Error('Price heartbeat should be a finite number')
+            if (value <= 0)
+                throw new Error('Price heartbeat should be positive')
+            if (value > maxPriceHeartbeat)
+                throw new Error(`Price heartbeat should not exceed ${maxPriceHeartbeat} ms`)
             this.priceHeartbeat = priceHeartbeat
         } catch (err) {
             this.__addIssue(`priceHeartbeat: ${err.message}`)
+        }
+    }
+
+    __validateTimeframes() {
+        const heartbeat = Number(this.priceHeartbeat) || defaultPriceHeartbeat
+        for (const [contractId, contract] of this.contracts) {
+            if (!(contract instanceof OracleConfig))
+                continue
+            //Number(), so a timeframe given as a numeric string is bounded too (OracleConfig accepts one)
+            const timeframe = Number(contract.timeframe)
+            if (!Number.isFinite(timeframe))
+                continue
+            if (timeframe > heartbeat - heartbeatTimeframeMargin)
+                this.__addIssue(`contracts.${contractId}.timeframe: Timeframe should be at most the price heartbeat minus ${heartbeatTimeframeMargin} ms`)
         }
     }
 
