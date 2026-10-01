@@ -51,7 +51,7 @@ const {
     mapToPlainObject
 } = require('./utils/map-helper')
 
-const {sortObjectKeys} = require('./utils/serialization-helper')
+const {sortObjectKeys, compareStrings} = require('./utils/serialization-helper')
 
 const {
     isTimestampValid,
@@ -148,6 +148,7 @@ module.exports.areAllSignaturesPresent = areAllSignaturesPresent
 module.exports.areMapsEqual = areMapsEqual
 module.exports.mapToPlainObject = mapToPlainObject
 module.exports.sortObjectKeys = sortObjectKeys
+module.exports.compareStrings = compareStrings
 module.exports.isTimestampValid = isTimestampValid
 module.exports.normalizeTimestamp = normalizeTimestamp
 

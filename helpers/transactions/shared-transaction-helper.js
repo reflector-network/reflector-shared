@@ -1,6 +1,7 @@
 const {TransactionBuilder, Operation} = require('@stellar/stellar-sdk')
 const {OracleClient, SubscriptionsClient} = require('@reflector/oracle-client')
 const {getMajority} = require('../../utils/majority-helper')
+const {compareStrings} = require('../../utils/serialization-helper')
 const {buildUpdates} = require('../updates-helper')
 const UpdateType = require('../../models/updates/update-type')
 const WasmPendingTransaction = require('../../models/transactions/wasm-pending-transaction')
@@ -75,7 +76,7 @@ async function buildUpdateTransaction(updateOptions) {
         case UpdateType.WASM: {
             const contractsData = [...currentConfig.contracts.values()]
                 .filter(c => c.type === update.contractType)
-                .sort((a, b) => a.contractId.localeCompare(b.contractId))
+                .sort((a, b) => compareStrings(a.contractId, b.contractId))
                 .map(c => ({
                     admin: c.admin,
                     contract: c.contractId
@@ -111,7 +112,7 @@ async function buildUpdateTransaction(updateOptions) {
                 account,
                 txOptions,
                 update,
-                admins.sort((a, b) => a.localeCompare(b)) //sort to have same order in all transactions
+                admins.sort(compareStrings) //sort to have same order in all transactions
             )
         }
             break
