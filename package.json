@@ -1,6 +1,6 @@
 {
   "name": "@reflector/reflector-shared",
-  "version": "7.2.0-rc1",
+  "version": "7.2.0-rc2",
   "description": "",
   "main": "index.js",
   "engines": {
@@ -17,7 +17,7 @@
     "nock": "^14.0.16"
   },
   "peerDependencies": {
-    "@reflector/oracle-client": "github:reflector-network/oracle-client#v7.1.2",
+    "@reflector/oracle-client": "github:reflector-network/oracle-client#v7.2.0-rc2",
     "@stellar/stellar-sdk": ">=17"
   }
 }
