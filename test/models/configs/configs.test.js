@@ -279,3 +279,25 @@ describe('heartbeat and timeframe bounds', () => {
         ])
     })
 })
+
+describe('beam requirements', () => {
+    test('a beam with invocation costs is refused: the contract has no such setting', () => {
+        const config = new OracleBeamConfig({...oracleBeamContractRaw, invocationCosts: ['100', '200', '300', '400', '500']})
+        expect(config.isValid).toBe(false)
+        expect(config.issuesString).toContain('invocationCosts')
+    })
+
+    test('a beam needs a fee config: access to its feeds is sold at that rate', () => {
+        const raw = {...oracleBeamContractRaw}
+        delete raw.feeConfig
+        const config = new OracleBeamConfig(raw)
+        expect(config.isValid).toBe(false)
+        expect(config.issuesString).toContain('feeConfig')
+    })
+
+    test('a price oracle still needs no fee config', () => {
+        const raw = {...oracleContractRaw}
+        delete raw.feeConfig
+        expect(new OracleConfig(raw).isValid).toBe(true)
+    })
+})

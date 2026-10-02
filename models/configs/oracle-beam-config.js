@@ -1,42 +1,17 @@
-const {sortObjectKeys} = require('../../utils/serialization-helper')
-const {areArraysEqual} = require('../../utils/comparison-helper')
 const OracleConfig = require('./oracle-config')
 
+/**
+ * A beam sells access to its price feeds: the fee config is the token and the daily rate per asset, so a beam without
+ * one can never have an active feed. It has no per-invocation costs
+ */
 module.exports = class OracleBeamConfig extends OracleConfig {
     constructor(raw) {
         super(raw)
-        this.__assignInvocationCosts(raw.invocationCosts)
-    }
-
-    __assignInvocationCosts(invocationCosts) {
-        try {
-            if (!invocationCosts)
-                return
-            if (!Array.isArray(invocationCosts) || invocationCosts.some(c => typeof c !== 'string' || !BigInt(c)) || invocationCosts.length !== 5)
-                throw new Error('invocationCosts must be an array of 5 BigInt strings')
-            this.invocationCosts = invocationCosts.map(c => BigInt(c))
-            this.__invocationCostsSet = true
-        } catch (err) {
-            this.__addIssue(`invocationCosts: ${err.message}`)
-        }
-    }
-
-    /**
-     * @type {BigInt[]}
-     */
-    invocationCosts
-
-    toPlainObject(asLegacy = true) {
-        return sortObjectKeys({
-            ...super.toPlainObject(asLegacy),
-            ...{
-                invocationCosts: this.__invocationCostsSet ? this.invocationCosts.map(c => c.toString()) : undefined
-            }
-        })
-    }
-
-    equals(other) {
-        return super.equals(other)
-            && areArraysEqual(this.invocationCosts, other.invocationCosts)
+        if (!raw)
+            return
+        if (raw.invocationCosts !== undefined)
+            this.__addIssue('invocationCosts: not supported, a beam charges for access through its fee config')
+        if (!raw.feeConfig)
+            this.__addIssue('feeConfig: required for a beam, it sets the access rate')
     }
 }

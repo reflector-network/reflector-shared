@@ -10,8 +10,6 @@ const DAODepositsUpdate = require('../models/updates/dao/deposits-update')
 const {isAllowedValidatorsUpdate} = require('../utils/majority-helper')
 const OracleFeeConfigUpdate = require('../models/updates/oracle/fee-config-update')
 const OracleCacheSizeUpdate = require('../models/updates/oracle/cache-size-update')
-const OracleInvocationCostsUpdate = require('../models/updates/oracle/invocation-costs-update')
-const {areArraysEqual} = require('../utils/comparison-helper')
 
 /**
  * Builds updates from current config and new config
@@ -104,6 +102,9 @@ function __tryGetNodesUpdate(timestamp, currentNodes, newNodes) {
 function __tryGetContractsUpdate(timestamp, currentConfigs, newConfigs) {
     const updates = new Map()
     const changes = __getChanges(newConfigs, currentConfigs)
+    //a new oracle is initialised with its assets, and the contract refuses its base asset among them
+    for (const contract of changes.added)
+        __assertBaseAssetNotFeed(contract.contractId, contract.baseAsset, contract.assets)
     if (changes.modified.length === 0)
         return updates
 
@@ -131,7 +132,9 @@ function __tryGetContractsUpdate(timestamp, currentConfigs, newConfigs) {
             if (newConfig.decimals !== currentConfig.decimals)
                 throw new ValidationError(`Contract ${currentConfig.contractId}. Decimals can not be modified`)
             setContractUpdate(
-                __tryGetAssetsUpdate(timestamp, newConfig.contractId, newConfig.admin, currentConfig.assets, newConfig.assets)
+                __tryGetAssetsUpdate(
+                    timestamp, newConfig.contractId, newConfig.admin, currentConfig.assets, newConfig.assets, newConfig.baseAsset
+                )
             )
 
             if (newConfig.period !== currentConfig.period)
@@ -147,11 +150,6 @@ function __tryGetContractsUpdate(timestamp, currentConfigs, newConfigs) {
 
             if (newConfig.cacheSize !== currentConfig.cacheSize)
                 setContractUpdate(new OracleCacheSizeUpdate(timestamp, newConfig.contractId, newConfig.admin, newConfig.cacheSize))
-
-            if (!areArraysEqual(newConfig.invocationCosts, currentConfig.invocationCosts))
-                setContractUpdate(
-                    new OracleInvocationCostsUpdate(timestamp, newConfig.contractId, newConfig.admin, newConfig.invocationCosts)
-                )
 
         } else if (newConfig.type === ContractTypes.SUBSCRIPTIONS) {
             if (newConfig.token !== currentConfig.token)
@@ -203,9 +201,10 @@ function __tryGetDepositsUpdate(timestamp, contractId, admin, currentDeposits, n
  * @param {string} admin
  * @param {Asset[]} currentAssets
  * @param {Asset[]} newAssets
+ * @param {Asset} baseAsset - the contract's base asset, which can never be a price feed
  * @returns {OracleAssetsUpdate}
  */
-function __tryGetAssetsUpdate(timestamp, contractId, admin, currentAssets, newAssets) {
+function __tryGetAssetsUpdate(timestamp, contractId, admin, currentAssets, newAssets, baseAsset) {
     const assetsChanges = __getArrayChanges(newAssets, currentAssets, 'code', `${contractId}:assets`)
     if (assetsChanges.removed.length > 0)
         throw new ValidationError(`Contract ${contractId}. Assets can not be removed`)
@@ -220,9 +219,22 @@ function __tryGetAssetsUpdate(timestamp, contractId, admin, currentAssets, newAs
     //if no added assets there are no changes that require transaction, so we don't need to create an update object
     if (assetsChanges.added.length === 0)
         return null
+    __assertBaseAssetNotFeed(contractId, baseAsset, assetsChanges.added)
     return new OracleAssetsUpdate(timestamp, contractId, admin, assetsChanges.added)
 }
 
+
+/**
+ * @param {string} contractId - oracle contract
+ * @param {Asset} baseAsset - its base asset
+ * @param {Asset[]} assets - assets it would publish prices for
+ */
+function __assertBaseAssetNotFeed(contractId, baseAsset, assets) {
+    if (!baseAsset || !assets)
+        return
+    if (assets.some(asset => asset.type === baseAsset.type && asset.code === baseAsset.code))
+        throw new ValidationError(`Contract ${contractId}. The base asset can not be a price feed`)
+}
 
 /**
  * Tries to get wasm update

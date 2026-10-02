@@ -29,7 +29,6 @@ const NodesPendingTransaction = require('./models/transactions/nodes-pending-tra
 const OracleHistoryRetentionTransaction = require('./models/transactions/oracle/history-period-update-transaction')
 const OracleCacheSizeUpdateTransaction = require('./models/transactions/oracle/cache-size-update-transaction')
 const OracleFeeConfigUpdateTransaction = require('./models/transactions/oracle/fee-config-update-transaction')
-const OracleInvocationCostsUpdateTransaction = require('./models/transactions/oracle/invocation-costs-update-transaction')
 const PriceUpdatePendingTransaction = require('./models/transactions/oracle/price-update-transaction')
 const ContractTypes = require('./models/configs/contract-type')
 
@@ -136,7 +135,6 @@ module.exports.WasmPendingTransaction = WasmPendingTransaction
 module.exports.NodesPendingTransaction = NodesPendingTransaction
 module.exports.OracleHistoryRetentionTransaction = OracleHistoryRetentionTransaction
 module.exports.PriceUpdatePendingTransaction = PriceUpdatePendingTransaction
-module.exports.OracleInvocationCostsUpdateTransaction = OracleInvocationCostsUpdateTransaction
 
 module.exports.encodeAssetContractId = encodeAssetContractId
 module.exports.getNetworkIdHash = getNetworkIdHash

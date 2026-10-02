@@ -193,6 +193,7 @@ const rawConfig = {
             "contractId": "CADGRYMISAODBSKAG7JQVSNLAN6U724UKFKQPIAOBADYJFG24QI6SGAW",
             "period": 86400000,
             "timeframe": 300000,
+            "feeConfig": {"fee": "100", "token": "CBRJTVBVGOYGN36KFHQSDI7V42QKBBVYNLUIIJ356HIYUSYE32Q4LFPP"},
             "type": "oracle_beam"
         },
         "CBMZO5MRIBFL457FBK5FEWZ4QJTYL3XWID7QW7SWDSDOQI5H4JN7XPZU": {
@@ -284,7 +285,6 @@ const rawConfig = {
 }
 
 const oracleContract = 'CAA2NN3TSWQFI6TZVLYM7B46RXBINZFRXZFP44BM2H6OHOPRXD5OASUW'
-const oracleBeamContract = 'CADGRYMISAODBSKAG7JQVSNLAN6U724UKFKQPIAOBADYJFG24QI6SGAW'
 const subscriptoionsContract = 'CBFZZVW5SKMVTXKHHQKGOLLHYTOVNSYA774GCROOBMYAKEYCP4THNEXQ'
 const daoContract = 'CDB7K2IT4NXDV66BGOESQSSTGVJXZWDGA3DM6P3U2W435IBY6U7GVUII'
 
@@ -359,17 +359,6 @@ describe('transaction helper', () => {
                 token: 'CDBBDS5FN46XAVGD5IRKJIK4I7KGGSFI7R2KLXG32QQQELHPTIZS26BW',
                 fee: BigInt(1000000)
             }
-            updateConfigs.push(newConfig)
-        }
-        {//update invocation config
-            const newConfig = new Config(rawConfig)
-            newConfig.contracts.get(oracleBeamContract).invocationCosts = [
-                100000n,
-                200000n,
-                300000n,
-                400000n,
-                500000n
-            ]
             updateConfigs.push(newConfig)
         }
         for (const newConfig of updateConfigs) {

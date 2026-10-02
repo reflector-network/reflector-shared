@@ -13,8 +13,7 @@ const {
     buildOracleAssetsUpdateTransaction,
     buildOracleHistoryPeriodUpdateTransaction,
     buildOracleCacheSizeUpdateTransaction,
-    buildOracleFeeConfigUpdateTransaction,
-    buildOracleInvocationCostsUpdateTransaction
+    buildOracleFeeConfigUpdateTransaction
 } = require('./oracle-transaction-helper')
 const {buildSubscriptionFeeUpdateTransaction} = require('./subscriptions-transaction-helper')
 const {buildDAODepositsUpdateTransaction} = require('./dao-transaction-helper')
@@ -133,9 +132,6 @@ async function buildUpdateTransaction(updateOptions) {
             break
         case UpdateType.ORACLE_CACHE_SIZE:
             tx = await buildOracleCacheSizeUpdateTransaction(sorobanRpc, account, txOptions, update)
-            break
-        case UpdateType.ORACLE_INVOCATION_COSTS:
-            tx = await buildOracleInvocationCostsUpdateTransaction(sorobanRpc, account, txOptions, update)
             break
         default:
             break //no updates that must be applied on blockchain
