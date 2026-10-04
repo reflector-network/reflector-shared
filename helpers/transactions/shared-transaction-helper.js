@@ -170,6 +170,8 @@ function getClientByType(contractType, network, sorobanRpc, contractId) {
     }
 }
 
+const maxTransactionFee = 4294967295
+
 /**
  * @param {Account} account - account
  * @param {any} txOptions - transaction options
@@ -178,8 +180,6 @@ function getClientByType(contractType, network, sorobanRpc, contractId) {
  * @returns {NodesPendingTransaction|null}
  */
 function buildNodesUpdate(account, txOptions, update, admins) {
-    const txBuilder = new TransactionBuilder(account, txOptions)
-
     let isOptionsChanged = false
     let threshold = update.currentNodes.size
     const currentNodeKeys = new Set([...update.currentNodes.keys()])
@@ -202,7 +202,12 @@ function buildNodesUpdate(account, txOptions, update, admins) {
     if (!isOptionsChanged)
         return null
     const currentMajority = getMajority(threshold)
-
+    //a transaction declares its total fee as an unsigned 32-bit integer, and this one carries an operation per signer
+    //change and one for the thresholds on every admin account, so a retry's raised fee is capped at what it can declare.
+    //Every node and the orchestrator compute the same cap, so they still build the same transaction
+    const operations = admins.length * (signerOperations.length + 1)
+    const fee = Math.min(Number(txOptions.fee), Math.floor(maxTransactionFee / operations))
+    const txBuilder = new TransactionBuilder(account, {...txOptions, fee})
 
     for (const admin of admins) {
         for (const signerOperation of signerOperations) {

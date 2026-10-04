@@ -377,6 +377,47 @@ describe('transaction helper', () => {
         }
     }, 10000)
 
+    describe('a node set update pays at most what a transaction can declare', () => {
+        //per admin account and the system account, one setOptions for the new signer and one for the thresholds: 6 x 2
+        const operations = 12
+        const maxTotalFee = 4294967295 //a transaction declares its total fee as an unsigned 32-bit integer
+
+        function addNode() {
+            const newConfig = new Config(rawConfig)
+            newConfig.nodes.set('GBP5VTXZF5C43SNXBUEVIXWKX4K6KJ6PAEKGRJWEY55EK3LGJI3PQSVV', new Node({
+                pubkey: 'GBP5VTXZF5C43SNXBUEVIXWKX4K6KJ6PAEKGRJWEY55EK3LGJI3PQSVV',
+                url: 'ws://some.node.com',
+                domain: 'node2.com'
+            }))
+            return newConfig
+        }
+
+        function build(fee) {
+            return buildUpdateTransaction({
+                currentConfig: new Config(rawConfig),
+                newConfig: addNode(),
+                timestamp: 1,
+                network: 'testnet',
+                sorobanRpc,
+                account,
+                maxTime: new Date(normalizeTimestamp(Date.now(), 1000) + 10000),
+                fee
+            })
+        }
+
+        test('the third attempt, 64 times the base fee per operation, is capped so its total fits', async () => {
+            const tx = await build(640000000)
+            expect(tx.transaction.operations).toHaveLength(operations)
+            expect(Number(tx.transaction.fee)).toBe(Math.floor(maxTotalFee / operations) * operations)
+            expect(Number(tx.transaction.fee)).toBeLessThanOrEqual(maxTotalFee)
+        })
+
+        test('a fee whose total fits is paid as asked', async () => {
+            const tx = await build(80000000)
+            expect(Number(tx.transaction.fee)).toBe(80000000 * operations)
+        })
+    })
+
     test('buildOraclePriceUpdateTransaction', async () => {
         const currentConfig = new Config(rawConfig)
         const contract = currentConfig.contracts.get(oracleContract)
