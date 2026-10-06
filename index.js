@@ -58,6 +58,17 @@ const {
 } = require('./utils/timestamp-helper')
 
 const {
+    FEE_MULTIPLIER,
+    firstAttemptTimeout,
+    maxSubmitAttempts,
+    syncTimeframe,
+    clusterRoundLength,
+    getMaxTime,
+    isUpdateTimeReached,
+    endsBeforeExpiration
+} = require('./utils/update-schedule')
+
+const {
     getDecoratedSignature,
     verifySignature,
     getSignaturePayloadHash,
@@ -149,6 +160,15 @@ module.exports.sortObjectKeys = sortObjectKeys
 module.exports.compareStrings = compareStrings
 module.exports.isTimestampValid = isTimestampValid
 module.exports.normalizeTimestamp = normalizeTimestamp
+
+module.exports.FEE_MULTIPLIER = FEE_MULTIPLIER
+module.exports.firstAttemptTimeout = firstAttemptTimeout
+module.exports.maxSubmitAttempts = maxSubmitAttempts
+module.exports.syncTimeframe = syncTimeframe
+module.exports.clusterRoundLength = clusterRoundLength
+module.exports.getMaxTime = getMaxTime
+module.exports.isUpdateTimeReached = isUpdateTimeReached
+module.exports.endsBeforeExpiration = endsBeforeExpiration
 
 module.exports.getDecoratedSignature = getDecoratedSignature
 module.exports.verifySignature = verifySignature
