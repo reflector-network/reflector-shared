@@ -110,6 +110,8 @@ const {
 } = require('./helpers/entries-helper')
 
 const {buildUpdates} = require('./helpers/updates-helper')
+const {OracleClient, SubscriptionsClient, DAOClient, parseSorobanResult} = require('./client')
+const {simulationRejectedCode} = require('./client/transaction-builder')
 
 module.exports.UpdateType = UpdateType
 module.exports.UpdateBase = UpdateBase
@@ -200,3 +202,8 @@ module.exports.getContractEntries = getContractEntries
 module.exports.getContractInstance = getContractInstance
 module.exports.getContractInstanceEntries = getContractInstanceEntries
 module.exports.getNativeStorage = getNativeStorage
+module.exports.OracleClient = OracleClient
+module.exports.SubscriptionsClient = SubscriptionsClient
+module.exports.DAOClient = DAOClient
+module.exports.parseSorobanResult = parseSorobanResult
+module.exports.simulationRejectedCode = simulationRejectedCode

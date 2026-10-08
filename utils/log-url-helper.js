@@ -1,7 +1,7 @@
 //An rpc or data provider often puts its api key in the url path (https://provider/<key>), where no query-key pattern
 //looks, so a url that reaches a log line or an error a consumer logs keeps its scheme, host and port only: no userinfo,
-//path, query or fragment. reflector-node src/utils/log-redaction.js, node-orchestrator
-//logger-cleanup.js and oracle-client src/log-url-helper.js cut urls the same way
+//path, query or fragment. reflector-node src/utils/log-redaction.js and node-orchestrator logger-cleanup.js cut urls
+//the same way
 
 //an http or websocket url: scheme, optional userinfo, the host and port, then whatever follows up to a blank or a quote.
 //file urls - stack frames - keep their paths

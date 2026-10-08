@@ -1,5 +1,5 @@
 const {TransactionBuilder, Operation} = require('@stellar/stellar-sdk')
-const {OracleClient, SubscriptionsClient} = require('@reflector/oracle-client')
+const {OracleClient, SubscriptionsClient} = require('../../client')
 const {getMajority} = require('../../utils/majority-helper')
 const {compareStrings} = require('../../utils/serialization-helper')
 const {buildUpdates} = require('../updates-helper')

@@ -1,4 +1,4 @@
-const {SubscriptionsClient} = require('@reflector/oracle-client')
+const {SubscriptionsClient} = require('../../client')
 const SubscriptionsInitTransaction = require('../../models/transactions/subscriptions/init-transaction')
 const SubscriptionsFeeUpdateTransaction = require('../../models/transactions/subscriptions/fee-update-transaction')
 const SubscriptionsTriggerTransaction = require('../../models/transactions/subscriptions/trigger-transaction')

@@ -1,4 +1,4 @@
-const {DAOClient} = require('@reflector/oracle-client')
+const {DAOClient} = require('../../client')
 const DAOInitTransaction = require('../../models/transactions/dao/init-transaction')
 const DAODepositsUpdateTransaction = require('../../models/transactions/dao/deposits-update-transaction')
 const DAOVoteTransaction = require('../../models/transactions/dao/vote-transaction')

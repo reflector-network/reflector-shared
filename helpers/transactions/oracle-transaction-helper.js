@@ -1,4 +1,4 @@
-const {OracleClient} = require('@reflector/oracle-client')
+const {OracleClient} = require('../../client')
 const OracleInitTransaction = require('../../models/transactions/oracle/init-transaction')
 const PriceUpdatePendingTransaction = require('../../models/transactions/oracle/price-update-transaction')
 const OracleHistoryPeriodUpdateTransaction = require('../../models/transactions/oracle/history-period-update-transaction')
