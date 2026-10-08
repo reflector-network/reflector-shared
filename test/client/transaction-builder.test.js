@@ -365,6 +365,13 @@ describe('a refused simulation', () => {
         expect(error.code).toBe('SIMULATION_REJECTED')
     })
 
+    test('an error the rpc reports for itself is not a refusal: message unchanged, no code', async () => {
+        mockSimulate = () => Promise.resolve({_parsed: true, id: '1', latestLedger: 1, events: [], error: 'preflight queue full'})
+        const error = await buildTransaction(client(), account(), invocation(), txOptions()).catch(e => e)
+        expect(error.message).toBe('preflight queue full')
+        expect(error.code).toBeUndefined()
+    })
+
     test('a request that failed on every url carries no code', async () => {
         mockSimulate = () => Promise.reject(new Error('fetch failed'))
         const error = await buildTransaction(client(), account(), invocation(), txOptions()).catch(e => e)

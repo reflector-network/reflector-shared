@@ -26,8 +26,11 @@ const maxWriteBytes = 132096
 //historical floor, kept so typical updates pay the same fee as before
 const minResourceFee = 10000000n
 
-//the simulation answered and refused the transaction. The error keeps the rpc's message and carries this code, so a
-//caller can tell a refusal, which asking again cannot change, from a request that failed on every url
+//the host ran the transaction and refused it - a contract error, an exhausted budget - so asking again gets the same
+//answer. Any other error the rpc puts in the response ("preflight queue full", a failed ledger read) is its own and
+//may pass, so it carries no code and a caller builds again
+const hostRefusalPattern = /^HostError\b/
+//marks a host refusal on the thrown error, so a caller can tell it from a failure that asking again may fix
 const simulationRejectedCode = 'SIMULATION_REJECTED'
 
 /**
@@ -120,7 +123,8 @@ async function buildTransaction(client, source, operation, options) {
     const simulationResponse = await makeServerRequest(client.sorobanRpcUrl, request)
     if (simulationResponse.error) {
         const error = new Error(simulationResponse.error)
-        error.code = simulationRejectedCode
+        if (hostRefusalPattern.test(simulationResponse.error))
+            error.code = simulationRejectedCode
         throw error
     }
     if (options.simulationOnly)

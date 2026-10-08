@@ -15,17 +15,20 @@ source, operation, options)` in `client/transaction-builder.js`:
 
 - `options.fee` is the classic per-operation fee; the Soroban resource fee is added on top.
 - The simulation is requested from each url in `client.sorobanRpcUrl` in turn, once, with a 15 s deadline per request,
-  starting with the url that answered last. When every url fails the error is `Failed to make request.` with the
-  per-url errors in `error.cause`.
-- When the simulation answers with an error, the transaction is refused: the thrown error's message is the rpc's error
-  string unchanged and its `code` is `SIMULATION_REJECTED` (`simulationRejectedCode`). Asking again gets the same
-  answer; a reflector-node treats it as final for the attempt.
+  starting with the url that answered last. When every url fails the error is `Failed to make request.`, with one
+  error per url tried in `error.cause`.
+- When the host ran the transaction and refused it (the rpc's error string starts with `HostError`: a contract error,
+  an exhausted budget), the thrown error's message is that string unchanged and its `code` is `SIMULATION_REJECTED`
+  (`simulationRejectedCode`). Asking again gets the same answer; a reflector-node treats it as final for the attempt.
+  Any other error the rpc reports in the simulation response (`preflight queue full`, a failed ledger read) keeps its
+  message and carries no code: asking again may succeed.
 - Simulated resources are rounded upward onto a fixed grid before they are signed: instructions in steps of
   10 000 000 (capped at 100 000 000), disk-read and write bytes in steps of 8192 (capped at 204 800 and 132 096), the
-  resource fee in steps of 1 000 000 stroops with a floor of 10 000 000. Each value gets between one and two steps of
-  slack. Nodes simulate independently, so this keeps their transactions identical unless a simulation lands within
-  one step of a grid edge. The caps are the public network's per-transaction limits (`txMaxInstructions`,
-  `txMaxDiskReadBytes`, `txMaxWriteBytes`) and must follow any network configuration change.
+  resource fee in steps of 1 000 000 stroops with a floor of 10 000 000. Below the caps and above the fee floor, each
+  value gets at least one and less than two steps of slack. Nodes simulate independently, so this keeps their
+  transactions identical unless a grid edge falls between two nodes' simulated values. The caps are the public
+  network's per-transaction limits (`txMaxInstructions`, `txMaxDiskReadBytes`, `txMaxWriteBytes`) and must follow any
+  network configuration change.
 - When the simulation returns a restore preamble, the result is a footprint-restore transaction, rounded the same
   way, with a non-enumerable `isRestore === true`. Check it before treating the transaction as the requested update.
 - `options.simulationOnly` returns the parsed simulation response instead of a transaction.
