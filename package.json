@@ -1,6 +1,6 @@
 {
   "name": "@reflector/reflector-shared",
-  "version": "7.2.0-rc4",
+  "version": "7.2.0-rc5",
   "description": "",
   "main": "index.js",
   "engines": {
@@ -13,7 +13,10 @@
   "author": "",
   "license": "ISC",
   "jest": {
-    "testPathIgnorePatterns": ["/node_modules/", "<rootDir>/test/client-integration/"]
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "<rootDir>/test/client-integration/"
+    ]
   },
   "devDependencies": {
     "@stellar-expert/eslint-config-js": "github:stellar-expert/eslint-config-js",
