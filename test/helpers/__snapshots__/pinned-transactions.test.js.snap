@@ -1,0 +1,25 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`every transaction the package builds is pinned a footprint restore the simulation demands in place of a price update 1`] = `"6da5a42a66da18c0da4f41b34e9b67c030119c8ae24a8e45df790e58d74c8d6e"`;
+
+exports[`every transaction the package builds is pinned one transaction of every kind 1`] = `
+{
+  "daoDeposits": "691d4fa6253e6d8e8bccaab2853029b6dd02738a4cb60328050f90e9804ae1c3",
+  "daoInit": "7a14600574e76fc5f40b6645a24d163b44f9df8665ce8b858f7a7b6eb218b704",
+  "daoUnlock": "4b70732b8defad587448a09fee00628bcb51d85a96876f18d837b3345fd54aba",
+  "daoVote": "fb88b250fdbe2206d067196012fbe46816c190b26654e484e95eaf64a3ebaec5",
+  "oracleInit": "95dc9bdb32e28eed8c98d2de3ef2c2e34fd3f76bc1c967e855244a49a5a12cd8",
+  "oraclePriceUpdate": "becc8a4a0844d2c388830b3be68145363f3b1ad48065c80a1c1259c2175d14b5",
+  "subscriptionsCharge": "5dff4b7d137c735a0235cc357734338ae50dce17cea4f3dce7705c7227082685",
+  "subscriptionsInit": "2258a85105625c2089a761c601911b8168c8275733a0532e1b4db55ef60548e4",
+  "subscriptionsTrigger": "76ff7ec7285d02044f045e86829c7d896314fe608f202953e524b9d98e272657",
+  "updateDaoDeposits": "691d4fa6253e6d8e8bccaab2853029b6dd02738a4cb60328050f90e9804ae1c3",
+  "updateNodes": "7fdb7c4666056b636b0c784bed34e3fe4158a800b3d26313e168396f764449ba",
+  "updateOracleAssets": "73a63db92f375fa2fdca063a6b37d490982c2a47676adb348b5236e8e4cb6534",
+  "updateOracleCacheSize": "d02b5531961285845a0a4dcb5b47482cbfa651b0bc8c59ff0851376cb823602c",
+  "updateOracleFeeConfig": "79e3752278ead407859dee76d87bdc2d4cc40a2e3db7d8f42b277a7f631656c9",
+  "updateOraclePeriod": "674f77c333caac2dcafbbab210a2e0f3f263c110a6908fa0554e67412dc8e5c8",
+  "updateSubscriptionsFee": "84b3f58df1a07c8fdd049f2704905fa0df6afa8a0e27e9653718d6bc9b2a537a",
+  "updateWasm": "dd45f7b55ae064c55bcd37d09a94c81b76d02cdeaa9cbb750e94f96aea0e626e",
+}
+`;
