@@ -417,7 +417,8 @@ describe.each(Object.entries(oracles))(`OracleClient %s`, (type, wasm) => {
         txOptions.timebounds.maxTime = getNormalizedMaxDate(60000, 30000)
         const caller = type === "beam" ? config.consumer.publicKey() : null
         await submitTx(
-            config.client.price(config.consumerAccount, contractConfig.assets[1], lastTimestamp / 1000, txOptions, caller),
+            //the first asset: a beam serves prices only for feeds someone paid for, and `track` paid for this one
+            config.client.price(config.consumerAccount, contractConfig.assets[0], lastTimestamp / 1000, txOptions, caller),
             [config.consumer],
             response => {
                 const price = parseSorobanResult(response.resultMetaXdr)
@@ -432,7 +433,7 @@ describe.each(Object.entries(oracles))(`OracleClient %s`, (type, wasm) => {
         txOptions.timebounds.maxTime = getNormalizedMaxDate(60000, 30000)
         const caller = type === "beam" ? config.consumer.publicKey() : null
         await submitTx(
-            config.client.price(config.consumerAccount, contractConfig.assets[1], 10000000000, txOptions, caller),
+            config.client.price(config.consumerAccount, contractConfig.assets[0], 10000000000, txOptions, caller),
             [config.consumer],
             response => {
                 const price = parseSorobanResult(response.resultMetaXdr)
