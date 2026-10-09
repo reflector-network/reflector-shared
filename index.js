@@ -6,6 +6,7 @@ const OracleHistoryPeriodUpdate = require('./models/updates/oracle/history-perio
 const OracleCacheSizeUpdate = require('./models/updates/oracle/cache-size-update')
 const OracleRetentionConfigUpdate = require('./models/updates/oracle/fee-config-update')
 const WasmUpdate = require('./models/updates/wasm-update')
+const WasmHash = require('./models/configs/wasm-hash')
 const ValidationError = require('./models/validation-error')
 const AssetType = require('./models/assets/asset-type')
 const Asset = require('./models/assets/asset')
@@ -28,7 +29,6 @@ const NodesPendingTransaction = require('./models/transactions/nodes-pending-tra
 const OracleHistoryRetentionTransaction = require('./models/transactions/oracle/history-period-update-transaction')
 const OracleCacheSizeUpdateTransaction = require('./models/transactions/oracle/cache-size-update-transaction')
 const OracleFeeConfigUpdateTransaction = require('./models/transactions/oracle/fee-config-update-transaction')
-const OracleInvocationCostsUpdateTransaction = require('./models/transactions/oracle/invocation-costs-update-transaction')
 const PriceUpdatePendingTransaction = require('./models/transactions/oracle/price-update-transaction')
 const ContractTypes = require('./models/configs/contract-type')
 
@@ -50,12 +50,23 @@ const {
     mapToPlainObject
 } = require('./utils/map-helper')
 
-const {sortObjectKeys} = require('./utils/serialization-helper')
+const {sortObjectKeys, compareStrings} = require('./utils/serialization-helper')
 
 const {
     isTimestampValid,
     normalizeTimestamp
 } = require('./utils/timestamp-helper')
+
+const {
+    FEE_MULTIPLIER,
+    firstAttemptTimeout,
+    maxSubmitAttempts,
+    syncTimeframe,
+    clusterRoundLength,
+    getMaxTime,
+    isUpdateTimeReached,
+    endsBeforeExpiration
+} = require('./utils/update-schedule')
 
 const {
     getDecoratedSignature,
@@ -99,6 +110,8 @@ const {
 } = require('./helpers/entries-helper')
 
 const {buildUpdates} = require('./helpers/updates-helper')
+const {OracleClient, SubscriptionsClient, DAOClient, parseSorobanResult} = require('./client')
+const {simulationRejectedCode} = require('./client/transaction-builder')
 
 module.exports.UpdateType = UpdateType
 module.exports.UpdateBase = UpdateBase
@@ -108,6 +121,7 @@ module.exports.OracleHistoryPeriodUpdate = OracleHistoryPeriodUpdate
 module.exports.OracleCacheSizeUpdate = OracleCacheSizeUpdate
 module.exports.OracleRetentionConfigUpdate = OracleRetentionConfigUpdate
 module.exports.WasmUpdate = WasmUpdate
+module.exports.WasmHash = WasmHash
 module.exports.ValidationError = ValidationError
 module.exports.AssetType = AssetType
 module.exports.Asset = Asset
@@ -134,7 +148,6 @@ module.exports.WasmPendingTransaction = WasmPendingTransaction
 module.exports.NodesPendingTransaction = NodesPendingTransaction
 module.exports.OracleHistoryRetentionTransaction = OracleHistoryRetentionTransaction
 module.exports.PriceUpdatePendingTransaction = PriceUpdatePendingTransaction
-module.exports.OracleInvocationCostsUpdateTransaction = OracleInvocationCostsUpdateTransaction
 
 module.exports.encodeAssetContractId = encodeAssetContractId
 module.exports.getNetworkIdHash = getNetworkIdHash
@@ -146,8 +159,18 @@ module.exports.areAllSignaturesPresent = areAllSignaturesPresent
 module.exports.areMapsEqual = areMapsEqual
 module.exports.mapToPlainObject = mapToPlainObject
 module.exports.sortObjectKeys = sortObjectKeys
+module.exports.compareStrings = compareStrings
 module.exports.isTimestampValid = isTimestampValid
 module.exports.normalizeTimestamp = normalizeTimestamp
+
+module.exports.FEE_MULTIPLIER = FEE_MULTIPLIER
+module.exports.firstAttemptTimeout = firstAttemptTimeout
+module.exports.maxSubmitAttempts = maxSubmitAttempts
+module.exports.syncTimeframe = syncTimeframe
+module.exports.clusterRoundLength = clusterRoundLength
+module.exports.getMaxTime = getMaxTime
+module.exports.isUpdateTimeReached = isUpdateTimeReached
+module.exports.endsBeforeExpiration = endsBeforeExpiration
 
 module.exports.getDecoratedSignature = getDecoratedSignature
 module.exports.verifySignature = verifySignature
@@ -179,3 +202,8 @@ module.exports.getContractEntries = getContractEntries
 module.exports.getContractInstance = getContractInstance
 module.exports.getContractInstanceEntries = getContractInstanceEntries
 module.exports.getNativeStorage = getNativeStorage
+module.exports.OracleClient = OracleClient
+module.exports.SubscriptionsClient = SubscriptionsClient
+module.exports.DAOClient = DAOClient
+module.exports.parseSorobanResult = parseSorobanResult
+module.exports.simulationRejectedCode = simulationRejectedCode

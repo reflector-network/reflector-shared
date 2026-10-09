@@ -1,5 +1,8 @@
-const {OracleClient} = require('@reflector/oracle-client')
-const {xdr, rpc, scValToNative, Address, XdrLargeInt, nativeToScVal} = require('@stellar/stellar-sdk')
+const {xdr, scValToNative, Address, XdrLargeInt, nativeToScVal} = require('@stellar/stellar-sdk')
+const {OracleClient} = require('../client')
+const {safeUrl, safeError} = require('../utils/log-url-helper')
+
+const {createRpcServer, orderByLastGood, rememberGoodUrl} = require('./rpc-helper')
 
 async function makeRequest(requestFn, sorobanRpc) {
     if (!sorobanRpc || sorobanRpc.length < 1)
@@ -7,12 +10,16 @@ async function makeRequest(requestFn, sorobanRpc) {
     for (let i = 0; i < 3; i++) { //max 3 attempts
         const errAggr = []
         try {
-            for (const serverRpc of sorobanRpc) {
+            for (const serverRpc of orderByLastGood(sorobanRpc)) {
                 try {
-                    const server = new rpc.Server(serverRpc, {allowHttp: true})
-                    return await requestFn(server)
+                    const server = createRpcServer(serverRpc)
+                    const result = await requestFn(server)
+                    rememberGoodUrl(sorobanRpc, serverRpc)
+                    return result
                 } catch (e) {
-                    errAggr.push({url: serverRpc, err: e})
+                    //as the url and the failure may be logged - here and by every consumer that logs the error thrown
+                    //below - with no key a provider put in the url path
+                    errAggr.push({url: safeUrl(serverRpc) || 'invalid url', err: safeError(e)})
                 }
             }
             throw new Error('Failed to invoke RPC method on all provided URLs', {cause: {errAggr}})

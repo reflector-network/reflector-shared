@@ -188,7 +188,7 @@ const oracleBeamContractRaw = {
     "dataSource": "exchanges",
     "timeframe": 300000,
     "period": 86400000,
-    "invocationCosts": ["100", "200", "300", "400", "500"]
+    "feeConfig": {"fee": "100", "token": "CBRJTVBVGOYGN36KFHQSDI7V42QKBBVYNLUIIJ356HIYUSYE32Q4LFPP"}
 }
 
 const oracleContractRaw = {

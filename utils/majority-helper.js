@@ -33,14 +33,14 @@ function isAllowedValidatorsUpdate(currentValidators, newValidators) {
  * Check if all signatures are present
  * @param {string[]} currentValidators - current validators
  * @param {string[]} newValidators - new validators
- * @param {{pubkey:string}[]} signatures - signatures to check
+ * @param {{pubkey: string, rejected: boolean}[]} signatures - signatures to check; rejections do not count as present
  * @returns {boolean}
  */
 function areAllSignaturesPresent(currentValidators, newValidators, signatures) {
     const requiredNodes = filterRemovedValidators(currentValidators, newValidators)
     return requiredNodes
         .every(node =>
-            signatures.some(signature => signature.pubkey === node)
+            signatures.some(signature => signature.pubkey === node && !signature.rejected)
         )
 }
 

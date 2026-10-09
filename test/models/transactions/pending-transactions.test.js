@@ -7,7 +7,6 @@ const OracleAssetsUpdateTransaction = require('../../../models/transactions/orac
 const OracleHistoryPeriodUpdateTransaction = require('../../../models/transactions/oracle/history-period-update-transaction')
 const OracleCacheSizeUpdateTransaction = require('../../../models/transactions/oracle/cache-size-update-transaction')
 const OracleFeeConfigUpdateTransaction = require('../../../models/transactions/oracle/fee-config-update-transaction')
-const OracleInvocationCostsUpdateTransaction = require('../../../models/transactions/oracle/invocation-costs-update-transaction')
 
 const SubscriptionsInitTransaction = require('../../../models/transactions/subscriptions/init-transaction')
 const SubscriptionsTriggerTransaction = require('../../../models/transactions/subscriptions/trigger-transaction')
@@ -33,7 +32,6 @@ const cases = [
     ['OracleHistoryPeriodUpdateTransaction', () => new OracleHistoryPeriodUpdateTransaction(mockTx(), 1, 1), PendingTransactionType.ORACLE_HISTORY_PERIOD_UPDATE],
     ['OracleCacheSizeUpdateTransaction', () => new OracleCacheSizeUpdateTransaction(mockTx(), 1, 1), PendingTransactionType.ORACLE_CACHE_SIZE_UPDATE],
     ['OracleFeeConfigUpdateTransaction', () => new OracleFeeConfigUpdateTransaction(mockTx(), 1, {}), PendingTransactionType.ORACLE_FEE_CONFIG_UPDATE],
-    ['OracleInvocationCostsUpdateTransaction', () => new OracleInvocationCostsUpdateTransaction(mockTx(), 1, [1n]), PendingTransactionType.ORACLE_INVOCATION_COSTS_UPDATE],
     ['SubscriptionsInitTransaction', () => new SubscriptionsInitTransaction(mockTx(), 1, {}), PendingTransactionType.SUBSCRIPTIONS_INIT],
     ['SubscriptionsTriggerTransaction', () => new SubscriptionsTriggerTransaction(mockTx(), 1, 'abc'), PendingTransactionType.SUBSCRIPTIONS_TRIGGER],
     ['SubscriptionsChargeTransaction', () => new SubscriptionsChargeTransaction(mockTx(), 1, [1n]), PendingTransactionType.SUBSCRIPTIONS_CHARGE],
@@ -49,5 +47,18 @@ const cases = [
 describe('pending transaction types', () => {
     test.each(cases)('%s has correct type', (_, create, expectedType) => {
         expect(create().type).toBe(expectedType)
+    })
+})
+
+describe('wasm hash typing', () => {
+    test('WasmPendingTransaction rejects an uppercase hash', () => {
+        expect(() => new WasmPendingTransaction(mockTx(), 1, 'A'.repeat(64), false)).toThrow('wasmHash is not valid')
+    })
+
+    test('WasmUpdate rejects an uppercase hash and keeps a lowercase one', () => {
+        const WasmUpdate = require('../../../models/updates/wasm-update')
+        const ContractTypes = require('../../../models/configs/contract-type')
+        expect(() => new WasmUpdate(1, 'A'.repeat(64), ContractTypes.ORACLE)).toThrow('wasmHash is not valid')
+        expect(new WasmUpdate(1, 'a'.repeat(64), ContractTypes.ORACLE).wasmHash).toBe('a'.repeat(64))
     })
 })

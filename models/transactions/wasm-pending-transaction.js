@@ -1,3 +1,5 @@
+const ValidationError = require('../validation-error')
+const WasmHash = require('../configs/wasm-hash')
 const PendingTransactionBase = require('./pending-transaction-base')
 const PendingTransactionType = require('./pending-transaction-type')
 
@@ -10,8 +12,8 @@ module.exports = class WasmPendingTransaction extends PendingTransactionBase {
      */
     constructor(transaction, timestamp, wasmHash, hasMoreTxns) {
         super(transaction, timestamp, PendingTransactionType.CONTRACT_UPDATE)
-        if (!wasmHash || wasmHash.length !== 64)
-            throw new Error('wasmHash is not valid')
+        if (typeof wasmHash !== 'string' || !WasmHash.pattern.test(wasmHash))
+            throw new ValidationError('wasmHash is not valid')
         this.wasmHash = wasmHash
         this.hasMoreTxns = hasMoreTxns
     }

@@ -1,17 +1,15 @@
-const {OracleClient} = require('@reflector/oracle-client')
+const {OracleClient} = require('../../client')
 const OracleInitTransaction = require('../../models/transactions/oracle/init-transaction')
 const PriceUpdatePendingTransaction = require('../../models/transactions/oracle/price-update-transaction')
 const OracleHistoryPeriodUpdateTransaction = require('../../models/transactions/oracle/history-period-update-transaction')
 const OracleAssetsUpdateTransaction = require('../../models/transactions/oracle/assets-update-transaction')
 const OracleCacheSizeUpdateTransaction = require('../../models/transactions/oracle/cache-size-update-transaction')
 const OracleFeeConfigUpdateTransaction = require('../../models/transactions/oracle/fee-config-update-transaction')
-const OracleInvocationCostsUpdateTransaction = require('../../models/transactions/oracle/invocation-costs-update-transaction')
 
 /**
  * @typedef {import('../../models/updates/oracle/assets-update')} OracleAssetsUpdate
  * @typedef {import('../../models/updates/oracle/history-period-update')} OraclePeriodUpdate
  * @typedef {import('../../models/updates/oracle/cache-size-update')} OracleCacheSizeUpdate
- * @typedef {import('../../models/updates/oracle/invocation-costs-update')} OracleInvocationCostsUpdate
  * @typedef {import('../../models/configs/oracle-config')} OracleConfig
  * @typedef {import('@stellar/stellar-sdk').Account} Account
  */
@@ -154,23 +152,6 @@ async function buildOracleCacheSizeUpdateTransaction(sorobanRpc, account, txOpti
  * @param {string[]} sorobanRpc - soroban rpc urls
  * @param {Account} account - account
  * @param {any} txOptions - transaction options
- * @param {OracleInvocationCostsUpdate} update - pending update
- * @return {Promise<OracleInvocationCostsUpdateTransaction>}
- */
-async function buildOracleInvocationCostsUpdateTransaction(sorobanRpc, account, txOptions, update) {
-    const oracleClient = new OracleClient(txOptions.networkPassphrase, sorobanRpc, update.contractId)
-    const tx = await oracleClient.setInvocationCosts(
-        account,
-        {admin: update.admin, invocationCosts: update.invocationCosts},
-        txOptions
-    )
-    return new OracleInvocationCostsUpdateTransaction(tx, update.timestamp, update.invocationCosts)
-}
-
-/**
- * @param {string[]} sorobanRpc - soroban rpc urls
- * @param {Account} account - account
- * @param {any} txOptions - transaction options
  * @param {OracleFeeConfigUpdate} update - pending update
  * @returns {Promise<OracleFeeConfigUpdateTransaction>}
  */
@@ -193,6 +174,5 @@ module.exports = {
     buildOracleAssetsUpdateTransaction,
     buildOraclePriceUpdateTransaction,
     buildOracleCacheSizeUpdateTransaction,
-    buildOracleFeeConfigUpdateTransaction,
-    buildOracleInvocationCostsUpdateTransaction
+    buildOracleFeeConfigUpdateTransaction
 }

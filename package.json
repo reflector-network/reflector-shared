@@ -1,20 +1,29 @@
 {
   "name": "@reflector/reflector-shared",
-  "version": "7.1.4",
+  "version": "7.2.0",
   "description": "",
   "main": "index.js",
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "scripts": {
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js -i"
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js -i",
+    "test:integration": "node --experimental-vm-modules node_modules/jest/bin/jest.js -i --config jest.integration.config.js"
   },
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
+  "jest": {
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "<rootDir>/test/client-integration/"
+    ]
+  },
   "devDependencies": {
     "@stellar-expert/eslint-config-js": "github:stellar-expert/eslint-config-js",
     "jest": "^30.4.2",
     "nock": "^14.0.16"
   },
   "peerDependencies": {
-    "@reflector/oracle-client": "github:reflector-network/oracle-client#v7.1.2",
     "@stellar/stellar-sdk": ">=17"
   }
 }

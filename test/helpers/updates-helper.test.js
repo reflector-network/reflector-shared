@@ -11,7 +11,6 @@ const DAODepositsUpdate = require('../../models/updates/dao/deposits-update')
 const SubscriptionsFeeUpdate = require('../../models/updates/subscriptions/base-fee-update')
 const OracleCacheSizeUpdate = require('../../models/updates/oracle/cache-size-update')
 const OracleFeeConfigUpdate = require('../../models/updates/oracle/fee-config-update')
-const OracleInvocationCostsUpdate = require('../../models/updates/oracle/invocation-costs-update')
 
 const rawConfig = {
     "contracts": {
@@ -202,6 +201,7 @@ const rawConfig = {
             "contractId": "CADGRYMISAODBSKAG7JQVSNLAN6U724UKFKQPIAOBADYJFG24QI6SGAW",
             "period": 86400000,
             "timeframe": 300000,
+            "feeConfig": {"fee": "100", "token": "CBRJTVBVGOYGN36KFHQSDI7V42QKBBVYNLUIIJ356HIYUSYE32Q4LFPP"},
             "type": "oracle_beam"
         },
         "CBFZZVW5SKMVTXKHHQKGOLLHYTOVNSYA774GCROOBMYAKEYCP4THNEXQ": {
@@ -555,15 +555,6 @@ describe('updates helper', () => {
         expect(update.get(oracle)).toBeInstanceOf(OracleFeeConfigUpdate)
     })
 
-    test('buildUpdates, change invocation costs', () => {
-        const config = new Config(rawConfig)
-        const newConfig = new Config(rawConfig)
-        newConfig.contracts.get(oracleBeam).invocationCosts = [1000n, 2000n, 3000n, 4000n, 5000n]
-        const update = buildUpdates(1, config, newConfig)
-        expect(update.size).toBe(1)
-        expect(update.get(oracleBeam)).toBeInstanceOf(OracleInvocationCostsUpdate)
-    })
-
     test('buildUpdates, update multiple assets thresholds', () => {
         const config = new Config(rawConfig)
         expect(config.issues).toBe(undefined)
@@ -597,5 +588,24 @@ describe('updates helper', () => {
 
         const update = buildUpdates(1, config, newConfig)
         expect(update.size).toBe(1)
+    })
+})
+describe('the base asset is never a price feed', () => {
+    test('buildUpdates refuses adding the base asset to the assets', () => {
+        const config = new Config(rawConfig)
+        const newConfig = new Config(rawConfig)
+        const contract = newConfig.contracts.get(oracle)
+        contract.assets.push(contract.baseAsset)
+        expect(() => buildUpdates(1, config, newConfig)).toThrow(/base asset/)
+    })
+
+    test('buildUpdates refuses a new contract whose assets include its base asset', () => {
+        const config = new Config(rawConfig)
+        const added = 'CADQOBYHA4DQOBYHA4DQOBYHA4DQOBYHA4DQOBYHA4DQOBYHA4DQP5KR'
+        const source = rawConfig.contracts[oracleBeam]
+        const contract = {...source, contractId: added, assets: [...source.assets, source.baseAsset]}
+        const newConfig = new Config({...rawConfig, contracts: {...rawConfig.contracts, [added]: contract}})
+        expect(newConfig.issues).toBe(undefined)
+        expect(() => buildUpdates(1, config, newConfig)).toThrow(/base asset/)
     })
 })

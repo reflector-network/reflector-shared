@@ -1,18 +1,19 @@
 const {TransactionBuilder, Operation} = require('@stellar/stellar-sdk')
-const {OracleClient, SubscriptionsClient} = require('@reflector/oracle-client')
+const {OracleClient, SubscriptionsClient} = require('../../client')
 const {getMajority} = require('../../utils/majority-helper')
+const {compareStrings} = require('../../utils/serialization-helper')
 const {buildUpdates} = require('../updates-helper')
 const UpdateType = require('../../models/updates/update-type')
 const WasmPendingTransaction = require('../../models/transactions/wasm-pending-transaction')
 const NodesPendingTransaction = require('../../models/transactions/nodes-pending-transaction')
+const WasmHash = require('../../models/configs/wasm-hash')
 const {getContractState} = require('../entries-helper')
 const ContractTypes = require('../../models/configs/contract-type')
 const {
     buildOracleAssetsUpdateTransaction,
     buildOracleHistoryPeriodUpdateTransaction,
     buildOracleCacheSizeUpdateTransaction,
-    buildOracleFeeConfigUpdateTransaction,
-    buildOracleInvocationCostsUpdateTransaction
+    buildOracleFeeConfigUpdateTransaction
 } = require('./oracle-transaction-helper')
 const {buildSubscriptionFeeUpdateTransaction} = require('./subscriptions-transaction-helper')
 const {buildDAODepositsUpdateTransaction} = require('./dao-transaction-helper')
@@ -74,7 +75,7 @@ async function buildUpdateTransaction(updateOptions) {
         case UpdateType.WASM: {
             const contractsData = [...currentConfig.contracts.values()]
                 .filter(c => c.type === update.contractType)
-                .sort((a, b) => a.contractId.localeCompare(b.contractId))
+                .sort((a, b) => compareStrings(a.contractId, b.contractId))
                 .map(c => ({
                     admin: c.admin,
                     contract: c.contractId
@@ -94,7 +95,7 @@ async function buildUpdateTransaction(updateOptions) {
             if (contractsData.some(c => c.error))
                 throw new Error(`Failed to get contract state. ${contractsData.find(c => c.error).error?.message}`)
 
-            const contractsToUpdate = contractsData.filter(c => c.contractState.hash !== update.wasmHash)
+            const contractsToUpdate = contractsData.filter(c => !WasmHash.isSameHash(c.contractState.hash, update.wasmHash))
             if (contractsToUpdate.length === 0)
                 break //no updates that must be applied on blockchain
             update.assignContractsToUpdate(contractsToUpdate)
@@ -110,7 +111,7 @@ async function buildUpdateTransaction(updateOptions) {
                 account,
                 txOptions,
                 update,
-                admins.sort((a, b) => a.localeCompare(b)) //sort to have same order in all transactions
+                admins.sort(compareStrings) //sort to have same order in all transactions
             )
         }
             break
@@ -131,9 +132,6 @@ async function buildUpdateTransaction(updateOptions) {
             break
         case UpdateType.ORACLE_CACHE_SIZE:
             tx = await buildOracleCacheSizeUpdateTransaction(sorobanRpc, account, txOptions, update)
-            break
-        case UpdateType.ORACLE_INVOCATION_COSTS:
-            tx = await buildOracleInvocationCostsUpdateTransaction(sorobanRpc, account, txOptions, update)
             break
         default:
             break //no updates that must be applied on blockchain
@@ -172,6 +170,8 @@ function getClientByType(contractType, network, sorobanRpc, contractId) {
     }
 }
 
+const maxTransactionFee = 4294967295
+
 /**
  * @param {Account} account - account
  * @param {any} txOptions - transaction options
@@ -180,8 +180,6 @@ function getClientByType(contractType, network, sorobanRpc, contractId) {
  * @returns {NodesPendingTransaction|null}
  */
 function buildNodesUpdate(account, txOptions, update, admins) {
-    const txBuilder = new TransactionBuilder(account, txOptions)
-
     let isOptionsChanged = false
     let threshold = update.currentNodes.size
     const currentNodeKeys = new Set([...update.currentNodes.keys()])
@@ -204,7 +202,12 @@ function buildNodesUpdate(account, txOptions, update, admins) {
     if (!isOptionsChanged)
         return null
     const currentMajority = getMajority(threshold)
-
+    //a transaction declares its total fee as an unsigned 32-bit integer, and this one carries an operation per signer
+    //change and one for the thresholds on every admin account, so a retry's raised fee is capped at what it can declare.
+    //Every node and the orchestrator compute the same cap, so they still build the same transaction
+    const operations = admins.length * (signerOperations.length + 1)
+    const fee = Math.min(Number(txOptions.fee), Math.floor(maxTransactionFee / operations))
+    const txBuilder = new TransactionBuilder(account, {...txOptions, fee})
 
     for (const admin of admins) {
         for (const signerOperation of signerOperations) {
